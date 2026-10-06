@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "mode": "simulation",
+  "live_signals_enabled": false,
+  "order_execution_enabled": false,
+  "risk_policy_status": "research_examples_not_selected_for_live",
+  "capital_initial_brl": "400",
+  "user_environment": {
+    "platform": "Profit Pro",
+    "operating_system": "Windows",
+    "broker": "Toro Investimentos",
+    "jev_api_access": "confirmed_by_user",
+    "profitdll_license": "not_available_confirmed_by_user",
+    "broker_margin_and_costs": "must_be_verified_in_account"
+  },
+  "objective": {
+    "description": "Pesquisar crescimento agressivo de capital com leitura de fluxo e risco explicitamente limitado.",
+    "daily_profit_target_brl": null,
+    "daily_profit_cap_brl": null,
+    "mandatory_loss_recovery": false,
+    "increase_size_because_of_loss": false,
+    "maximize": "out_of_sample_net_performance_subject_to_explicit_risk_budget",
+    "live_risk_budget_selected_by_user": false
+  },
+  "instrument": {
+    "family": "WIN",
+    "point_value_brl": "0.20",
+    "tick_points": 5,
+    "exchange_min_margin_brl": "155",
+    "margin_reference_date": "2026-10-06",
+    "margin_source": "https://www.b3.com.br/pt_br/solucoes/plataformas/puma-trading-system/para-participantes-e-traders/regras-e-parametros-de-negociacao/margem-minima-requerida-e-guia-educacional-para-minicontratos/",
+    "actual_contract": null
+  },
+  "risk": {
+    "per_trade_fraction": "0.01",
+    "daily_loss_fraction": "0.03",
+    "max_contracts": 1,
+    "max_consecutive_losses": 2,
+    "cooldown_after_loss_ms": 300000,
+    "min_net_reward_risk": "1.5",
+    "max_account_age_ms": 2000,
+    "cash_buffer_brl": "100",
+    "capital_basis": "session_start_cap",
+    "daily_budget_mode": "loss_only",
+    "reserve_planned_loss_beside_margin": false,
+    "max_peak_drawdown_fraction": null
+  },
+  "simulation_profiles": {
+    "controle": {
+      "label": "Exemplo de baixo orçamento de risco; não é a preferência declarada do usuário",
+      "overrides": {}
+    },
+    "agressivo_pesquisa": {
+      "label": "Exemplo agressivo para pesquisa; limites arbitrários, sem validação de rentabilidade",
+      "overrides": {
+        "per_trade_fraction": "0.15",
+        "daily_loss_fraction": "0.50",
+        "max_contracts": 100,
+        "max_consecutive_losses": 4,
+        "cooldown_after_loss_ms": 60000,
+        "cash_buffer_brl": "0",
+        "capital_basis": "current_equity",
+        "daily_budget_mode": "equity_floor",
+        "reserve_planned_loss_beside_margin": true,
+        "max_peak_drawdown_fraction": "0.50"
+      }
+    }
+  },
+  "costs": {
+    "round_trip_fees_brl_per_contract": "1.00",
+    "slippage_points_round_trip": 5,
+    "illustrative_only": true,
+    "explanation": "Valores hipotéticos para testar o cálculo, não tarifas da Toro. Infraestrutura e impostos não estão embutidos."
+  },
+  "market_data": {
+    "expected_symbol": "WIN_SIM",
+    "allowed_origins": ["synthetic", "replay"],
+    "max_age_ms": 1000,
+    "max_spread_points": 10,
+    "max_candidates": 8,
+    "required_session_status": "CONTINUOUS",
+    "require_profit_open": true
+  },
+  "jev": {
+    "model": "jev-1.13.0",
+    "endpoint": "https://api.typesafe.ai/v1/systemone",
+    "api_key_environment_variable": "TYPESAFE_API_KEY",
+    "timeout_seconds": 1.0,
+    "max_inference_age_ms": 1000,
+    "retries": 0,
+    "confidence_min_example": 0.65,
+    "setup_support_min_example": 0.75,
+    "contradiction_max_example": 0.20,
+    "thresholds_calibrated_on_win": false
+  },
+  "execution": {
+    "implemented": false,
+    "signals": "simulation_review_only",
+    "automatic_orders": false,
+    "martingale": false,
+    "averaging_down": false,
+    "stop_widening_to_avoid_loss": false,
+    "pyramiding": "separate_future_research_requires_total_risk_recalculation"
+  },
+  "research": {
+    "predictive_edge_validated": false,
+    "future_profit_probability": null,
+    "required_baselines": ["deterministic_rules", "quantitative_model", "same_pipeline_with_jev"],
+    "promote_automatically_to_live": false
+  }
+}

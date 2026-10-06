@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-06",
+  "timezone": "America/Sao_Paulo",
+  "app_version_audited": "0.3.0",
+  "status": "research_specification_not_production_config",
+  "authenticated_jev_calls_executed": 0,
+  "order_execution_enabled": false,
+  "empirical_WIN_outcomes_available": false,
+  "api_budget_for_future_experiments": null,
+  "minimum_sample_size": null,
+  "sample_size_policy": "Definir pela precisão desejada e unidade efetiva por sessão; nenhum número universal de trades valida edge.",
+  "global_rules": [
+    "Preservar limites determinísticos de risco e qualidade.",
+    "Separar treino, escolha/calibração e teste futuro intocado.",
+    "Agrupar candidatos simultâneos e registrar todos os experimentos.",
+    "Distinguir observado, calculado, inferido e proposto.",
+    "Não promover recurso só porque melhora score de classificação."
+  ],
+  "experiments": [
+    {
+      "id": "E01",
+      "priority": "P0",
+      "title": "Contrato da fonte e integridade",
+      "status": "proposed_not_run",
+      "dependencies": [],
+      "required_data": [
+        "exportação real identificada",
+        "semântica de IDs, tipos, edição e sessão"
+      ],
+      "arms": [
+        "duplicata idêntica",
+        "edição com mesmo ID",
+        "lacuna e reconexão",
+        "tabela RTD sobrescrita",
+        "leilão e RLP"
+      ],
+      "metrics": [
+        "perda de eventos por sessão",
+        "eventos não resolvidos",
+        "divergência reconciliada"
+      ],
+      "promotion_gate": "Não declarar tape completo sem prova da fonte e reconciliação. Duplicata, correção e tipo especial devem ser distintos."
+    },
+    {
+      "id": "E02",
+      "priority": "P0",
+      "title": "Premissa explícita e dimensões independentes",
+      "status": "proposed_not_run",
+      "dependencies": [],
+      "required_data": [
+        "casos sintéticos rotulados por proposição"
+      ],
+      "arms": [
+        "payload atual",
+        "premissa explícita",
+        "famílias separadas: progressão, absorção, exaustão"
+      ],
+      "metrics": [
+        "fidelidade à premissa",
+        "desacordo por família",
+        "erro na falta de dados"
+      ],
+      "promotion_gate": "Payload contém a premissa exata; ausência e contradição não são intercambiáveis; validação remota depende de casos e orçamento de API."
+    },
+    {
+      "id": "E03",
+      "priority": "P1",
+      "title": "Abstenção e inconsistência",
+      "status": "proposed_not_run",
+      "dependencies": [
+        "E02"
+      ],
+      "required_data": [
+        "rótulos de interpretação e cobertura"
+      ],
+      "arms": [
+        "composição atual",
+        "suficiência explícita",
+        "seletor ajustado só em validação"
+      ],
+      "metrics": [
+        "curva erro-cobertura",
+        "desacordo entre respostas",
+        "cobertura por hora"
+      ],
+      "promotion_gate": "Não melhorar precisão simplesmente recusando quase tudo. Nenhum limiar numérico será escolhido no teste externo."
+    },
+    {
+      "id": "E04",
+      "priority": "P1",
+      "title": "Perturbações sem mudança de sentido",
+      "status": "proposed_not_run",
+      "dependencies": [
+        "E02"
+      ],
+      "required_data": [
+        "casos congelados",
+        "mapeamento reversível de rótulos"
+      ],
+      "arms": [
+        "ordem de Choice balanceada",
+        "ordem de candidatos",
+        "nomes neutros",
+        "espelhamento sintético compra-venda"
+      ],
+      "metrics": [
+        "taxa de troca da classe",
+        "variação da distribuição",
+        "sensibilidade ao conjunto candidato"
+      ],
+      "promotion_gate": "Interpretar diferenças com repetição e incerteza; não transformar chamadas correlacionadas em evidência independente."
+    },
+    {
+      "id": "E05",
+      "priority": "P0",
+      "title": "Orçamento de tempo útil",
+      "status": "proposed_not_run",
+      "dependencies": [
+        "E01"
+      ],
+      "required_data": [
+        "relógios de fonte, recebimento, submissão, resposta e tela"
+      ],
+      "arms": [
+        "polling atual",
+        "gatilho por mudança de evidência",
+        "downsampling controlado do mesmo arquivo"
+      ],
+      "metrics": [
+        "p50 p95 p99",
+        "fração de respostas vencidas",
+        "custo por avaliação utilizável"
+      ],
+      "promotion_gate": "Horizon e validade devem ser definidos por experimento causal. Não ampliar validade só para acomodar chamadas lentas."
+    },
+    {
+      "id": "E06",
+      "priority": "P0",
+      "title": "Desfechos e execução causal",
+      "status": "proposed_not_run",
+      "dependencies": [
+        "E01",
+        "E05"
+      ],
+      "required_data": [
+        "eventos com ordem resolvida",
+        "regras de entrada, saída e roteamento"
+      ],
+      "arms": [
+        "toque ideal",
+        "execução plausível",
+        "execução adversa predefinida"
+      ],
+      "metrics": [
+        "não entrada",
+        "timeout",
+        "dados irresolúveis",
+        "PnL após custos",
+        "slippage e fills"
+      ],
+      "promotion_gate": "Reproduzir resultados sem preço anterior à chegada, futuro no estado ou desempate favorável inventado."
+    },
+    {
+      "id": "E07",
+      "priority": "P1",
+      "title": "Valor incremental do JEV",
+      "status": "proposed_not_run",
+      "dependencies": [
+        "E02",
+        "E03",
+        "E04",
+        "E06"
+      ],
+      "required_data": [
+        "mesmas oportunidades e custos para todos braços"
+      ],
+      "arms": [
+        "regras atuais",
+        "modelo quantitativo básico",
+        "básico mais JEV",
+        "JEV somente em ambiguidades"
+      ],
+      "metrics": [
+        "Brier e log loss",
+        "PnL pareado líquido por oportunidade",
+        "drawdown de sessão",
+        "custo de API"
+      ],
+      "promotion_gate": "Benefício deve persistir em blocos futuros e execução adversa, com registro de tentativas e incerteza por sessão."
+    },
+    {
+      "id": "E08",
+      "priority": "P2",
+      "title": "Ablação de microestrutura",
+      "status": "proposed_not_run",
+      "dependencies": [
+        "E07"
+      ],
+      "required_data": [
+        "feed com capacidades verificadas",
+        "normais ajustadas só no passado"
+      ],
+      "arms": [
+        "preço/spread",
+        "mais delta normalizado",
+        "mais desequilíbrio de topo",
+        "mais OFI",
+        "mais níveis fixos",
+        "episódios por preço"
+      ],
+      "metrics": [
+        "ganho incremental fora da amostra",
+        "estabilidade por regime",
+        "custo computacional"
+      ],
+      "promotion_gate": "OFI requer eventos adequados; ajuste contemporâneo não é previsão futura. Manter apenas componentes que contribuam."
+    },
+    {
+      "id": "E09",
+      "priority": "P2",
+      "title": "Calibração e mudança de regime",
+      "status": "proposed_not_run",
+      "dependencies": [
+        "E07"
+      ],
+      "required_data": [
+        "resultados maduros",
+        "versões imutáveis de estado, modelo e perguntas"
+      ],
+      "arms": [
+        "base temporal",
+        "modelo de desfecho e calibrador simples",
+        "método adaptativo posterior"
+      ],
+      "metrics": [
+        "confiabilidade com contagens",
+        "erro por estrato",
+        "cobertura de incerteza",
+        "sequências de falha"
+      ],
+      "promotion_gate": "Não renomear Noul contextual como probabilidade financeira. Toda atualização usa apenas outcomes disponíveis naquele instante."
+    },
+    {
+      "id": "E10",
+      "priority": "P3",
+      "title": "Quantidade e crescimento de patrimônio",
+      "status": "proposed_not_run",
+      "dependencies": [
+        "E06",
+        "E07",
+        "E09"
+      ],
+      "required_data": [
+        "vantagem econômica validada",
+        "custos condicionais a quantidade",
+        "conta e exposição conciliadas",
+        "tolerância de perda explícita"
+      ],
+      "arms": [
+        "q=0",
+        "quantidades menores que teto",
+        "fração fixa",
+        "dimensionamento robusto com limites de trajetória"
+      ],
+      "metrics": [
+        "crescimento composto",
+        "expected shortfall",
+        "drawdown",
+        "incapacidade de operar tamanho mínimo",
+        "saldo negativo"
+      ],
+      "promotion_gate": "O teto de margem é restrição. Nenhuma fração deste plano constitui recomendação para a conta real."
+    }
+  ]
+}

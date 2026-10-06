@@ -1,0 +1,46 @@
+{
+  "status": "passed",
+  "generated_at_utc": "2026-10-06T22:03:07.375692+00:00",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "executable": "/workspace/scratch/e769fda15fc1/jeve-trader/.venv/bin/python",
+  "platform": "linux",
+  "checks": {
+    "tests": {
+      "command": [
+        "/workspace/scratch/e769fda15fc1/jeve-trader/.venv/bin/python",
+        "-E",
+        "-s",
+        "-B",
+        "/workspace/scratch/e769fda15fc1/jeve-trader/scripts/verify.py",
+        "--_child",
+        "tests"
+      ],
+      "cwd": "/workspace/scratch/e769fda15fc1/jeve-trader/app",
+      "returncode": 0,
+      "elapsed_seconds": 0.715,
+      "tests_run": 166,
+      "passed": true
+    },
+    "desktop": {
+      "command": [
+        "/workspace/scratch/e769fda15fc1/jeve-trader/.venv/bin/python",
+        "-E",
+        "-s",
+        "-B",
+        "/workspace/scratch/e769fda15fc1/jeve-trader/scripts/verify.py",
+        "--_child",
+        "desktop"
+      ],
+      "cwd": "/workspace/scratch/e769fda15fc1/jeve-trader/app",
+      "returncode": 0,
+      "elapsed_seconds": 0.169,
+      "passed": true
+    }
+  },
+  "python_socket_network_blocked": true,
+  "gui_opened": false,
+  "windows_runtime_validated": false,
+  "live_jev_api_tested": false,
+  "live_profit_excel_tested": false,
+  "order_execution_tested": false
+}

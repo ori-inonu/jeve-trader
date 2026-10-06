@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "fresh_setup_passed": true,
+  "idempotent_rerun_passed": true,
+  "network_package_index_disabled": true,
+  "wheel": "/workspace/scratch/e769fda15fc1/build_windows/wheels/tzdata-2025.2-py2.py3-none-any.whl",
+  "wheel_sha256": "1a403fada01ff9221ca8044d701868fa132215d84beb92242d9acd2147f667a8",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "executable": "/workspace/scratch/e769fda15fc1/jeve-trader/.venv/bin/python",
+  "tk_version": 9.0,
+  "tzdata_version": "2025.2",
+  "windows_comtypes_skipped_by_marker": true,
+  "windows_setup_executed": false
+}

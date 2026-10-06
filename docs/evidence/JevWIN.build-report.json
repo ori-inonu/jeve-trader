@@ -1,0 +1,77 @@
+{
+  "app_version": "0.3.0",
+  "build_method": "native NSIS x64 compiler; conventional official Windows CPython runtime tree",
+  "windows_launch_test": "not performed by this assembler; installation and GUI require separate Windows validation",
+  "build_platform": "linux",
+  "runtime": "CPython 3.12 x64 (official interpreter files copied unchanged)",
+  "comtypes": "1.4.17",
+  "payload_files": 2957,
+  "payload_bytes": 48161254,
+  "portable_round_trip_hashes_passed": true,
+  "installer_round_trip_hashes_passed": true,
+  "launcher_identity": {
+    "machine": "AMD64 (0x8664)",
+    "format": "PE32+",
+    "subsystem": 2
+  },
+  "installer_identity": {
+    "machine": "AMD64 (0x8664)",
+    "format": "PE32+",
+    "subsystem": 2
+  },
+  "installation_scope": "current user",
+  "installation_directory": "%LOCALAPPDATA%\\Programs\\JevWIN",
+  "diagnostic_logs": "%LOCALAPPDATA%\\JevWIN\\logs",
+  "original_python_exe_unchanged": true,
+  "original_pythonw_exe_unchanged": true,
+  "original_tcl_tk_dlls_unchanged": true,
+  "artifacts": {
+    "JevWIN_Instalador.exe": {
+      "bytes": 12868966,
+      "sha256": "1a1b65cdb1137d8c86035d26e6b69ea286ff6943757cf85d72bde83af14373de"
+    },
+    "JevWIN_Portatil.zip": {
+      "bytes": 18601190,
+      "sha256": "6bb728c6b012c7b7c5cb45744bdf3d6462900a04dc774c413fa935ef3db6bd9f"
+    }
+  },
+  "final_source_snapshot_verified": true,
+  "final_source_resources_verified": 45,
+  "extracted_installer_source_self_test": {
+    "host_platform": "linux",
+    "result": {
+      "status": "passed",
+      "demo_checks": {
+        "progression": [
+          "progression_buy"
+        ],
+        "absorption": [
+          "absorption_buy"
+        ],
+        "exhaustion": [
+          "absorption_buy",
+          "exhaustion_buy"
+        ],
+        "choppy": []
+      },
+      "capital_400_contracts": 2,
+      "capital_4000_contracts": 22,
+      "synthetic_technical_candidates": 8,
+      "decision_state_without_jev": "AGUARDAR",
+      "decision_options": 8,
+      "actual_jev_api_tested": false,
+      "actual_profit_connection_tested": false,
+      "order_execution": false,
+      "app_version": "0.3.0",
+      "runtime": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "platform": "linux"
+    },
+    "meaning": "actual installer app source/resources passed on Linux; not Windows installation or GUI"
+  },
+  "diagnostic_logging_checks": {
+    "persistent_failure_log": "passed on host with controlled startup error",
+    "credential_and_url_sanitization": "passed",
+    "windows_native_startup": "not executed"
+  },
+  "external_JevWIN_exe_is_alias_of": "JevWIN_Instalador.exe"
+}

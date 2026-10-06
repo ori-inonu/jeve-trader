@@ -1,0 +1,23 @@
+{
+  "version": "0.3.0",
+  "total_tests": 166,
+  "tests_by_module": {
+    "test_app_core": 9,
+    "test_app_store": 3,
+    "test_candidate_research": 10,
+    "test_capital_planner": 7,
+    "test_copilot": 19,
+    "test_dashboard": 4,
+    "test_desktop_controller": 2,
+    "test_flow_engine": 13,
+    "test_jev_client": 9,
+    "test_panel_report": 7,
+    "test_profit_bridge": 33,
+    "test_recommendation_engine": 12,
+    "test_risk": 29,
+    "test_risk_research": 6,
+    "test_stress_lab": 3
+  },
+  "execution_result": "passed",
+  "environment": "Linux CPython 3.12.14; COM and HTTP transports mocked; native Windows GUI not executed"
+}

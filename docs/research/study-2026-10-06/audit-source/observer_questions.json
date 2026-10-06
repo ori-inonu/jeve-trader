@@ -1,0 +1,38 @@
+{
+  "flow_context": {
+    "type": "choice",
+    "instructions": "Classify the OBSERVED state.computed_features and evidence_coverage over the measured windows. Do not predict the next price, profit or a trading action. If tape is partial, distinguish limited evidence from a confirmed market-wide pattern. Unknown aggression must remain unknown. Never infer the existence of missing data.",
+    "criteria": {
+      "buy_progression": "Dominant executed buying accompanies upward price progress in the current observed window.",
+      "sell_progression": "Dominant executed selling accompanies downward price progress in the current observed window.",
+      "possible_buy_absorption": "Repeated buying did not produce comparable upward progress; absorption is a possible explanation.",
+      "possible_sell_absorption": "Repeated selling did not produce comparable downward progress; absorption is a possible explanation.",
+      "possible_exhaustion": "Previously advancing directional aggression lost intensity and failed to continue; no reversal is implied.",
+      "mixed_or_insufficient": "Mixed context or insufficient coverage for the other descriptions. Partial snapshots may omit decisive trades."
+    }
+  },
+  "buy_progression_supported": {
+    "type": "noul",
+    "instructions": "Do state.computed_features show observed buying dominance together with upward price progress, with evidence_coverage sufficient for this description? Evaluate only the observed interval. Missing aggressor, stale tape or incomplete sampling weaken support. This is not a probability of profit."
+  },
+  "sell_progression_supported": {
+    "type": "noul",
+    "instructions": "Do state.computed_features show observed selling dominance together with downward price progress, with evidence_coverage sufficient for this description? Evaluate only the observed interval. Missing aggressor, stale tape or incomplete sampling weaken support. This is not a probability of profit."
+  },
+  "buy_absorption_supported": {
+    "type": "noul",
+    "instructions": "Do observed repeated buy aggressions fail to produce comparable upward progress, supporting POSSIBLE passive absorption? Use state.computed_features and evidence_coverage. Do not assert hidden orders, participant identity, reversal or future profit. Partial tape weakens evidence."
+  },
+  "sell_absorption_supported": {
+    "type": "noul",
+    "instructions": "Do observed repeated sell aggressions fail to produce comparable downward progress, supporting POSSIBLE passive absorption? Use state.computed_features and evidence_coverage. Do not assert hidden orders, participant identity, reversal or future profit. Partial tape weakens evidence."
+  },
+  "exhaustion_supported": {
+    "type": "noul",
+    "instructions": "Is there evidence of directional aggression losing intensity AFTER previous directional price progress, with no comparable continuation in the current window? Compare state.computed_features.windows. Require useful prior and current windows. Exhaustion is a hypothesis and does not imply reversal or profit."
+  },
+  "evidence_insufficient": {
+    "type": "noul",
+    "instructions": "Are coverage limitations, stale/missing inputs, mixed aggression or inconsistent observations substantial enough to avoid a confident tape-context conclusion? Use state.evidence_coverage, measurement_limits and computed_features. full_tape=false means only sampled observations are available."
+  }
+}

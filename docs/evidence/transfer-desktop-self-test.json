@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "demo_checks": {
+    "progression": [
+      "progression_buy"
+    ],
+    "absorption": [
+      "absorption_buy"
+    ],
+    "exhaustion": [
+      "absorption_buy",
+      "exhaustion_buy"
+    ],
+    "choppy": []
+  },
+  "capital_400_contracts": 2,
+  "capital_4000_contracts": 22,
+  "synthetic_technical_candidates": 8,
+  "decision_state_without_jev": "AGUARDAR",
+  "decision_options": 8,
+  "actual_jev_api_tested": false,
+  "actual_profit_connection_tested": false,
+  "order_execution": false,
+  "app_version": "0.3.0",
+  "runtime": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "platform": "linux"
+}

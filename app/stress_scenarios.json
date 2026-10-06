@@ -1,0 +1,134 @@
+{
+  "type": "ILLUSTRATIVE_STRESS_ARITHMETIC",
+  "current_market_data": false,
+  "probabilities_estimated": false,
+  "capital_brl": "400",
+  "notes": [
+    "Scenarios are not predictions and do not estimate maximum loss.",
+    "Four WIN do not fit BRL400 at BRL155 minimum margin per contract.",
+    "Broker liquidation thresholds, extra fees and real slippage must be confirmed.",
+    "A negative scenario balance is possible; deposited capital is not a guaranteed loss cap."
+  ],
+  "scenarios": [
+    {
+      "contracts": 1,
+      "adverse_move_points": 100,
+      "minimum_margin_brl": "155",
+      "margin_fits_before_reserves": true,
+      "loss_with_hypothetical_normal_costs_brl": "22.00",
+      "loss_if_forced_fee_also_applies_brl": "57.00",
+      "forced_loss_percent_of_initial": "14.25",
+      "balance_after_forced_scenario_brl": "343.00"
+    },
+    {
+      "contracts": 1,
+      "adverse_move_points": 200,
+      "minimum_margin_brl": "155",
+      "margin_fits_before_reserves": true,
+      "loss_with_hypothetical_normal_costs_brl": "42.00",
+      "loss_if_forced_fee_also_applies_brl": "77.00",
+      "forced_loss_percent_of_initial": "19.25",
+      "balance_after_forced_scenario_brl": "323.00"
+    },
+    {
+      "contracts": 1,
+      "adverse_move_points": 500,
+      "minimum_margin_brl": "155",
+      "margin_fits_before_reserves": true,
+      "loss_with_hypothetical_normal_costs_brl": "102.00",
+      "loss_if_forced_fee_also_applies_brl": "137.00",
+      "forced_loss_percent_of_initial": "34.25",
+      "balance_after_forced_scenario_brl": "263.00"
+    },
+    {
+      "contracts": 1,
+      "adverse_move_points": 1000,
+      "minimum_margin_brl": "155",
+      "margin_fits_before_reserves": true,
+      "loss_with_hypothetical_normal_costs_brl": "202.00",
+      "loss_if_forced_fee_also_applies_brl": "237.00",
+      "forced_loss_percent_of_initial": "59.25",
+      "balance_after_forced_scenario_brl": "163.00"
+    },
+    {
+      "contracts": 2,
+      "adverse_move_points": 100,
+      "minimum_margin_brl": "310",
+      "margin_fits_before_reserves": true,
+      "loss_with_hypothetical_normal_costs_brl": "44.00",
+      "loss_if_forced_fee_also_applies_brl": "114.00",
+      "forced_loss_percent_of_initial": "28.50",
+      "balance_after_forced_scenario_brl": "286.00"
+    },
+    {
+      "contracts": 2,
+      "adverse_move_points": 200,
+      "minimum_margin_brl": "310",
+      "margin_fits_before_reserves": true,
+      "loss_with_hypothetical_normal_costs_brl": "84.00",
+      "loss_if_forced_fee_also_applies_brl": "154.00",
+      "forced_loss_percent_of_initial": "38.50",
+      "balance_after_forced_scenario_brl": "246.00"
+    },
+    {
+      "contracts": 2,
+      "adverse_move_points": 500,
+      "minimum_margin_brl": "310",
+      "margin_fits_before_reserves": true,
+      "loss_with_hypothetical_normal_costs_brl": "204.00",
+      "loss_if_forced_fee_also_applies_brl": "274.00",
+      "forced_loss_percent_of_initial": "68.50",
+      "balance_after_forced_scenario_brl": "126.00"
+    },
+    {
+      "contracts": 2,
+      "adverse_move_points": 1000,
+      "minimum_margin_brl": "310",
+      "margin_fits_before_reserves": true,
+      "loss_with_hypothetical_normal_costs_brl": "404.00",
+      "loss_if_forced_fee_also_applies_brl": "474.00",
+      "forced_loss_percent_of_initial": "118.50",
+      "balance_after_forced_scenario_brl": "-74.00"
+    },
+    {
+      "contracts": 4,
+      "adverse_move_points": 100,
+      "minimum_margin_brl": "620",
+      "margin_fits_before_reserves": false,
+      "loss_with_hypothetical_normal_costs_brl": "88.00",
+      "loss_if_forced_fee_also_applies_brl": "228.00",
+      "forced_loss_percent_of_initial": "57.00",
+      "balance_after_forced_scenario_brl": "172.00"
+    },
+    {
+      "contracts": 4,
+      "adverse_move_points": 200,
+      "minimum_margin_brl": "620",
+      "margin_fits_before_reserves": false,
+      "loss_with_hypothetical_normal_costs_brl": "168.00",
+      "loss_if_forced_fee_also_applies_brl": "308.00",
+      "forced_loss_percent_of_initial": "77.00",
+      "balance_after_forced_scenario_brl": "92.00"
+    },
+    {
+      "contracts": 4,
+      "adverse_move_points": 500,
+      "minimum_margin_brl": "620",
+      "margin_fits_before_reserves": false,
+      "loss_with_hypothetical_normal_costs_brl": "408.00",
+      "loss_if_forced_fee_also_applies_brl": "548.00",
+      "forced_loss_percent_of_initial": "137.00",
+      "balance_after_forced_scenario_brl": "-148.00"
+    },
+    {
+      "contracts": 4,
+      "adverse_move_points": 1000,
+      "minimum_margin_brl": "620",
+      "margin_fits_before_reserves": false,
+      "loss_with_hypothetical_normal_costs_brl": "808.00",
+      "loss_if_forced_fee_also_applies_brl": "948.00",
+      "forced_loss_percent_of_initial": "237.00",
+      "balance_after_forced_scenario_brl": "-548.00"
+    }
+  ]
+}

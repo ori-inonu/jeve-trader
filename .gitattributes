@@ -1,0 +1,17 @@
+* text=auto
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.jsonl text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.nsi text eol=crlf
+*.xlsx binary
+*.png binary
+*.pdf binary
+# Preserve the exact imported baseline and the research audit snapshots.
+app/** -text
+docs/research/study-2026-10-06/** -text

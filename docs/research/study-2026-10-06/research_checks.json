@@ -1,0 +1,12 @@
+{
+  "draft_adapter_shape": "passed",
+  "model_in_fixture": "jev-1.13.0",
+  "questions": 3,
+  "semantic_quality_empirically_tested": false,
+  "authenticated_api_calls": 0,
+  "real_market_data": false,
+  "production_snapshot_matches": true,
+  "review": "Two limited independent reviews found no material issue in methodology, JEV semantics and status distinctions.",
+  "source_reference_definitions": 21,
+  "report_word_count": 4919
+}

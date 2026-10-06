@@ -1,0 +1,29 @@
+{
+  "flow_interpretation": {
+    "type": "choice",
+    "instructions": "Which interpretation is best supported by the supplied observed facts and precomputed features? Interpret only the current observation window. Use observed evidence, not account results, desired recovery, or future profitability. Choose inconclusive when essential evidence is missing, mixed, or contradictory.",
+    "criteria": {
+      "buying_with_price_acceptance": "Observed aggressive buying is accompanied by sustained acceptance of higher prices.",
+      "selling_with_price_acceptance": "Observed aggressive selling is accompanied by sustained acceptance of lower prices.",
+      "buying_absorbed": "Observed aggressive buying meets repeated opposing liquidity without sustained upward progress.",
+      "selling_absorbed": "Observed aggressive selling meets repeated opposing liquidity without sustained downward progress.",
+      "inconclusive": "The observations are insufficient, mixed, contradictory, or fail to distinguish the other interpretations."
+    }
+  },
+  "setup_evidence_support": {
+    "type": "noul",
+    "instructions": "Do the supplied observed facts support the contextual premise explicitly stated in candidate_setup? Evaluate the premise against the current observations. This asks about support in supplied evidence, not the probability of future profit. A missing candidate premise has no observed support.",
+    "criteria": {
+      "true": "Relevant observed facts support the stated contextual premise.",
+      "false": "The observed facts do not establish the stated contextual premise, or the premise is missing."
+    }
+  },
+  "contradictory_evidence": {
+    "type": "noul",
+    "instructions": "Do the supplied observed facts contain evidence that contradicts the contextual premise explicitly stated in candidate_setup? Judge contradiction in the current observations independently of other questions. Missing evidence alone is not a contradiction.",
+    "criteria": {
+      "true": "At least one relevant observed fact directly contradicts the stated contextual premise.",
+      "false": "No supplied observed fact directly contradicts the stated contextual premise; this does not establish that the premise is supported."
+    }
+  }
+}

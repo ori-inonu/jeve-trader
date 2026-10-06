@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "experimental_descriptive_rules_not_calibrated_on_WIN",
+  "short_window_ms": 5000,
+  "long_window_ms": 30000,
+  "retention_ms": 60000,
+  "max_age_ms": 2000,
+  "minimum_trades": 4,
+  "dominance_fraction": "0.70",
+  "progression_min_ticks": "2",
+  "no_follow_max_ticks": "1",
+  "absorption_min_aggressed_contracts": 20,
+  "exhaustion_intensity_ratio_max": "0.50",
+  "depth_reduction_fraction_min": "0.50",
+  "maximum_depth_levels": 50
+}

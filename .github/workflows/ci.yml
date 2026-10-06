@@ -1,0 +1,33 @@
+name: Offline Python verification
+
+# Manual only: importing/pushing this repository does not start a paid CI run.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      # Official version tags; see docs/DEVELOPMENT.md before pinning a verified SHA.
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Set up the minimal development environment
+        run: bash scripts/setup-codex.sh
+      - name: Verify tests and desktop self-test without a display
+        run: .venv/bin/python scripts/verify.py
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-verification-linux-python312
+          path: .artifacts/
+          retention-days: 7
+          if-no-files-found: warn

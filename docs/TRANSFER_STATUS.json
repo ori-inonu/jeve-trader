@@ -1,0 +1,39 @@
+{
+  "project_name": "Jeve Trader",
+  "repository_name": "jeve-trader",
+  "consolidation_date": "2026-10-06",
+  "timezone": "America/Sao_Paulo",
+  "application_baseline": "JevWIN 0.3.0",
+  "application_behavior_changed_in_transfer": false,
+  "github": {
+    "connected_account": "ori-inonu",
+    "intended_visibility": "private",
+    "repository_url": "https://github.com/ori-inonu/jeve-trader",
+    "status": "source_and_documentation_published",
+    "repository_id": 1408003317,
+    "visibility": "private",
+    "default_branch": "main",
+    "publication_method": "github_connector_git_objects"
+  },
+  "codex": {
+    "environment_name": "Jeve Trader",
+    "environment_url": null,
+    "status": "environment_configuration_pending",
+    "setup_command": "bash scripts/setup-codex.sh",
+    "verify_command": ".venv/bin/python scripts/verify.py",
+    "development_task_started": false
+  },
+  "empirical_validation": {
+    "windows_native_installation": "pending",
+    "real_profit_excel_connection": "pending",
+    "authenticated_jev_evaluation": "pending",
+    "financial_edge": "not_demonstrated"
+  },
+  "local_git": {
+    "branch": "main",
+    "status": "local_prepublication_history_preserved_separately",
+    "remote_configured": true,
+    "prepublication_commit": "4ad7e9ff923cac45685464496f6cae4676b246b1",
+    "historical_bundle": "docs/archive/Jeve_Trader_Historico_2026-10-06.bundle"
+  }
+}

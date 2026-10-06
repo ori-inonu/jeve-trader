@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "snapshot_id": "synthetic-400-0-0",
+  "ts_ms": 1801848600000,
+  "exchange_ts_ms": 1801848600000,
+  "quote_ts_ms": 1801848600000,
+  "flow_ts_ms": 1801848600000,
+  "data_origin": "synthetic",
+  "symbol": "WIN_SIM",
+  "session_status": "CONTINUOUS",
+  "profit_open": true,
+  "feed_connected": true,
+  "sequence_ok": true,
+  "warmup_complete": true,
+  "calendar_verified": true,
+  "event_risk_blocked": false,
+  "bid_points": 131000,
+  "ask_points": 131005,
+  "account": {
+    "asof_ms": 1801848600000,
+    "start_equity_brl": "400",
+    "equity_brl": "400",
+    "peak_equity_brl": "400",
+    "realized_pnl_net_brl": "0",
+    "unrealized_pnl_brl": "0",
+    "reserved_risk_brl": "0",
+    "available_margin_brl": "400",
+    "broker_margin_brl_per_contract": "155",
+    "open_contracts": 0,
+    "pending_entry_contracts": 0,
+    "consecutive_losses": 0,
+    "last_loss_ms": null,
+    "reconciled": true,
+    "environment": "simulated"
+  },
+  "observations": {
+    "label": "SYNTHETIC FIXTURE, NOT B3 MARKET DATA",
+    "recent_tape_summary": "Synthetic buy aggressions with higher traded prices.",
+    "book_replenishment": "No opposing replenishment represented in this fixture."
+  },
+  "computed_features": {
+    "window_ms": 5000,
+    "buy_aggressed_contracts": 180,
+    "sell_aggressed_contracts": 70,
+    "delta_contracts": 110,
+    "price_change_points": 35,
+    "source": "synthetic_values_not_a_feature_calculation"
+  },
+  "evidence_coverage": {
+    "complete_for_fixture": true,
+    "exchange_data": false
+  },
+  "candidates": [
+    {
+      "id": "buy_example",
+      "side": "buy",
+      "entry_points": 131005,
+      "stop_points": 130905,
+      "target_points": 131205,
+      "quantity_requested": 100,
+      "premise": "Recent observed aggressive buying is accepted at higher prices."
+    },
+    {
+      "id": "sell_example",
+      "side": "sell",
+      "entry_points": 131000,
+      "stop_points": 131100,
+      "target_points": 130800,
+      "quantity_requested": 100,
+      "premise": "Recent observed aggressive selling is accepted at lower prices."
+    }
+  ]
+}

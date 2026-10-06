@@ -1,0 +1,103 @@
+{
+  "study_date": "2026-10-06",
+  "app_version_audited": "0.3.0",
+  "market_data_used": false,
+  "authenticated_jev_calls": 0,
+  "windows_gui_tested": false,
+  "production_changes": false,
+  "audit": {
+    "actual_candidate_projection_keys": [
+      "id",
+      "side",
+      "entry_points",
+      "stop_points",
+      "target_points",
+      "reference_levels"
+    ],
+    "premise_exists_before_projection": true,
+    "premise_exists_after_projection": false,
+    "base_question_count": 7,
+    "maximum_questions_at_eight_candidates": 23,
+    "first_choice_option": "buy_progression",
+    "sources_sha256": {
+      "app_core.py": "3ecaab799b79abb4d94dcc66358febedf7ced37a2f031244f0954da83eacbec3",
+      "app_store.py": "9b7744687299ae4878589bbdf0017e4a11d737e78624568b4c139944d20a462f",
+      "candidate_engine.py": "b55e7996389ec916cea92ea32f0361b059dc7d77a5854f11a50bd0c701112481",
+      "candidate_research.py": "8a09b860c48fbf0228aef0e05971e3315a84b3807af00a239375a662a5c2b131",
+      "capital_planner.py": "a18e93343df0d09e08f653f965e5577ed890cb7f0c60abf841123c9dd448abdf",
+      "config.json": "2b5c064448d0865a21d3cd78a4044139706c6da9a76a8b3ee92bae321669d8cb",
+      "desktop_app.py": "2f80cedfbcd5d6766aa46ca68f8318fa18d5efccfaab1d5379b84447aae56a98",
+      "flow_engine.py": "8c9a149ae844c1855dd380729d60d312907899827d64662458a31bab4c49b9a2",
+      "flow_rules.json": "a58f466dd47fd33c7d7df0e9a032037b4eec43897062b8e09c121b5422187bb1",
+      "jev_client.py": "2385c0401025639134fcfd6fa635d3ba45cbd6aacc90cf386e2d668651d2dd37",
+      "observer_questions.json": "d28131efb8b639ddc31567f0dd1c6f39bb78a6f6ba38f7fa6e34b06c34d019ec",
+      "profit_bridge.py": "bbed287b175550e6d6b943a78fff3ff37aef290a8aeb31b663eaf1327e2870d7",
+      "questions.json": "fa458be405b7cda67d91ffc603a3cc52a293f35c5a3381022580806dffc5748b",
+      "recommendation_engine.py": "1ba12afa54d0e3f0bfd56924be90780f4126c3e8d252aad3508151592cb85039",
+      "risk.py": "4378f6a2f0b2b71668747f374083419cd60dcc985de4f6fa1af963229c5878df",
+      "risk_research.py": "d6abde3e412464adcf1f26a74a29c4d01fd814e970e4bdc09e0aff1f999649f7",
+      "test_inventory.json": "d570803f0ab88823ef2175cd993a2af33eb109859406dea93cc21f2f312f72a3"
+    }
+  },
+  "reward_risk_is_not_expected_value": {
+    "A": {
+      "net_gain": "58",
+      "net_loss": "22",
+      "probability_assumed_not_estimated": "0.25",
+      "net_reward_risk": "2.636363636363636363636363636",
+      "break_even_probability": "0.275",
+      "expected_net_result": "-2.00"
+    },
+    "B": {
+      "net_gain": "38",
+      "net_loss": "22",
+      "probability_assumed_not_estimated": "0.45",
+      "net_reward_risk": "1.727272727272727272727272727",
+      "break_even_probability": "0.3666666666666666666666666667",
+      "expected_net_result": "5.00"
+    },
+    "assumptions": "Binary, net payoffs, certain entry, no timeout, no impact; p is purely assumed."
+  },
+  "compound_growth_example": {
+    "p_assumed": 0.4,
+    "gain_assumed": 38.0,
+    "loss_assumed": 22.0,
+    "binary_toy_optimal_fraction": 0.05263157894736844,
+    "assumptions": "IID binary returns, no margin, granularity, gaps, impact or timeout. Not a sizing recommendation.",
+    "rows": [
+      {
+        "fraction_lost_in_binary_stop": 0.0,
+        "arithmetic_expected_return": 0.0,
+        "expected_log_growth": 0.0
+      },
+      {
+        "fraction_lost_in_binary_stop": 0.01,
+        "arithmetic_expected_return": 0.0009090909090909094,
+        "expected_log_growth": 0.0008198982980844637
+      },
+      {
+        "fraction_lost_in_binary_stop": 0.05,
+        "arithmetic_expected_return": 0.004545454545454547,
+        "expected_log_growth": 0.0023584255991293372
+      },
+      {
+        "fraction_lost_in_binary_stop": 0.1,
+        "arithmetic_expected_return": 0.009090909090909094,
+        "expected_log_growth": 0.0005165060330065696
+      },
+      {
+        "fraction_lost_in_binary_stop": 0.15,
+        "arithmetic_expected_return": 0.013636363636363641,
+        "expected_log_growth": -0.005355373764674154
+      }
+    ]
+  },
+  "latency_example": {
+    "assumed_age_at_submission_ms": 1900,
+    "assumed_roundtrip_ms": 300,
+    "age_at_response_ms": 2200,
+    "configured_source_validity_ms": 2000,
+    "expired": true,
+    "measured_remotely": false
+  }
+}
