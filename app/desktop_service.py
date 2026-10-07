@@ -12,6 +12,7 @@ import sys
 import threading
 import time
 import uuid
+import webbrowser
 
 from app_core import ObservationSession, DEFAULT_INPUTS, build_risk_study, jev_observation_state, can_classify
 from app_store import resource_path, UserStore
@@ -21,6 +22,7 @@ from decision_engine import AccountState, CostSchedule, MarketSnapshot, compare_
 from decision_store import DecisionStore
 from jev_client import JevClient
 from profit_bridge import CombinedExcelBridge, SourceBatch, MarketEvent, QuoteSnapshot, SourceHealth, read_csv_events
+from release_updates import check_for_updates, current_version, update_state, trusted_release_url
 
 EXPERIMENT_RESOURCES = ('desktop_service.py', 'app_core.py', 'app_store.py', 'capital_example.py',
                         'decision_engine.py', 'decision_store.py', 'context_requests.py', 'candidate_engine.py',
@@ -97,7 +99,7 @@ class ExcelCollector:
 
 
 class DecisionService:
-    def __init__(self, directory=None):
+    def __init__(self, directory=None, *, update_checker=check_for_updates):
         self.store = DecisionStore(directory)
         self.settings = UserStore(directory)
         self.session = ObservationSession()
@@ -109,6 +111,9 @@ class DecisionService:
         self.api_last_at = 0.
         self.pending_jev = False
         self.results = queue.Queue()
+        self.update_results = queue.Queue()
+        self.update_checker = update_checker
+        self.updates = update_state(current_version())
         self.collector = None
         self.source_error = None
         self.sequence = 0
@@ -155,6 +160,7 @@ class DecisionService:
                         'pending': self.pending_jev, 'current': latest is not None, 'model': 'jev-1.13.0', 'financial_probability': None},
                 'source': {'error': self.source_error, 'excel_running': self.collector is not None, 'config': self.source_config},
                 'equity_history': equity_history, 'history': history[:40],
+                'updates': dict(self.updates),
                 'research': {'status': 'EMPIRICAL_VALIDATION_PENDING', 'logistic_baseline': 'offline CLI: scripts/run_decision_lab.py',
                              'profitdll': 'SDK_AUTHORIZED_REQUIRED', 'risk_catalog': ['fixed_lot', 'fixed_cash', 'initial_fraction', 'current_fraction', 'kelly', 'fractional_kelly', 'drawdown_kelly', 'volatility', 'optimal_f', 'fixed_ratio', 'paroli', 'partial_reinvest', 'pyramiding', 'martingale', 'dalembert', 'fibonacci', 'labouchere'],
                              'profit_target': None, 'drawdown_pause': None}, 'orders_enabled': False}
@@ -174,6 +180,13 @@ class DecisionService:
             raise ValueError('Parâmetros inválidos')
         if method == 'snapshot':
             pass
+        elif method == 'updates.check':
+            self.request_update_check()
+        elif method == 'updates.open':
+            if self.updates['status'] != 'available' or not trusted_release_url(self.updates['release_url']):
+                raise ValueError('Nenhuma atualização verificada disponível')
+            if not webbrowser.open(self.updates['release_url']):
+                raise ValueError('Não foi possível abrir a página da atualização')
         elif method == 'source.demo':
             self.disconnect()
             fixture = generate_candidate_scenario()
@@ -233,6 +246,19 @@ class DecisionService:
             raise ValueError('Comando não autorizado ou desconhecido')
         return self.snapshot()
 
+    def request_update_check(self):
+        if self.updates['status'] == 'checking':
+            return
+        version = self.updates['current_version']
+        self.updates = update_state(version, 'checking')
+        def check():
+            try:
+                result = self.update_checker(version)
+            except Exception:
+                result = update_state(version, 'unavailable')
+            self.update_results.put(result)
+        threading.Thread(target=check, daemon=True).start()
+
     def request_jev(self):
         if not self.api_key or self.pending_jev or self.api_calls >= self.api_limit or time.monotonic()-self.api_last_at < 10:
             raise ValueError('Configure a chave, aguarde 10 segundos e confira o orçamento de chamadas')
@@ -265,6 +291,11 @@ class DecisionService:
 
     def tick(self):
         changed = False
+        try:
+            self.updates = self.update_results.get_nowait()
+            changed = True
+        except queue.Empty:
+            pass
         if self.collector:
             try:
                 value = self.collector.poll()

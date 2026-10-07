@@ -1,0 +1,31 @@
+# Jeve Trader — dados reais, movimento e atualização Windows
+
+Label: wayfinder:map
+Status: open
+Created: 2026-10-07
+Tracker: local-markdown
+
+## Destination
+
+Definir uma central dinâmica de decisão sustentada pelas fontes realmente disponíveis, com cadência, validade e alertas verificáveis, e deixar o aplicativo acessível no Windows com versionamento e aviso de novas versões.
+
+## Notes
+
+Pedido atual de Gabriel: investigar com Wayfinder; instalar no computador com ícone; controlar commits/GitHub e apresentar atualizações. A autorização de instalação e atualização permite executar este incremento, além da pesquisa documental. Os mapas anteriores de [contratos](../wayfinder-evolucao-decisao/map.md) e [oportunidades](../wayfinder-proximas-oportunidades/map.md) permanecem com seu escopo original; não representam funcionalidades entregues.
+
+Wayfinder orienta o mapa, research os fatos, TDD o incremento especificado e code-review a revisão independente. Pesquisa já realizada por dois agentes leitores; somente o principal escreve. Novo harness Desktop consultado após a substituição de AGENTS; snapshot sem tarefas. Não depender de Mission Control para esta entrega.
+
+Respostas humanas registradas: alertas experimentais identificados; horizonte de segundos a dois minutos; Profit e Excel disponíveis. Manter ordens manuais, identificadores JevWIN e dados existentes. Não confundir força contextual, confiança ou Noul com probabilidade de lucro. Não consultar API paga nos testes. Questões humanas pendentes permanecem abertas.
+
+## Decisions so far
+
+- [Fontes reais e capacidade do Excel](issues/01-fontes.md): RTD é parcial; velocidade de leitura não elimina limites da fonte; DLL exige SDK/licença próprios.
+- [Cadência e termômetro contextual](issues/02-cadencia.md): dois ciclos separados; alvo inicial JEV de até 1 Hz por mudança relevante, condicionado a validade e orçamento; índice contextual tipado proposto.
+
+## Not yet specified
+
+Modelo econômico aprovado, parâmetros pessoais de risco, retorno incremental medido em WIN, qualidade real da exportação e execução por liquidez/fila. Dependem da captura e anotação reais; não preencher essas ausências com mocks.
+
+## Out of scope
+
+Ordens automáticas, promessa de rentabilidade/alavancagem, contratação de feed, publicação do código privado, alteração global do Excel ou remoção de gates financeiros. Atualizador com instalação dentro do app depende de assinatura e publicação próprias.

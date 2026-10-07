@@ -2,6 +2,12 @@
 param([switch]$SkipInstallDependencies, [switch]$IsolatedInstaller)
 $ErrorActionPreference = 'Stop'
 $workspace = Split-Path $PSScriptRoot -Parent
+$version = (Get-Content -LiteralPath (Join-Path $workspace 'app\version.json') -Raw | ConvertFrom-Json).version
+if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid canonical application version' }
+$packageVersion = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'package.json') -Raw | ConvertFrom-Json).version
+$tauriVersion = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'src-tauri\tauri.conf.json') -Raw | ConvertFrom-Json).version
+$cargoConfig = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'src-tauri\Cargo.toml') -Raw
+if ($version -ne $packageVersion -or $version -ne $tauriVersion -or $cargoConfig -notmatch ('(?m)^version = "'+[regex]::Escape($version)+'"$')) { throw 'Application version metadata differs' }
 $python = Join-Path $workspace '.venv\Scripts\python.exe'
 $cargo = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
 $nsis = Join-Path ${env:ProgramFiles(x86)} 'NSIS\makensis.exe'
@@ -27,7 +33,7 @@ try {
     foreach ($resource in @('desktop_service.py', 'app_core.py', 'app_store.py', 'capital_example.py', 'decision_engine.py',
         'decision_store.py', 'context_requests.py', 'candidate_engine.py', 'candidate_research.py', 'flow_engine.py',
         'profit_bridge.py', 'recommendation_engine.py', 'jev_client.py', 'copilot.py', 'capital_planner.py', 'risk.py',
-        'risk_research.py', 'config.json', 'flow_rules.json', 'observer_questions.json')) {
+        'risk_research.py', 'release_updates.py', 'version.json', 'config.json', 'flow_rules.json', 'observer_questions.json')) {
         $pyinstallerArgs += @('--add-data', "$(Join-Path $workspace "app\$resource");.")
     }
     $pyinstallerArgs += (Join-Path $workspace 'app\desktop_service.py')
@@ -55,18 +61,20 @@ Diagnosticar_JevWIN.cmd testa o motor em pasta temporária, sem chamar a API.
     $files = Get-ChildItem -LiteralPath $payload -File -Recurse | Where-Object { $_.Name -ne 'package-manifest.json' } | ForEach-Object {
         [ordered]@{ name=[IO.Path]::GetRelativePath($payload, $_.FullName); bytes=$_.Length; sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash }
     }
-    [ordered]@{ version='0.4.0'; platform='Windows x64'; created_utc=[DateTime]::UtcNow.ToString('o');
+    [ordered]@{ version=$version; platform='Windows x64'; created_utc=[DateTime]::UtcNow.ToString('o');
         orders_enabled=$false; model_deployment_approved=$false; files=@($files) } |
         ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $payload 'package-manifest.json') -Encoding utf8
     $sizeKb = [int][Math]::Ceiling(((Get-ChildItem -LiteralPath $payload -File -Recurse | Measure-Object Length -Sum).Sum)/1024)
     $suffix = if ($IsolatedInstaller) { '-isolated-test' } else { '' }
-    $installer = Join-Path $artifacts "JevWIN_0.4.0_setup$suffix.exe"
-    $nsisArgs = @('/INPUTCHARSET', 'UTF8', '/DVERSION=0.4.0', "/DOUTPUT=$installer", "/DPAYLOAD=$payload", "/DSIZE_KB=$sizeKb")
+    $installer = Join-Path $artifacts "JevWIN_${version}_setup$suffix.exe"
+    $nsisArgs = @('/INPUTCHARSET', 'UTF8', "/DVERSION=$version", "/DOUTPUT=$installer", "/DPAYLOAD=$payload", "/DSIZE_KB=$sizeKb")
     if ($IsolatedInstaller) { $nsisArgs += '/DISOLATED_TEST' }
     $nsisArgs += (Join-Path $workspace 'app\packaging\installer.nsi')
     & $nsis @nsisArgs
     if ($LASTEXITCODE) { throw 'Installer build failed' }
-    Compress-Archive -LiteralPath (Get-ChildItem -LiteralPath $payload).FullName -DestinationPath (Join-Path $artifacts 'JevWIN_0.4.0_portable.zip') -Force
+    $portableZip = Join-Path $artifacts "JevWIN_${version}_portable.zip"
+    Compress-Archive -LiteralPath (Get-ChildItem -LiteralPath $payload).FullName -DestinationPath $portableZip -Force
+    Get-FileHash -LiteralPath $installer, $portableZip -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLowerInvariant())  $(Split-Path $_.Path -Leaf)" } | Set-Content -LiteralPath (Join-Path $artifacts "SHA256SUMS-$version.txt") -Encoding utf8
     Write-Output "Portable: $payload"
     Write-Output "Installer: $installer"
 } finally { Pop-Location }
