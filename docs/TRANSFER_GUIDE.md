@@ -1,6 +1,6 @@
 # Continuar o Jeve Trader no Codex
 
-**Projeto preparado em 06/10/2026.** O repositório privado confirmado é [ori-inonu/jeve-trader](https://github.com/ori-inonu/jeve-trader), branch `main`, com código, documentação, pesquisa e plano de implementação organizados. O **ambiente remoto na conta Codex continua pendente**. O status detalhado fica em [TRANSFER_STATUS.json](TRANSFER_STATUS.json).
+**Projeto preparado em 06/10/2026; publicação confirmada em 07/10/2026 (UTC).** O repositório privado é [ori-inonu/jeve-trader](https://github.com/ori-inonu/jeve-trader), branch `main`, com código, documentação, pesquisa e plano de implementação organizados. O **ambiente Jeve Trader está publicado na conta Codex** e disponível no seletor de ambientes de um novo chat. O status detalhado fica em [TRANSFER_STATUS.json](TRANSFER_STATUS.json).
 
 ## Caminho principal: clonar o GitHub
 
@@ -47,9 +47,11 @@ git clone .\docs\archive\Jeve_Trader_Historico_2026-10-06.bundle ..\jeve-trader-
 
 Esse clone histórico tem o bundle local como origem. Continue a implementação na pasta clonada do GitHub; não envie a branch do histórico por cima de `main` remoto. Mudanças úteis identificadas no arquivo histórico devem ser portadas como alterações revisáveis sobre a história atual.
 
-## Configurar o ambiente Codex pendente
+## Usar o ambiente Codex publicado
 
-No Codex, selecione `ori-inonu/jeve-trader`, branch `main`, e configure o ambiente conforme [CODEX.md](CODEX.md): Python 3.12, setup `bash scripts/setup-codex.sh`, verificação `.venv/bin/python scripts/verify.py`. Nenhuma chave é necessária para esses testes. A presença do repositório e do guia no GitHub não cria automaticamente o ambiente na conta; sua criação só estará confirmada quando houver identificador/URL registrado no status da transferência.
+No Codex, abra um novo chat, use o seletor de ambientes e procure **Jeve Trader**. O ambiente foi publicado com `ori-inonu/jeve-trader` e `bash scripts/setup-codex.sh`. A preparação confirmou checkout `main`, Python 3.12.14 e `.venv/bin/python scripts/verify.py` aprovado. Nenhuma chave foi adicionada. A interface não exibiu campo de branch nem URL exclusiva do ambiente; o [chat de configuração](https://chatgpt.com/local/01a113f1-e024-75b3-9113-723a82fd30f9?hostId=local) permite consultar a preparação e seu painel. Veja [CODEX.md](CODEX.md).
+
+O produto iniciou uma tarefa de configuração do ambiente, concluída apenas nesse escopo. Nenhuma tarefa de implementação do backlog foi iniciada. A interface não apresentou um valor de consumo de cota para registrar.
 
 ## Prompt curto de retomada
 

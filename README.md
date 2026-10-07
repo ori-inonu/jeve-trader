@@ -21,7 +21,9 @@ git clone https://github.com/ori-inonu/jeve-trader.git
 cd jeve-trader
 ```
 
-O **ambiente remoto no Codex ainda está pendente**. Consulte [docs/CODEX.md](docs/CODEX.md) para sua configuração e [docs/TRANSFER_STATUS.json](docs/TRANSFER_STATUS.json) para o estado confirmado.
+O **ambiente Jeve Trader está publicado no Codex**. Em um novo chat, abra o seletor de ambientes, procure `Jeve Trader` e selecione-o. O [chat de configuração](https://chatgpt.com/local/01a113f1-e024-75b3-9113-723a82fd30f9?hostId=local) registra a preparação; a interface não forneceu uma URL exclusiva do ambiente. Consulte [docs/CODEX.md](docs/CODEX.md) e [docs/TRANSFER_STATUS.json](docs/TRANSFER_STATUS.json) para os detalhes confirmados.
+
+A preparação usou GPT-6.1 Sol e registrou Python 3.12.14, 166 testes e autoteste aprovados, com os 71 arquivos do aplicativo preservados. A implementação do backlog ainda não foi iniciada. Evidências da publicação ficam em [docs/evidence/](docs/evidence/).
 
 Os ZIPs entregues anteriormente são snapshots da preparação anterior à publicação. O histórico Git local dessa fase fica preservado separadamente em [docs/archive/Jeve_Trader_Historico_2026-10-06.bundle](docs/archive/Jeve_Trader_Historico_2026-10-06.bundle); a publicação tem história remota própria. Para continuidade, use o clone GitHub. O bundle é arquivo de consulta/recuperação histórica, não uma branch a empurrar sobre `main`. [Guia de transferência](docs/TRANSFER_GUIDE.md).
 
@@ -80,6 +82,6 @@ A documentação canônica descreve o estado atual. Os documentos históricos co
 
 A fundação e o painel moderno estão implementados, com evidência de software e distribuição. A continuação exige contrato real da fonte, dados WIN autorizados, validação financeira temporal e integração do modelo aprovado ao serviço. Veja [HANDOFF.md](docs/HANDOFF.md) e os estados por item no backlog.
 
-O status de publicação e vinculação ao Codex está em [docs/TRANSFER_STATUS.json](docs/TRANSFER_STATUS.json). A presença destes arquivos não cria, por si só, um ambiente remoto no Codex.
+O status de publicação e vinculação ao Codex está em [docs/TRANSFER_STATUS.json](docs/TRANSFER_STATUS.json). A publicação do ambiente foi confirmada na interface e sua seleção foi verificada em um novo chat com o campo de tarefa vazio.
 
 Licenças das dependências distribuídas anteriormente estão em `app/licenses/`. Não foi escolhida uma licença de código aberto para o código do projeto.

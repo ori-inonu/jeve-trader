@@ -1,0 +1,58 @@
+{
+  "verified_at_utc": "2026-10-07T01:27:39.537180+00:00",
+  "source": "observed_codex_interface_and_setup_task_summary",
+  "environment_name": "Jeve Trader",
+  "publication_status": "published",
+  "published_status_visible": true,
+  "selectable_in_new_chat": true,
+  "selected_new_chat_prompt_empty": true,
+  "repository": "ori-inonu/jeve-trader",
+  "repository_default_branch": "main",
+  "setup_checkout_branch_reported": "main",
+  "branch_configuration_field_observed": false,
+  "canonical_environment_url_provided_by_ui": false,
+  "environment_url": null,
+  "setup_chat_url": "https://chatgpt.com/local/01a113f1-e024-75b3-9113-723a82fd30f9?hostId=local",
+  "new_chat_url": "https://chatgpt.com/",
+  "setup_command": "bash scripts/setup-codex.sh",
+  "initialization_verify_command": ".venv/bin/python scripts/verify.py",
+  "visibility_label": "Somente eu",
+  "internet_profile_label": "Gerenciadores de pacotes",
+  "additional_domains_added": [],
+  "environment_variables_added": [],
+  "proxy_secrets_added": [],
+  "setup_model_observed": "GPT-6.1 Sol Leve",
+  "setup_task_executed": true,
+  "implementation_task_started": false,
+  "quota_usage_reported": null,
+  "setup_task_report": {
+    "python_version": "3.12.14",
+    "setup_passed": true,
+    "setup_rerun_passed": true,
+    "tests_passed": 166,
+    "desktop_self_test_passed": true,
+    "app_files_unchanged": 71,
+    "git_clean": true,
+    "authenticated_jev_calls": false,
+    "order_execution": false,
+    "windows_native_validation": false
+  },
+  "evidence_limits": "Setup outcomes were read from the Codex task summary shown in the interface. Raw task artifacts were not exported. Earlier independently recorded local test and integrity evidence remains in transfer-verification.json and transfer-integrity.json.",
+  "screenshots": [
+    {
+      "path": "codex-environment-published-2026-10-07.jpg",
+      "bytes": 138561,
+      "sha256": "d29837a0046d87590c3fde8381ddbf1a04ae72dd809de80452e2f1eef3488c50"
+    },
+    {
+      "path": "codex-environment-selected-2026-10-07.jpg",
+      "bytes": 30878,
+      "sha256": "a5b038130bcd72c3498fc118edd029b4796f59711a159d44a97054c955540e4d"
+    },
+    {
+      "path": "github-repository-published-2026-10-07.jpg",
+      "bytes": 141240,
+      "sha256": "a79bda92bcb82946468b51ca2ec8038a38499977092b60aaece8950353143ade"
+    }
+  ]
+}

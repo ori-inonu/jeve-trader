@@ -1,6 +1,18 @@
 # Abrir e continuar no Codex
 
-Este repositório contém as instruções e os scripts necessários para retomar o desenvolvimento. A publicação no GitHub e a criação de um ambiente remoto são estados externos separados; confira `TRANSFER_STATUS.json` antes de presumir que foram concluídos.
+Este repositório contém as instruções e os scripts necessários para retomar o desenvolvimento. O repositório privado e o ambiente **Jeve Trader** no Codex foram publicados e verificados. O estado detalhado está em `TRANSFER_STATUS.json`.
+
+## Ambiente publicado — acesso confirmado
+
+No Codex, abra um novo chat, abra o seletor de ambientes e procure **Jeve Trader**. O ambiente aparece entre os publicados e foi selecionado com o campo de tarefa vazio. Use `docs/CODEX_NEXT_TASK.md` quando desejar iniciar a implementação.
+
+O [chat de configuração](https://chatgpt.com/local/01a113f1-e024-75b3-9113-723a82fd30f9?hostId=local) registra a preparação e permite abrir o painel do ambiente. A interface consultada não forneceu URL canônica exclusiva do ambiente nem campo para configurar a branch; a tarefa de preparação confirmou checkout/origin `main`.
+
+A configuração publicada contém o nome **Jeve Trader**, repositório `ori-inonu/jeve-trader`, acesso **Somente eu**, instalação `bash scripts/setup-codex.sh` e instruções de inicialização com Python 3.12 e `.venv/bin/python scripts/verify.py`. O acesso à internet permaneceu no perfil **Gerenciadores de pacotes**, sem domínios extras, variáveis ou segredos adicionados.
+
+O onboarding executou somente a preparação autorizada, usando **GPT-6.1 Sol Leve**. O resultado mostrado no Codex registrou Python 3.12.14, setup executado e repetido com sucesso, 166 testes e autoteste aprovados, 71 arquivos de `app/` idênticos e Git limpo. A implementação do backlog não foi iniciada. O consumo de cota dessa tarefa de preparação não foi informado na interface.
+
+As capturas e o registro do alcance estão em [evidence/codex-publication-2026-10-07.json](evidence/codex-publication-2026-10-07.json). A validação continua restrita ao ambiente Linux; Windows e integrações reais mantêm os critérios próprios do backlog.
 
 ## Projeto local no computador
 
@@ -10,7 +22,7 @@ Use Python 3.12 x64 com Tcl/Tk no Windows. Execute os comandos de `DEVELOPMENT.m
 
 ## Ambiente Codex Cloud
 
-Na interface da sua conta, selecione o repositório Jeve Trader e a branch de trabalho. Nome sugerido do ambiente: **Jeve Trader**. Se o repositório não aparecer, a conexão GitHub pode precisar incluir especificamente esse repositório. Revise o alcance antes de conceder acesso; não é necessário conceder acesso a todos os seus repositórios.
+Para recriar o ambiente futuramente, selecione o repositório `ori-inonu/jeve-trader` e a branch de trabalho quando esse campo estiver disponível. Nome usado: **Jeve Trader**. Se o repositório não aparecer, a conexão GitHub pode precisar incluir especificamente esse repositório. Revise o alcance antes de conceder acesso; não é necessário conceder acesso a todos os seus repositórios.
 
 Configuração preparada:
 
@@ -28,7 +40,7 @@ O setup instala dependências em `.venv`. As tarefas devem chamar o Python desse
 
 O acesso de rede necessário para instalar dependências deve ser separado de chamadas autenticadas ao modelo. Não adicione `TYPESAFE_API_KEY` para executar a suíte offline. O workflow GitHub Actions incluso é manual, e nenhuma tarefa de desenvolvimento precisa ser iniciada antes de Gabriel desejar usar sua cota.
 
-Um arquivo local com estes valores **não cria automaticamente um ambiente na conta**. A criação só está concluída quando aparece na interface e há um identificador/URL confirmado no status da transferência.
+Um arquivo local com estes valores **não cria automaticamente um ambiente na conta**. Nesta transferência, a criação foi confirmada pelo estado **Publicado** no painel e pela presença de **Jeve Trader** no seletor de ambientes de um novo chat. O chat de configuração e as evidências foram registrados no status da transferência.
 
 ## O que continua dependente do Windows
 
