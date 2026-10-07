@@ -1,5 +1,23 @@
 # Retomada — Jeve Trader
 
+## Estado atual — 07/10/2026
+
+A implementação local 0.4.0 está neste checkout, ainda sem commit/PR. Preserve as alterações que já existiam antes desta tarefa; o patch inicial está em `.artifacts/before-implementation.patch`. Não clone por cima deste diretório. [Guia atual](DECISION_PANEL.md), [status](IMPLEMENTATION_STATUS.md), [backlog](BACKLOG.md) e [evidência](evidence/decision-panel-2026-10-07.json) descrevem o escopo demonstrado.
+
+Entregues o painel Tauri/React em quatro áreas, serviço Python independente, coletor COM isolado, contratos JEV com premissas literais, dimensões contextuais separadas, registro experimental, banca inteira e posições reais informadas manualmente. Há comparação determinística de quantidades e contratos financeiros/seleção tipada. O laboratório offline executa replay causal, logística multiclasse, calibração temporal e comparação de 17 variantes de dimensionamento. O serviço ainda não carrega um modelo financeiro aprovado nem chama a seleção econômica JEV; mantém Aguardar e probabilidade não estimada. Isso é trabalho pendente, além da falta de dados empíricos.
+
+Verificados no Windows: 188 testes, autoteste legado, build React/Tauri, diagnóstico Python congelado e instalação/reinstalação/desinstalação isoladas com preservação dos dados. A janela nativa e o processo supervisionado foram observados. Os formulários foram exercitados na prévia React conectada ao mesmo serviço: R$400 → R$800 → R$600 e duas saídas parciais com resultado final R$627, sem ordens. Interações nos formulários nativos, Excel/RTD real, API JEV real, SDK ProfitDLL e rentabilidade não foram verificados. O teste estatístico é sintético e não aprova um modelo para operação.
+
+O instalador e ZIP estão em `.artifacts/desktop-windows/`. Abra a UI com `powershell -File scripts/start-desktop.ps1`; o build exige PowerShell 7, Rust/MSVC, Node/npm, NSIS e as dependências Python de build. Use `.venv/Scripts/python.exe scripts/verify.py`. O laboratório requer `app/requirements-lab.txt` e usa `scripts/run_decision_lab.py`. Preserve `%LOCALAPPDATA%/JevWIN`; o novo `decision-lab.sqlite3` fica separado do diário legado, com importação inicial de valores compatíveis, sem sincronização contínua.
+
+Próximos trabalhos: completar hipótese específica de exaustão (JT-002); conferir contrato RTD real sem ampliar cobertura; obter amostra WIN autorizada e auditável; validar prospectivamente estimativas/custos/latência; definir artefato versionado e ligação estimador → serviço → seleção tipada JEV (JT-013/JT-015); validar formulários na janela Windows e SDK/licença ProfitDLL quando disponíveis. Não promover `--smoke` nem um relatório com `deployment_approved=false`. Sem acesso autorizado ao SDK, continue apenas o adaptador contratual.
+
+Mission Control não respondeu à consulta inicial; respondeu à nova consulta antes da conclusão, disponível e sem tarefas neste projeto. Consulte novamente o contexto antes de iniciar novos escritores. Não faça chamadas pagas em testes/setup. A preferência do agente de desenvolvimento continua GPT-6.1 Sol, separada do modelo/chave do aplicativo.
+
+## Histórico da transferência — 06/10/2026
+
+As seções abaixo descrevem a transferência anterior. Use o estado atual acima para retomar.
+
 Data de consolidação: 06/10/2026, America/Sao_Paulo.
 
 ## Goal & Scope

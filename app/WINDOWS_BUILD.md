@@ -1,5 +1,11 @@
 # Distribuição Windows do JevWIN
 
+## Painel moderno 0.4.0
+
+Use [o guia atual](../docs/DECISION_PANEL.md) e `pwsh -File desktop/build-windows.ps1` para o painel Tauri/React com motor Python congelado. O instalador e ZIP desta implementação ficam em `.artifacts/desktop-windows/`; os testes de instalação usam uma identidade isolada. Dados em `%LOCALAPPDATA%/JevWIN` são preservados. O build requer PowerShell 7 e WebView2 deve estar instalado para abrir o painel.
+
+## Distribuição anterior — Tkinter
+
 A distribuição atual usa um **instalador NSIS x64 real** e uma pasta convencional com o interpretador oficial do Windows. O programa é iniciado por `pythonw.exe` com as bibliotecas, arquivos Tcl/Tk e módulos da aplicação em suas pastas normais. A inicialização do CPython não usa o arquivo congelado experimental da versão 0.2.
 
 ## Arquivos entregues

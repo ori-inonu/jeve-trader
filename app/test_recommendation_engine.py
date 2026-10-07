@@ -6,6 +6,7 @@ from app_core import DEFAULT_INPUTS, build_risk_study, ObservationSession, jev_o
 from candidate_research import build_market_candidates, generate_candidate_scenario
 from flow_engine import FlowEngine
 from recommendation_engine import build_recommendation
+from context_requests import attach_candidates
 
 
 class RecommendationTests(unittest.TestCase):
@@ -22,14 +23,24 @@ class RecommendationTests(unittest.TestCase):
         technical = build_market_candidates(engine, snapshot, study["config"], study["account"], now)
         state = jev_observation_state(snapshot)
         state["source_generation"] = 1
-        state["candidate_setups"] = [{key: row[key] for key in ("id", "side", "entry_points", "stop_points", "target_points", "reference_levels")}
-                                      for row in technical["rows"] if row["risk"]["status"] == "ALLOW_SIMULATION"]
-        answers = {"flow_context": {"type": "choice", "choice": "buy_progression", "confidence": 0.1}}
+        attach_candidates(state, {}, [row for row in technical['rows'] if row['risk']['status'] == 'ALLOW_SIMULATION'])
+        answers = {"flow_context": {"type": "choice", "choice": "buy_progression", "confidence": 0.1},
+                   'evidence_insufficient': {'type': 'noul', 'noul': 0.1}}
         for index, setup in enumerate(state["candidate_setups"]):
             answers[f"candidate_{index}_support"] = {"type": "noul", "noul": 0.8}
             answers[f"candidate_{index}_contradiction"] = {"type": "noul", "noul": 0.2}
+            answers[f"candidate_{index}_insufficient"] = {"type": "noul", "noul": 0.1}
         model = {"response": {"answers": answers}, "state": state, "source_ts_ms": now, "flow_ts_ms": now, "mode": "synthetic"}
         return snapshot, technical, study, model, now
+
+    def test_insufficiency_and_changed_premise_prevent_review(self):
+        values = self.fixture()
+        values[3]['response']['answers']['evidence_insufficient']['noul'] = 0.9
+        self.assertEqual(self.build(values)['review_candidate_ids'], [])
+        values = self.fixture()
+        for setup in values[3]['state']['candidate_setups']:
+            setup['premise'] = 'A different claim'
+        self.assertEqual(self.build(values)['review_candidate_ids'], [])
 
     def build(self, values):
         snapshot, technical, study, model, now = values

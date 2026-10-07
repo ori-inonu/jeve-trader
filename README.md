@@ -2,7 +2,7 @@
 
 Copiloto experimental de leitura de fluxo para o **mini índice WIN da B3**, desenvolvido para acompanhar o **Profit Pro no Windows** com avaliações contextuais do **JEV, da TypeSafe AI**.
 
-Este repositório reúne o código e o trabalho desta conversa em uma base portátil para continuar no Codex. O aplicativo importado é o **JevWIN v0.3.0**. O nome do projeto passa a ser **Jeve Trader**; os nomes internos, caminhos de dados e instaladores permanecem preservados até uma migração explícita.
+O painel experimental **0.4.0** usa Tauri 2, React, TypeScript, Vite, Tailwind CSS 4 e ECharts, com motor Python independente. A baseline **JevWIN v0.3.0** e seus dados continuam preservados. Veja o [guia do painel moderno](docs/DECISION_PANEL.md) para abrir, configurar Excel/Profit, registrar execuções manuais e reproduzir a distribuição Windows.
 
 ## Começar pelo ponto certo
 
@@ -27,11 +27,11 @@ Os ZIPs entregues anteriormente são snapshots da preparação anterior à publi
 
 ## Estado real
 
-Há interface Tk, leitura de Excel por COM nos modos `quote`, `tape` e `combined`, importação CSV, medidas de fluxo, cenários geométricos, laboratório de capital/risco, cliente JEV, diário local e empacotamento Windows com NSIS. As fontes de negócios disponíveis mantêm cobertura parcial.
+O painel tem quatro áreas: Decisão, Capital, Pesquisa e Configuração. O serviço Python calcula planos com `Decimal`, incluindo aguardar e quantidades admissíveis dentro do limite computacional documentado; usa toda a banca informada, preserva seu pico e registra entradas e saídas parciais efetivamente informadas. Não há parada por lucro nem pausa automática em drawdown de 30%. Excel/COM roda em processo separado; a cobertura disponível continua parcial. As avaliações JEV preservam a premissa exata e separam apoio, contradição e insuficiência.
 
-O acompanhamento é de observação e pesquisa: **não há envio de ordens, conciliação automática da conta, probabilidade financeira calibrada ou vantagem econômica demonstrada**. O instalador foi gerado e inspecionado; a instalação, a interface e a conexão real com Profit/Excel ainda precisam de validação nativa no Windows. A causa da falha do EXE relatada pelo usuário permanece desconhecida.
+Em 07/10/2026 passaram **188 testes e autoteste em Windows**. O novo pacote foi instalado, aberto, reinstalado e desinstalado em ambiente isolado Windows x64, preservando dados e encerrando os processos filhos. Os formulários React foram verificados na prévia local; interações dentro da janela nativa e RTD real ainda precisam de validação. [Evidência e alcance](docs/IMPLEMENTATION_STATUS.md).
 
-As pesquisas de melhoria estão documentadas e ainda não foram aplicadas à versão 0.3.0. Testes de software e exemplos sintéticos não representam operações observadas no mercado.
+O laboratório offline implementa replay causal, regressão logística multiclasse, calibração temporal, comparação com/sem atributos JEV e 17 políticas experimentais. Seu smoke test usa dados sintéticos. **Não há envio de ordens, conciliação automática, modelo financeiro aprovado para o painel ou vantagem econômica demonstrada.** A recomendação principal permanece aguardar, e a probabilidade de lucro aparece como “não estimada”. A conexão de um modelo financeiro aprovado e do Choice econômico ao serviço faz parte da continuação documentada; nenhum relatório sintético libera essa etapa.
 
 ## Desenvolvimento no Windows
 
@@ -47,6 +47,8 @@ Os comandos não configuram a conta da corretora nem habilitam o envio de ordens
 
 Para gerar o instalador, veja [app/WINDOWS_BUILD.md](app/WINDOWS_BUILD.md). O script de build fica em `app/build_windows.ps1` e exige NSIS e os pré-requisitos documentados.
 
+Para o painel moderno, use `powershell -File .\scripts\start-desktop.ps1`; o build Tauri/Python fica em `desktop/build-windows.ps1` e requer PowerShell 7. Pré-requisitos e diagnóstico estão em [docs/DECISION_PANEL.md](docs/DECISION_PANEL.md).
+
 ## Desenvolvimento no Codex/Linux
 
 ```bash
@@ -60,7 +62,8 @@ O ambiente Linux valida componentes sem abrir a janela. Ele não substitui Windo
 
 | Caminho | Responsabilidade |
 |---|---|
-| `app/` | Baseline v0.3.0: aplicativo, testes, configurações, templates e distribuição. |
+| `app/` | Baseline preservada, serviço Python, contratos, diário financeiro, laboratório e testes. |
+| `desktop/` | Painel React, host Tauri, transporte e empacotamento Windows 0.4.0. |
 | `docs/PRD.md` | Objetivo, escopo e critérios do produto. |
 | `docs/ARCHITECTURE.md` | Componentes, dados e limites de responsabilidade. |
 | `docs/IMPLEMENTATION_STATUS.md` | Evidência disponível e pendências. |
@@ -75,7 +78,7 @@ A documentação canônica descreve o estado atual. Os documentos históricos co
 
 ## Retomada
 
-O primeiro ciclo implementa premissas explícitas, separação entre apoio/contradição/insuficiência e registro reproduzível das avaliações. Captura real, latência, apuração de resultados, comparação com uma base sem JEV e dimensionamento econômico têm etapas e critérios próprios no backlog.
+A fundação e o painel moderno estão implementados, com evidência de software e distribuição. A continuação exige contrato real da fonte, dados WIN autorizados, validação financeira temporal e integração do modelo aprovado ao serviço. Veja [HANDOFF.md](docs/HANDOFF.md) e os estados por item no backlog.
 
 O status de publicação e vinculação ao Codex está em [docs/TRANSFER_STATUS.json](docs/TRANSFER_STATUS.json). A presença destes arquivos não cria, por si só, um ambiente remoto no Codex.
 

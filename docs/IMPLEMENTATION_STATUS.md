@@ -1,5 +1,41 @@
 # Jeve Trader — implementação e evidências
 
+## Entrega atual — 07/10/2026, painel 0.4.0
+
+Implementado o painel Tauri 2/React/TypeScript/Vite/Tailwind 4/ECharts, com serviço Python separado da UI Tkinter. Mudanças locais anteriores foram preservadas; o diff inicial foi arquivado em `.artifacts/before-implementation.patch`. A distribuição mantém os identificadores JevWIN e o diretório de dados legado. [Guia](DECISION_PANEL.md), [ADR](decisions/0010-painel-e-capital-progressivo.md) e [evidência sanitizada](evidence/decision-panel-2026-10-07.json).
+
+| Entrega | Código e evidência | Limite restante |
+|---|---|---|
+| Premissas e dimensões JEV | Premissa literal/versionada, continuidade e absorção separadas, apoio/contradição/insuficiência independentes; testes offline. | Família de exaustão e validação remota/empírica ainda pendentes. |
+| Registro experimental | Estado e perguntas exatos, hashes de código/perguntas, receita, modelo solicitado, relógios, conta/custos, resposta e falhas sanitizadas. | Política de retenção, captura real e protocolo E02 completo. |
+| Painel e capital | Quatro áreas, cálculos `Decimal`, banca inteira, pico, ausência de parada por lucro/pausa fixa, alternativas e capacidade. | Recomendação financeira principal continua aguardar; não há modelo aprovado integrado. |
+| Registro de execução | Entrada manual e saída parcial, margem proporcional, taxas uma vez, histórico, idempotência e revisão otimista. | Sem posição/saldo automático, lucro flutuante ou envio de ordens. |
+| Excel/RTD | Processo COM próprio com timeout/reconexão; cotação e tape combinado continuam parciais. | Exportação real do Profit, campos, continuidade e uso prolongado não verificados. |
+| Laboratório financeiro | Replay causal de preço, rótulos censurados, logística multiclasse, calibração, teste temporal, comparação pareada com/sem JEV e 17 políticas. | Smoke sintético; sem vantagem empírica WIN, execução por fila ou modelo exportado/aprovado. |
+| Escolha econômica | Motor compara quantidades e `q=0`, crescimento log líquido, Kelly fracionado/adaptação e Choice tipado. | Conectar modelo validado e Choice ao serviço; parâmetros operacionais ainda não selecionados em dados WIN. |
+| ProfitDLL | Contrato read-only para callbacks/Market Data, overflow/gaps identificados; testes locais. | SDK autorizado, licença e adaptação ABI real ausentes. |
+| Windows | Pacote x64, instalador e portátil; instalar/reinstalar/desinstalar, janela nativa, sidecar e encerramento dos descendentes verificados. | Interações na janela nativa, RTD real, assinatura do instalador e auditoria completa das licenças. |
+
+**Verificação de software:** 188 testes `unittest` e autoteste aprovados em Windows 11 x64/Python 3.14.7; rede Python bloqueada durante a suíte. TypeScript e build Vite aprovados; build release Tauri aprovado. Diagnóstico do Python empacotado: PASS, schema 1, 16 alternativas sintéticas, ordens desligadas e probabilidade financeira nula. Instalação isolada confirmou preservação do SQLite após reinstalação/desinstalação e nenhuma alteração da instalação/dados primários. A janela nativa foi observada; isso não verifica seus formulários. Uma regressão adicional confirma o reinício da sequência Labouchère após sua conclusão no laboratório.
+
+**Verificação visual:** quatro páginas React na prévia local conectada ao Python, com dados isolados. Banca R$400 → R$800 → R$600 preservou pico R$800 e drawdown 25%; capacidade passou a 3 contratos no cenário sintético. Entrada fictícia de 2 contratos a 131000, custo R$1 e margem R$310: banca R$599/margem R$289. Saídas de 1 contrato a 131100 e 131050, custo R$1 cada: banca final R$627, margem R$627, posição zero e pico R$800. Foram registros locais de teste, sem operações no Profit.
+
+**Laboratório:** 300 linhas sintéticas em 10 sessões, separadas em treino 180/calibração 60/teste 60; modelos com/sem JEV permanecem `RESEARCH_ONLY` e `deployment_approved=false`. Comparações e risco estimados nesse cenário não são resultados do WIN. Nenhuma chamada paga/autenticada ao JEV, conta real ou ProfitDLL ocorreu.
+
+Mission Control em `127.0.0.1:18792` estava indisponível durante a consulta inicial. A nova consulta antes da conclusão respondeu `available=true`, sem tarefas neste projeto. Nenhum writer concorrente foi iniciado. Consulte [HANDOFF.md](HANDOFF.md) e o [backlog](BACKLOG.md) antes de continuar.
+
+## Planejamento documental — Wayfinder, 07/10/2026
+
+Resolvidos documentalmente [mapa e seis tickets](../.scratch/wayfinder-evolucao-decisao/map.md), com seis contratos internos, [especificação transversal](../.scratch/wayfinder-evolucao-decisao/spec.md), [sequência de implementação](../.scratch/wayfinder-evolucao-decisao/implementation-plan.md) e [auditoria de aceite](../.scratch/wayfinder-evolucao-decisao/acceptance-audit.md). O [complemento datado](research/Complemento_Wayfinder_JEV_WIN_2026-10-07.md) preserva os achados e registra o fechamento. Conferidos isoladamente vetores de identidade e fixture aritmética; nenhuma linha do aplicativo ou parâmetro operacional foi alterado nesta rodada. Catálogo/status E01–E10 e estados empíricos JT permanecem preservados. Implementação dos novos contratos, confirmação econômica e sessão Windows ainda não foram executadas; dados, custos da conta, orçamento e limites pessoais constam como pendências.
+
+## Nova descoberta — oportunidades com valor verificável, 07/10/2026
+
+Aberto o [novo mapa Wayfinder](../.scratch/wayfinder-proximas-oportunidades/map.md), com pesquisa de composições tipadas JEV, evidência que falta para aprender com casos e experiências de compreensão da decisão. O [enquadramento](../.scratch/wayfinder-proximas-oportunidades/spec.md) preserva as escolhas anteriores e distingue hipótese de melhoria de benefício demonstrado. Investigação documental; nenhum código, parâmetro operacional, estado empírico JT/E ou aprovação financeira muda por esta rodada. A última consulta ao Mission Control recusou conexão; os pesquisadores são leitores e a escrita é centralizada pelo principal.
+
+## Histórico de 06/10/2026 e da transferência
+
+O texto abaixo preserva o estado da época. Afirmações sobre ausência de painel moderno/laboratório ou de instalação Windows devem ser lidas como históricas, com o alcance da entrega atual descrito acima.
+
 Baseline documental em 06/10/2026: aplicação **JevWIN v0.3.0** preservada em `app/`; Jeve Trader é o nome de apresentação do projeto. Este documento distingue código existente, verificações de software e validação no ambiente real. A organização do repositório não implica nova versão do aplicativo, correção do executável ou execução de experimentos financeiros.
 
 ## Resultado conhecido
@@ -58,3 +94,9 @@ Achados relevantes para o próximo trabalho: a premissa criada no candidato não
 ## Proveniência e manutenção
 
 Este é o registro canônico de status; o [PRD](PRD.md) define intenção e a [arquitetura](ARCHITECTURE.md) descreve o código. [`archive/Projeto_JEV_Profit.md`](archive/Projeto_JEV_Profit.md) e documentos herdados preservam afirmações e nomes da entrega anterior. Atualizações devem registrar data, alteração, evidência e alcance da execução. Uma capacidade só passa de “pendente” a “verificada” com evidência no ambiente correspondente; aprovação de testes locais não promove o projeto a ferramenta operacional ou lucrativa.
+
+## Registro de 06/10/2026 — sessão Windows (máquina do usuário)
+
+- **Primeira abertura nativa registrada:** a janela Tkinter abriu em Windows 11 com Python 3.14.7 (a máquina não tem `py -3.12`; o `.venv` foi criado manualmente equivalente ao `setup-windows.ps1`, que também falha por quoting quando invocado via Git Bash). Autoteste `--self-test` aprovado nesta máquina (`.artifacts/desktop-self-test.json`). Isto cobre a abertura da janela; aparência/uso prolongado e COM/RTD real seguem pendentes (JT-006 não está concluído).
+- **Suíte reproduzida em Windows:** 167 testes `unittest` aprovados (antes: 5 falhas). Correções: dois testes de controlador fechavam o diário SQLite só no `addCleanup`, após a remoção do `TemporaryDirectory` (WinError 32; Linux mascarava); três testes da ponte Excel presumiam `comtypes` ausente — agora forçam `reader._com_modules = None` para exercitar o fallback PowerShell pretendido em qualquer ambiente; `verify.py` deixou de quebrar em console cp1252 ao imprimir logs com `\ufffd`.
+- **Mudança de interface (não altera capacidade):** as oito abas viraram sete — nova home **Copiloto** centrada no JEV (estado da fonte, medidas, faixa de contexto com validade, conclusão), **Conexões+JEV** fundidas em **Configuração**, e campo **Sua leitura**: texto declarado pelo usuário entra no estado JEV como `state.user_premise` e recebe três Nouls independentes (`premise_evidence_support`, `premise_evidence_contradiction`, `premise_evaluable`), mantendo apoio/contradição/suficiência como dimensões separadas. É a direção de JT-002/JT-003 no trecho da premissa, mas **não conclui** esses tickets (premissa do motor de candidatos continua fora do payload). Nenhuma chamada autenticada ao JEV foi feita; o JEV segue sem observar ações do usuário no Profit — posição/ordens exigem ProfitDLL roteamento (JT-014).

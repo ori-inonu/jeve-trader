@@ -8,14 +8,15 @@ from panel_report import STATUS_LABELS, MODE_LABELS, CHOICE_LABELS, evidence_lin
 
 
 class DecisionPanel(ttk.Frame):
-    def __init__(self, parent, *, refresh, classify, demonstrate, export):
+    def __init__(self, parent, *, refresh, classify, demonstrate, export, actions=True):
         super().__init__(parent)
         self.pack(fill="both", expand=True)
-        actions = ttk.Frame(self)
-        actions.pack(fill="x", pady=(0, 10))
-        for title, command in (("Atualizar avaliação", refresh), ("Consultar JEV", classify),
-                               ("Demonstrar cenários", demonstrate), ("Exportar painel HTML", export)):
-            ttk.Button(actions, text=title, command=command).pack(side="left", padx=(0, 7))
+        if actions:
+            row = ttk.Frame(self)
+            row.pack(fill="x", pady=(0, 10))
+            for title, command in (("Atualizar avaliação", refresh), ("Consultar JEV", classify),
+                                   ("Demonstrar cenários", demonstrate), ("Exportar painel HTML", export)):
+                ttk.Button(row, text=title, command=command).pack(side="left", padx=(0, 7))
         self.status = ttk.Label(self, text="SEM DADOS SUFICIENTES", foreground="#f0c575", font=("Segoe UI", 22, "bold"))
         self.status.pack(anchor="w")
         self.action = ttk.Label(self, text="Carregue uma fonte para avaliar.", wraplength=1050, font=("Segoe UI", 11))

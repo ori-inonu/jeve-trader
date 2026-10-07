@@ -140,6 +140,7 @@ class ProfitBridgeTests(unittest.TestCase):
             'ok': True, 'rows': [['symbol', 'last', 'date', 'time'],
                                 ['WINV26', 130000, '06/10/2026', '10:30:00']]}))
         fake_os = SimpleNamespace(name='nt', environ={'SystemRoot': r'C:\Windows'})
+        reader._com_modules = None
         with patch.object(bridge, 'os', fake_os), patch.object(bridge, '_load_comtypes', return_value=None), patch.object(bridge.subprocess, 'run', return_value=fake_result) as run:
             batch = reader.read()
         args, kwargs = run.call_args
@@ -155,6 +156,7 @@ class ProfitBridgeTests(unittest.TestCase):
         reader = bridge.ExcelBridge('quotes.xlsx', 'Planilha1', 'A1:H20')
         fake_os = SimpleNamespace(name='nt', environ={'SystemRoot': r'C:\Windows'})
         fake_result = SimpleNamespace(returncode=1, stdout='SECRET', stderr='SECRET C:/private/file')
+        reader._com_modules = None
         with patch.object(bridge, 'os', fake_os), patch.object(bridge, '_load_comtypes', return_value=None), patch.object(bridge.subprocess, 'run', return_value=fake_result):
             with self.assertRaises(bridge.BridgeError) as raised:
                 reader.read()
@@ -164,6 +166,7 @@ class ProfitBridgeTests(unittest.TestCase):
     def test_excel_timeout_is_sanitized(self):
         reader = bridge.ExcelBridge('quotes.xlsx', 'Planilha1', 'A1:H20')
         fake_os = SimpleNamespace(name='nt', environ={'SystemRoot': r'C:\Windows'})
+        reader._com_modules = None
         with patch.object(bridge, 'os', fake_os), patch.object(bridge, '_load_comtypes', return_value=None), patch.object(bridge.subprocess, 'run', side_effect=bridge.subprocess.TimeoutExpired('SECRET', 8)):
             with self.assertRaisesRegex(bridge.BridgeError, 'prazo'):
                 reader.read()
@@ -342,6 +345,7 @@ class ProfitBridgeTests(unittest.TestCase):
     def test_combined_requires_native_com_without_policy_fallback(self):
         reader = bridge.CombinedExcelBridge('quotes.xlsx', 'Dados', 'A1:H2',
                                             'Negocios', 'A1:F20', symbol='WINV26')
+        reader._com_modules = None
         with patch.object(bridge, 'os', SimpleNamespace(name='nt', environ={})), patch.object(bridge, '_load_comtypes', return_value=None), patch.object(bridge.subprocess, 'run') as shell:
             with self.assertRaisesRegex(bridge.BridgeError, 'comtypes'):
                 reader.read()

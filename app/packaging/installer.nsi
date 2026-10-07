@@ -1,8 +1,13 @@
-Target amd64-unicode
+; NSIS 3.13 ships x86 Unicode stubs; the installed application remains x64.
+Target x86-unicode
 Unicode true
 Name "JevWIN ${VERSION}"
 OutFile "${OUTPUT}"
+!ifdef ISOLATED_TEST
+InstallDir "$LOCALAPPDATA\Programs\JevWIN-Isolated-Test"
+!else
 InstallDir "$LOCALAPPDATA\Programs\JevWIN"
+!endif
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
 SetCompressorDictSize 32
@@ -16,10 +21,15 @@ VIAddVersionKey /LANG=1046 "FileDescription" "Instalador JevWIN para Windows x64
 VIAddVersionKey /LANG=1046 "FileVersion" "${VERSION}"
 VIAddVersionKey /LANG=1046 "ProductVersion" "${VERSION}"
 VIAddVersionKey /LANG=1046 "LegalCopyright" "Licenças dos componentes incluídas no pacote"
+!ifdef ISOLATED_TEST
+!define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\JevWIN-Isolated-Test"
+!else
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\JevWIN"
+!endif
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
 !include "WinVer.nsh"
+!include "x64.nsh"
 !define MUI_WELCOMEPAGE_TITLE "Instalar JevWIN ${VERSION}"
 !define MUI_WELCOMEPAGE_TEXT "Este assistente instala o JevWIN para o usuário atual.$\r$\n$\r$\nO Python e as bibliotecas necessárias estão incluídos. Não é necessário instalar Python nem usar uma conta de administrador.$\r$\n$\r$\nA pasta do programa será: $LOCALAPPDATA\Programs\JevWIN"
 !insertmacro MUI_PAGE_WELCOME
@@ -33,23 +43,30 @@ VIAddVersionKey /LANG=1046 "LegalCopyright" "Licenças dos componentes incluída
 !insertmacro MUI_LANGUAGE "PortugueseBR"
 
 Function .onInit
+  ${IfNot} ${RunningX64}
+    MessageBox MB_OK|MB_ICONSTOP "O JevWIN exige Windows de 64 bits."
+    Quit
+  ${EndIf}
   ${IfNot} ${AtLeastWin10}
     MessageBox MB_OK|MB_ICONSTOP "O JevWIN exige Windows 10 ou 11 de 64 bits."
     Quit
   ${EndIf}
   SetShellVarContext current
+  SetRegView 64
 FunctionEnd
 
 Section "Programa" SEC_MAIN
   SetShellVarContext current
   SetOutPath "$INSTDIR"
-  File /r "${PAYLOAD}/*"
+  File /r "${PAYLOAD}\*"
   WriteUninstaller "$INSTDIR\Desinstalar_JevWIN.exe"
+!ifndef ISOLATED_TEST
   CreateDirectory "$SMPROGRAMS\JevWIN"
   CreateShortCut "$SMPROGRAMS\JevWIN\JevWIN.lnk" "$INSTDIR\JevWIN.exe"
   CreateShortCut "$SMPROGRAMS\JevWIN\Diagnosticar JevWIN.lnk" "$INSTDIR\Diagnosticar_JevWIN.cmd"
   CreateShortCut "$SMPROGRAMS\JevWIN\Desinstalar JevWIN.lnk" "$INSTDIR\Desinstalar_JevWIN.exe"
   CreateShortCut "$DESKTOP\JevWIN.lnk" "$INSTDIR\JevWIN.exe"
+!endif
   WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayName" "JevWIN ${VERSION}"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayVersion" "${VERSION}"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "Publisher" "JevWIN"
@@ -63,15 +80,21 @@ SectionEnd
 
 Section "Uninstall"
   SetShellVarContext current
+  SetRegView 64
+!ifndef ISOLATED_TEST
   Delete "$DESKTOP\JevWIN.lnk"
   Delete "$SMPROGRAMS\JevWIN\JevWIN.lnk"
   Delete "$SMPROGRAMS\JevWIN\Diagnosticar JevWIN.lnk"
   Delete "$SMPROGRAMS\JevWIN\Desinstalar JevWIN.lnk"
   RMDir "$SMPROGRAMS\JevWIN"
+!endif
   DeleteRegKey HKCU "${UNINSTALL_KEY}"
   RMDir /r "$INSTDIR\runtime"
   RMDir /r "$INSTDIR\app"
+  RMDir /r "$INSTDIR\licenses"
   Delete "$INSTDIR\JevWIN.exe"
+  Delete "$INSTDIR\jeve-engine.exe"
+  Delete "$INSTDIR\LICENSES.txt"
   Delete "$INSTDIR\JevWIN.cmd"
   Delete "$INSTDIR\Diagnosticar_JevWIN.cmd"
   Delete "$INSTDIR\windows_launcher.py"

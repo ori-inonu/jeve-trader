@@ -10,7 +10,7 @@ import time
 from app_store import resource_path
 from capital_planner import project_stop_capacity
 from copilot import load_json
-from dashboard import example_from_inputs
+from capital_example import example_from_inputs
 from flow_engine import FlowEngine, generate_flow_scenario
 from risk_research import compare_risk_policies
 
@@ -189,6 +189,42 @@ def jev_observation_state(snapshot: dict) -> dict:
                             "absorption": "Aggression occurred without comparable price progress; passive absorption remains a hypothesis.",
                             "exhaustion": "Previously advancing aggression decelerated and failed to continue. This does not predict reversal.",
                             "book": "Visible quantities only. Order identity, hidden volume and reasons for changes are unknown."}}
+
+
+PREMISE_TEXT_LIMIT = 300
+
+
+def premise_questions() -> dict:
+    """Independent judgments about the user's declared reading of the market.
+
+    Support, contradiction and evaluability stay separate dimensions: absent
+    support is not contradiction, and insufficient evidence remains explicit.
+    """
+    return {
+        "premise_evidence_support": {
+            "type": "noul",
+            "instructions": ("Does state.computed_features with state.evidence_coverage support the market expectation "
+                             "the user declared in state.user_premise.text? Judge observed evidential support only; "
+                             "this is not a profit probability or a recommendation. Partial or stale coverage weakens support.")},
+        "premise_evidence_contradiction": {
+            "type": "noul",
+            "instructions": ("Does the observed evidence directly contradict the user's declared expectation in "
+                             "state.user_premise.text? Absence of support is not contradiction; answer yes only for "
+                             "actively conflicting observed evidence.")},
+        "premise_evaluable": {
+            "type": "noul",
+            "instructions": ("Is the observed evidence sufficient to evaluate the user's declared expectation in "
+                             "state.user_premise.text at all? Answer no when coverage limits, stale data or missing "
+                             "aggression prevent judging support or contradiction for what the text describes.")},
+    }
+
+
+def declared_premise(text: str, *, asof_ms: int) -> dict | None:
+    """Bounded user-authored expectation carried verbatim into the JEV state."""
+    text = " ".join(str(text or "").split())
+    if not text:
+        return None
+    return {"text": text[:PREMISE_TEXT_LIMIT], "declared_at_ms": asof_ms}
 
 
 def can_classify(snapshot: dict, *, now_ms: int | None = None) -> tuple[bool, str]:

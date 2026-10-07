@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-10-07T14:57:33.924017+00:00",
+  "release": "Jeve Trader experimental 0.4.0",
+  "platform": "Windows 11 x64, build 26200",
+  "python": "3.14.7",
+  "scope": "Software verification and synthetic research; no live trading or empirical WIN validation.",
+  "software_verification": {
+    "generated_at_utc": "2026-10-07T14:54:32.112054+00:00",
+    "command": ".venv/Scripts/python.exe scripts/verify.py",
+    "unittest_count": 188,
+    "unittest_passed": true,
+    "legacy_desktop_self_test_passed": true,
+    "python_socket_network_blocked": true,
+    "typescript_vite_build_passed": true,
+    "tauri_release_build_passed": true,
+    "build_results_source": "Observed build commands during this task; package hashes below.",
+    "labouchere_sequence_restart_regression_passed": true
+  },
+  "packaged_engine": {
+    "status": "PASS",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.7",
+    "schema_version": 1,
+    "experimental": true,
+    "alternatives": 16,
+    "orders_enabled": false,
+    "financial_probability": null,
+    "code_sha256": "5ccd92936f59a5a4a14970301a6f4f4528bd7c8876a875abb03f46e75b5fcdd1",
+    "current_runtime_sources_match": true,
+    "source_count": 20
+  },
+  "installation": {
+    "status": "PASS",
+    "platform": "Windows 11 x64",
+    "diagnostic": {
+      "status": "PASS",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "python": "3.14.7",
+      "schema_version": 1,
+      "experimental": true,
+      "alternatives": 16,
+      "orders_enabled": false,
+      "financial_probability": null,
+      "code_sha256": "5ccd92936f59a5a4a14970301a6f4f4528bd7c8876a875abb03f46e75b5fcdd1"
+    },
+    "silent_install": true,
+    "native_window_observed": true,
+    "owned_sidecar_observed": true,
+    "forced_root_exit_cleans_sidecar": true,
+    "reinstall_preserves_data": true,
+    "uninstall_preserves_data": true,
+    "primary_installation_unchanged": true,
+    "native_ui_interactions_verified": false,
+    "excel_rtd_verified": false
+  },
+  "payload_manifest": {
+    "path": ".artifacts/desktop-windows/portable/package-manifest.json",
+    "sha256": "af8818eebeaa697fd262787ae91e78563ed5779058860e455109f2ed2279ff10",
+    "file_count": 485,
+    "all_file_hashes_match": true
+  },
+  "packages": [
+    {
+      "path": ".artifacts/desktop-windows/JevWIN_0.4.0_setup.exe",
+      "bytes": 13857176,
+      "sha256": "a60bbf0053d67fe66c9ad53b49d4923ab62216ba51581bb804a40bb747a2d6c2"
+    },
+    {
+      "path": ".artifacts/desktop-windows/JevWIN_0.4.0_portable.zip",
+      "bytes": 15644103,
+      "sha256": "c67d59f4e6b28de450ca5d25d6e900eab2f50b5ad121dc8405e4374414fa0895"
+    }
+  ],
+  "visual_verification": {
+    "surface": "In-app browser preview, same React UI and Python service, isolated test data",
+    "pages": [
+      "Decisão",
+      "Capital",
+      "Pesquisa",
+      "Configuração"
+    ],
+    "equity_sequence_brl": [
+      "400.00",
+      "800.00",
+      "600.00"
+    ],
+    "capacities": [
+      2,
+      4,
+      3
+    ],
+    "peak_brl": "800.00",
+    "drawdown_at_600": 0.25,
+    "manual_test_entry": {
+      "quantity": 2,
+      "side": "buy",
+      "entry_points": "131000",
+      "paid_cost_brl": "1.00",
+      "reserved_margin_brl": "310.00"
+    },
+    "manual_test_partial_exits": [
+      {
+        "quantity": 1,
+        "price_points": "131100",
+        "paid_cost_brl": "1.00"
+      },
+      {
+        "quantity": 1,
+        "price_points": "131050",
+        "paid_cost_brl": "1.00"
+      }
+    ],
+    "final_equity_brl": "627.00",
+    "final_available_margin_brl": "627.00",
+    "final_open_quantity": 0,
+    "screenshot": ".artifacts/desktop-windows/painel-decisao.jpg",
+    "native_ui_interactions_verified": false
+  },
+  "laboratory": {
+    "command": ".venv/Scripts/python.exe scripts/run_decision_lab.py --smoke --initial 300 --target 4000 --output-dir .artifacts/lab-smoke-final",
+    "report_path": ".artifacts/lab-smoke-final/report.json",
+    "report_sha256": "b8c4f8101d777e674dd0726f9d021d258c7b09a0fa06871f900c21a8a3a28657",
+    "source_sha256": "6cfd1358d2ece67b1cde4bcbed6c9f0aae77e4201efe3cf20c8db55f46220bab",
+    "synthetic": true,
+    "rows": 300,
+    "sessions": 10,
+    "initial_brl": "300.00",
+    "investigation_target_brl": "4000.00",
+    "model_status": {
+      "without_jev": "RESEARCH_ONLY",
+      "with_jev": "RESEARCH_ONLY"
+    },
+    "partitions": {
+      "without_jev": {
+        "train": 180,
+        "calibration": 60,
+        "test": 60
+      },
+      "with_jev": {
+        "train": 180,
+        "calibration": 60,
+        "test": 60
+      }
+    },
+    "risk_policy_count": 17,
+    "deployment_approved": false,
+    "runtime_model_exported": false,
+    "empirical_profitability_demonstrated": false
+  },
+  "notices": {
+    "inventory_sha256": "f26a543d0645975aefe7c4682724cb3e529e451ff030d9f59a6373c144174765",
+    "packages": 459,
+    "notices_available": 288,
+    "ecosystems": {
+      "python": 4,
+      "npm": 49,
+      "cargo": 406
+    },
+    "commercial_license_audit_complete": false
+  },
+  "mission_control": {
+    "initial_query_available": false,
+    "closing_query_available": true,
+    "project_tasks": 0,
+    "competing_writers_started": false
+  },
+  "not_verified": [
+    "Native window form interactions",
+    "Real Excel/Profit RTD",
+    "Authenticated JEV API",
+    "Authorized ProfitDLL SDK",
+    "Actual broker costs/margin",
+    "Prospective financial calibration or profitability"
+  ],
+  "pending_implementation": [
+    "Runtime export/loading of a temporally validated WIN model",
+    "Economic typed JEV selection connected to the service",
+    "Position exit recommendation and mark-to-market",
+    "Additional candidate exhaustion and intratrade exit policies"
+  ],
+  "orders_enabled": false,
+  "paid_jev_requests_made": false,
+  "financial_probability_display": "not estimated"
+}

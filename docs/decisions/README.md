@@ -1,6 +1,6 @@
 # Decisões e contratos do projeto
 
-Este índice é a entrada mínima para escolhas que não podem ficar implícitas no próximo ciclo. A aplicação entregue permanece v0.3.0. Os registros ADR abaixo estão **propostos**, sem afirmar implementação, experimento executado ou aprovação empírica.
+Este índice registra escolhas e contratos para continuidade. O [ADR-0010 — painel e capital progressivo](0010-painel-e-capital-progressivo.md) foi aceito para engenharia em 07/10/2026 e possui implementação experimental 0.4. Os ADR-0001–0009 abaixo continuam propostas de escopo maior; o [status atual](../IMPLEMENTATION_STATUS.md) distingue partes implementadas dos gates ainda pendentes.
 
 ## Restrições já documentadas a preservar
 

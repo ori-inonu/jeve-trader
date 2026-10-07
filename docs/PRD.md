@@ -1,5 +1,21 @@
 # Jeve Trader — requisitos de produto
 
+## Requisitos aceitos do painel 0.4 — 07/10/2026
+
+O produto é um copiloto Windows para decisões sobre WIN, com execução manual no Profit Pro. O painel moderno centra a apresentação em uma recomendação principal; hipóteses, alternativas e fundamentos ficam nos detalhes. Gráficos representam evidência contextual, capital, drawdown e distribuições financeiras quando estas forem validadas. O gráfico de preço é secundário.
+
+Cada avaliação usa a banca atual inteira e as posições informadas. R$400 → R$800 → R$600 muda a base financeira; não existe reinício obrigatório em um contrato. Lotes podem começar acima de um contrato quando o plano e a capacidade justificarem. Não há parada por lucro. Drawdown de 30% é referência de adaptação, sem pausa fixa. Perda anterior não obriga recuperação ou aumento de lote. Planos incluem aguardar e quantidades admissíveis dentro do limite computacional configurado.
+
+Preços, custos, margem e regras financeiras são calculados no código com `Decimal`. JEV interpreta hipóteses e, após integração de um modelo aprovado, poderá selecionar IDs de planos admissíveis. Confiança, apoio e contradição permanecem contextuais. Sem validação financeira temporal, o painel mostra “não estimada” para probabilidade e aguardar como recomendação principal. Exemplos de R$300 para R$4.000 são cenários de pesquisa, não metas obrigatórias.
+
+Excel/RTD é a fonte inicial, com coleta isolada e cobertura explicitamente parcial. Capital, posição, custos e execuções são informados manualmente e registrados com revisão e idempotência. ProfitDLL real depende do SDK autorizado e começa por Market Data. Ordens automáticas, contratação de dados e licenciamento comercial seguem escopos posteriores.
+
+O [ADR 0010](decisions/0010-painel-e-capital-progressivo.md), o [guia do painel](DECISION_PANEL.md) e o [status](IMPLEMENTATION_STATUS.md) registram implementação e pendências. A ausência de modelo aprovado não impede calcular hipóteses, custos e capacidade; impede apresentá-los como uma recomendação financeira validada.
+
+## Requisitos históricos da baseline 0.3.0
+
+As seções abaixo descrevem a entrega anterior. As políticas de pausa dessa baseline não governam o novo serviço. A afirmação histórica de ausência de laboratório estatístico foi superada pelo código offline 0.4, sem que isso demonstre desempenho empírico.
+
 Documento canônico para continuidade no Codex/GitHub. Referência inicial: código herdado **JevWIN v0.3.0**, em 06/10/2026. O nome público do projeto passa a ser **Jeve Trader**; nomes internos, versão, caminhos de dados, scripts e artefatos JevWIN permanecem preservados por compatibilidade até uma migração explícita.
 
 ## Objetivo e usuário

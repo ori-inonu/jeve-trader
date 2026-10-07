@@ -1,5 +1,7 @@
 # Primeira tarefa no Codex — ciclo de decisão v0.4
 
+**Retomada em 07/10/2026:** o painel 0.4 e boa parte deste primeiro ciclo estão implementados. Leia [HANDOFF.md](HANDOFF.md), [status](IMPLEMENTATION_STATUS.md) e o quadro atual do [backlog](BACKLOG.md). Não repita a transferência, o scaffold ou a implementação das premissas já corrigidas. O texto abaixo preserva a tarefa original e seus critérios; os itens ainda parciais têm continuação explícita no backlog.
+
 Você está no repositório **Jeve Trader**, continuação de um projeto existente. Leia `AGENTS.md`, `docs/HANDOFF.md` e os itens iniciais do `docs/BACKLOG.md`. Trabalhe sobre `app/`, que contém a baseline JevWIN v0.3.0. Respeite o modelo selecionado por Gabriel; a preferência registrada é GPT-6.1 Sol.
 
 **Objetivo desta sessão:** implementar o primeiro conjunto verificável de melhorias na avaliação contextual do JEV. Conclua código e testes dos itens viáveis; não entregue apenas uma nova especificação.
