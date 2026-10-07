@@ -18,7 +18,7 @@ import sys
 import time
 import unicodedata
 from collections import OrderedDict
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -40,6 +40,8 @@ class MarketEvent:
     price_points: float
     quantity: int
     aggressor: str
+    buyer_broker: str | None = None
+    seller_broker: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         result = asdict(self)
@@ -81,11 +83,16 @@ class SourceBatch:
     quotes: tuple[QuoteSnapshot, ...]
     health: SourceHealth
     warnings: tuple[str, ...] = ()
+    books: tuple[dict, ...] = ()
+    aggregates: tuple[dict, ...] = ()
+    capabilities: dict = field(default_factory=dict)
+    evidence: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return dict(events=[event.to_dict() for event in self.events],
                     quotes=[asdict(quote) for quote in self.quotes],
-                    health=self.health.to_dict(), warnings=list(self.warnings))
+                    health=self.health.to_dict(), warnings=list(self.warnings), books=list(self.books),
+                    aggregates=list(self.aggregates), capabilities=dict(self.capabilities), evidence=dict(self.evidence))
 
 
 class SeenTradeIds:
@@ -132,6 +139,8 @@ ALIASES = {
     'ask': {'ask', 'ovd', 'ofertavenda', 'ofvenda'},
     'bidqty': {'bidqty', 'voc', 'quantidadecompra', 'volumedeofertadecompra'},
     'askqty': {'askqty', 'vov', 'quantidadevenda', 'volumedeofertadevenda'},
+    'buyer_broker': {'buyerbroker', 'buyfirm', 'corretoracompradora', 'corretoracompra'},
+    'seller_broker': {'sellerbroker', 'sellfirm', 'corretoravendedora', 'corretoravenda'},
 }
 
 
@@ -305,7 +314,9 @@ def _parse_rows(rows: list[list[Any]], symbol: str, *, mode: str, kind: str,
                 trade_id = str(cell('id', '') or '').strip() or None
                 valid_ids = valid_ids and trade_id is not None
                 event = MarketEvent(trade_id, row_symbol, ts, _price(cell('price')),
-                                    _quantity(cell('quantity')), _aggressor(cell('aggressor')))
+                                    _quantity(cell('quantity')), _aggressor(cell('aggressor')),
+                                    str(cell('buyer_broker') or '').strip()[:80] or None,
+                                    str(cell('seller_broker') or '').strip()[:80] or None)
                 raw_events += 1
                 observed_events.append(event)
                 if dedup.accept(event):
@@ -465,14 +476,14 @@ def discover_open_excel(*, com_modules=None):
             comtypes.CoUninitialize()
 
 
-def _read_excel_com_ranges(workbook: str, ranges: list[tuple[str, str]], *, com_modules=None) -> list[list[list[Any]]]:
+def _read_excel_com_ranges(workbook: str, ranges: list[tuple[str, str]], *, com_modules=None, property_name='Value2') -> list[list[list[Any]]]:
     """Attach existing Excel, copy values, then release pointers on this thread.
 
     Dynamic dispatch avoids generating Excel type-library wrappers. No Excel
     object is retained or passed to another thread. Never launch/open/write.
     """
-    if not isinstance(ranges, list) or not 1 <= len(ranges) <= 2:
-        raise BridgeError('Informe um ou dois intervalos Excel.')
+    if not isinstance(ranges, list) or not 1 <= len(ranges) <= 4:
+        raise BridgeError('Informe de um a quatro intervalos Excel.')
     selections = []
     for sheet, cell_range in ranges:
         if not isinstance(sheet, str) or not sheet.strip():
@@ -514,7 +525,7 @@ def _read_excel_com_ranges(workbook: str, ranges: list[tuple[str, str]], *, com_
             selected_sheet = worksheets.Item(sheet)
             stage = 'read'
             selected_range = selected_sheet.Range[cell_range]
-            values = selected_range.Value2
+            values = selected_range.Formula if property_name == 'Formula' else selected_range.Value2
             if not isinstance(values, (tuple, list)) or not 2 <= len(values) <= 5001:
                 raise BridgeError('Excel retornou intervalo inválido; inclua cabeçalho e dados.')
             rows = []
@@ -636,6 +647,8 @@ class CombinedExcelBridge:
     """
     def __init__(self, workbook: str, quote_sheet: str, quote_range: str,
                  tape_sheet: str, tape_range: str, *, symbol: str,
+                 book_sheet: str = '', book_range: str = '', vap_sheet: str = '', vap_range: str = '',
+                 window_mode: str = '', filters: str = '',
                  timeout_seconds: float = 8):
         if not all(isinstance(value, str) and value.strip()
                    for value in (workbook, quote_sheet, symbol)) or bool(tape_sheet) != bool(tape_range):
@@ -645,6 +658,17 @@ class CombinedExcelBridge:
         self.workbook, self.quote_sheet, self.tape_sheet = workbook, quote_sheet, tape_sheet
         self.quote_range = _validate_range(quote_range)
         self.tape_range = _validate_range(tape_range) if tape_sheet else ''
+        for sheet, interval in ((book_sheet,book_range), (vap_sheet,vap_range)):
+            if bool(sheet) != bool(interval):
+                raise BridgeError('Informe planilha e intervalo juntos para livro/VAP.')
+            if sheet: _validate_range(interval)
+        self.last_capture_ms = None
+        self.last_values = None
+        self.last_change_ms = None
+        self.change_interval_ms = None
+        self.book_sheet, self.book_range = book_sheet, book_range
+        self.vap_sheet, self.vap_range = vap_sheet, vap_range
+        self.window_mode, self.filters = window_mode, filters
         self.symbol = symbol.strip().upper()
         self.timeout_seconds = timeout_seconds  # no hard interruption for native COM
         self.seen_ids = SeenTradeIds()
@@ -659,14 +683,13 @@ class CombinedExcelBridge:
         selections = [(self.quote_sheet, self.quote_range)]
         if self.tape_sheet:
             selections.append((self.tape_sheet, self.tape_range))
+        if self.book_sheet:
+            selections.append((self.book_sheet,self.book_range))
+        if self.vap_sheet:
+            selections.append((self.vap_sheet,self.vap_range))
         matrices = _read_excel_com_ranges(self.workbook, selections, com_modules=modules)
         if len(matrices) != len(selections):
             raise BridgeError('Leitura combinada incompleta; nenhuma tabela foi aplicada.')
-        if not self.tape_sheet:
-            batch = _parse_rows(matrices[0], self.symbol, mode='quote', kind='EXCEL_COMBINED_SNAPSHOT')
-            if not batch.health.connected:
-                raise BridgeError('Nenhuma cotação válida no intervalo selecionado.')
-            return batch
         # Parse each new cycle with a transactional dedup cache. Failure of one
         # table must not consume IDs or return the other table plus old values.
         staged_ids = SeenTradeIds(self.seen_ids.capacity)
@@ -674,7 +697,7 @@ class CombinedExcelBridge:
         staged_ids.evictions = self.seen_ids.evictions
         quote_batch = _parse_rows(matrices[0], self.symbol, mode='quote', kind='RTD_SNAPSHOT')
         tape_batch = _parse_rows(matrices[1], self.symbol, mode='tape',
-                                 kind='EXCEL_TAPE_SNAPSHOT', seen_ids=staged_ids)
+                                 kind='EXCEL_TAPE_SNAPSHOT', seen_ids=staged_ids) if self.tape_sheet else SourceBatch((),(),SourceHealth('EXCEL_TAPE_SNAPSHOT',True,False,None,int(time.time()*1000),sequence_ok=True))
         if not quote_batch.health.connected or not tape_batch.health.connected:
             raise BridgeError('Leitura combinada exige cotações e negócios válidos nas duas tabelas; nenhuma tabela foi aplicada.')
         if any(warning.startswith('Linha ') or 'linha(s) inválida(s)' in warning
@@ -683,12 +706,135 @@ class CombinedExcelBridge:
         if not tape_batch.health.sequence_ok:
             raise BridgeError('Negócios combinados fora de ordem temporal; organize do mais antigo ao mais recente antes de aplicar.')
         observed = int(time.time() * 1000)
+        extra_index = 1 + bool(self.tape_sheet)
+        books = (parse_book_rows(matrices[extra_index],self.symbol,observed),) if self.book_sheet else ()
+        aggregates = tuple(parse_vap_rows(matrices[extra_index+bool(self.book_sheet)],self.symbol)) if self.vap_sheet else ()
+        columns = _columns(matrices[1][0]) if self.tape_sheet else {}
+        capabilities = dict(trade_id='id' in columns, buyer_broker='buyer_broker' in columns,
+                            seller_broker='seller_broker' in columns,
+                            book_snapshot=bool(books), volume_at_price=bool(aggregates), continuity_verified=False)
         warnings = tuple(dict.fromkeys((
             'Cotações e negócios lidos no mesmo ciclo COM; valores sequenciais, sem garantia de atomicidade ou tape integral.',
             *quote_batch.warnings, *tape_batch.warnings)))
         health = SourceHealth('EXCEL_COMBINED_SNAPSHOT', True, False,
                               tape_batch.health.last_event_ts_ms, observed,
                               '; '.join(warnings), sequence_ok=True)
+        # Observed sample changes are measured separately from polling; neither
+        # is an exchange latency nor proof of Excel's effective RTD frequency.
+        polling = observed-self.last_capture_ms if self.last_capture_ms is not None else None
+        values = repr(matrices)
+        if values != self.last_values:
+            self.change_interval_ms = observed-self.last_change_ms if self.last_change_ms is not None else None
+            self.last_change_ms = observed
+        self.last_capture_ms, self.last_values = observed, values
         # Commit only after all reads and both parsers succeed.
         self.seen_ids = staged_ids
-        return SourceBatch(tape_batch.events, quote_batch.quotes, health, warnings)
+        return SourceBatch(tape_batch.events, quote_batch.quotes, health, warnings, books, aggregates, capabilities,
+                           dict(window_mode=self.window_mode or 'não informado', filters=self.filters or 'não informado',
+                                captured_at_ms=observed, table_fields=[list(_columns(m[0])) for m in matrices],
+                                continuity='não demonstrada', polling_target_ms=250,
+                                polling_effective_ms=polling, rtd_change_interval_ms=self.change_interval_ms))
+
+    def audit(self):
+        selections = [(self.quote_sheet,self.quote_range)]
+        for sheet, interval in ((self.tape_sheet,self.tape_range),(self.book_sheet,self.book_range),(self.vap_sheet,self.vap_range)):
+            if sheet: selections.append((sheet,interval))
+        # Bounded excerpt of selected tables only. Formulas stay local and are
+        # deliberately excluded from the shared JEV state.
+        formulas = _read_excel_com_ranges(self.workbook,selections,com_modules=self._com_modules,property_name='Formula')
+        return dict(status='ready', captured_at_ms=int(time.time()*1000),
+                    tables=[dict(sheet=sheet, interval=interval, excerpt=[row[:16] for row in matrix[:12]])
+                            for (sheet,interval),matrix in zip(selections,formulas)],
+                    note='Excerto local de até 12×16 células por tabela selecionada; fórmulas não são enviadas ao JEV.')
+
+
+def parse_book_rows(rows, symbol, captured_at_ms):
+    """Paired bid/ask columns. No inferred order IDs or exchange timestamps."""
+    columns = _columns(rows[0])
+    if not {'bid','ask','bidqty','askqty'} <= columns.keys():
+        raise BridgeError('Livro exige bid, ask, bidqty e askqty explícitos.')
+    sides = dict(bids=[], asks=[])
+    stamps = set()
+    for row in rows[1:]:
+        if not any(v not in (None,'') for v in row): continue
+        cell = lambda key: row[columns[key]] if columns[key] < len(row) else None
+        if 'symbol' in columns and str(cell('symbol')).upper() != symbol: continue
+        for side,price,qty in (('bids','bid','bidqty'),('asks','ask','askqty')):
+            if cell(price) in (None,''): continue
+            p, q = _price(cell(price)), _quantity(cell(qty),allow_zero=True)
+            if p % 5: raise BridgeError('Preço do livro fora do tick WIN.')
+            if q: sides[side].append(dict(price_points=p,quantity=q))
+        if 'ts_ms' in columns: stamps.add(_timestamp(cell('ts_ms'),epoch_ms=True))
+    for side in sides:
+        sides[side].sort(key=lambda x:x['price_points'],reverse=side=='bids')
+        if not sides[side] or len(sides[side])>256 or len({x['price_points'] for x in sides[side]})!=len(sides[side]):
+            raise BridgeError('Livro vazio, duplicado ou acima de 256 níveis.')
+    if sides['bids'][0]['price_points'] >= sides['asks'][0]['price_points']:
+        raise BridgeError('Livro travado/cruzado; confira a tabela selecionada.')
+    return dict(symbol=symbol, **sides, market_ts_ms=next(iter(stamps)) if len(stamps)==1 else None,
+                captured_at_ms=captured_at_ms, kind='book_snapshot', order_identity=False, continuity_verified=False)
+
+
+def parse_vap_rows(rows, symbol):
+    columns = _columns(rows[0])
+    if not {'price','quantity'} <= columns.keys(): raise BridgeError('VAP exige preço e quantidade explícitos.')
+    result = []
+    for row in rows[1:]:
+        if not any(v not in (None,'') for v in row): continue
+        if 'symbol' in columns and str(row[columns['symbol']]).upper()!=symbol: continue
+        if _price(row[columns['price']]) % 5: raise BridgeError('Preço VAP fora do tick WIN.')
+        result.append(dict(price_points=_price(row[columns['price']]),quantity=_quantity(row[columns['quantity']],allow_zero=True),
+                           kind='volume_at_price_aggregate', window='janela da exportação; não equivale ao tape'))
+    if len({x['price_points'] for x in result}) != len(result): raise BridgeError('Preço duplicado no VAP.')
+    return result
+
+
+class RtdThrottleGuard:
+    """Only explicit enable changes Excel's global RTD interval; never opens Excel."""
+    def __init__(self, *, com_modules=None):
+        self.modules = com_modules
+        self.previous = None
+        self.attached_excel = None
+
+    def _access(self, operation):
+        native,client = self.modules or _load_comtypes()
+        native.CoInitialize()
+        excel = None
+        try:
+            excel = client.GetActiveObject('Excel.Application',dynamic=True)
+            return operation(excel)
+        except Exception as error:
+            raise BridgeError('Não foi possível consultar/restaurar throttle do Excel; verifique manualmente.') from error
+        finally:
+            excel = None
+            native.CoUninitialize()
+
+    def observe(self):
+        return self._access(lambda excel: dict(current_ms=int(excel.RTD.ThrottleInterval),status='observed'))
+
+    def enable(self):
+        def change(excel):
+            current = int(excel.RTD.ThrottleInterval)
+            handle = getattr(excel,'Hwnd',None)
+            if self.previous is not None and self.attached_excel != handle:
+                raise BridgeError('Instância Excel mudou; restauração anterior requer verificação manual.')
+            if self.previous is None:
+                self.previous = current
+                self.attached_excel = handle
+            excel.RTD.ThrottleInterval = 250
+            return dict(previous_ms=self.previous,current_ms=250,restored=False,status='changed')
+        return self._access(change)
+
+    def restore(self):
+        if self.previous is None: return dict(restored=True,status='unchanged')
+        def change(excel):
+            current = int(excel.RTD.ThrottleInterval)
+            if getattr(excel,'Hwnd',None) != self.attached_excel:
+                raise BridgeError('Instância Excel mudou; confira throttle anterior manualmente.')
+            restored = current==250
+            if restored: excel.RTD.ThrottleInterval = self.previous
+            result = dict(previous_ms=self.previous,current_ms=int(excel.RTD.ThrottleInterval),restored=restored,
+                          status='restored' if restored else 'external_change_preserved')
+            self.previous = None
+            return result
+        return self._access(change)

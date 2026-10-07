@@ -1,84 +1,103 @@
-import {useEffect, useRef, useState} from 'react';
-import {Pause, Play, Volume2} from 'lucide-react';
-import {type Snapshot} from './transport';
+import {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {Power, Volume2} from 'lucide-react';
+import {type Snapshot, type FlowHypothesis} from './transport';
 import {Chart} from './Chart';
+import {liveSnapshot} from './liveView';
+import {paintLatency} from './visualLatency';
 
 let audio:AudioContext|null = null;
-export async function enableAudio() {
-  audio ??= new AudioContext();
-  await audio.resume();
-}
+export async function enableAudio() { audio ??= new AudioContext(); await audio.resume(); }
 function tone(side:string) {
-  if (!audio || audio.state !== 'running') return;
-  const oscillator = audio.createOscillator(), gain = audio.createGain();
-  oscillator.type = 'sine'; oscillator.frequency.value = side==='buy'?880:440;
-  gain.gain.setValueAtTime(.06, audio.currentTime);
-  gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime+.3);
-  oscillator.connect(gain); gain.connect(audio.destination);
-  oscillator.start(); oscillator.stop(audio.currentTime+.3);
+  if (!audio || audio.state!=='running') return;
+  const oscillator=audio.createOscillator(), gain=audio.createGain();
+  oscillator.frequency.value=side==='buy'?880:440;
+  gain.gain.setValueAtTime(.06,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+.3);
+  oscillator.connect(gain);gain.connect(audio.destination);oscillator.start();oscillator.stop(audio.currentTime+.3);
 }
-const number = (value:unknown) => value==null ? null : Number.isFinite(Number(value)) ? Number(value) : null;
-const display = (value:number|null, suffix='') => value==null ? 'indisponível' : `${value.toLocaleString('pt-BR',{maximumFractionDigits:2})}${suffix}`;
-const clock = (value:number|null) => value ? new Date(value).toLocaleTimeString('pt-BR') : '—';
-
-function Gauge({label, value, extent=100, detail, suffix=''}:{label:string;value:number|null;extent?:number;detail:string;suffix?:string}) {
-  const width = value==null ? 0 : Math.min(100, Math.abs(value)/Math.max(1,extent)*100);
-  return <div className="live-gauge"><span>{label}</span><strong>{display(value,suffix)}</strong><div className="bar"><i className={value!=null&&value<0?'red':'green'} style={{width:`${width}%`}}/></div><small>{detail}</small></div>;
+const num=(v:unknown)=>v==null?null:Number.isFinite(Number(v))?Number(v):null;
+const fmt=(v:number|null,s='')=>v==null?'—':`${v.toLocaleString('pt-BR',{maximumFractionDigits:1})}${s}`;
+const sideName=(side:string|null)=>side==='buy'?'compra':side==='sell'?'venda':'sem direção';
+type Run=(method:string,params?:Record<string,unknown>)=>Promise<void>;
+function Phenomenon({h,data}:{h:FlowHypothesis;data:Snapshot}) {
+  const family=h.kind==='progression'?'continuation':h.kind;
+  const context=data.hypothesis_context.find(c=>c.family===family&&c.aggressor_side===h.aggressor_side);
+  const dimension=context?.dimensions;
+  return <div className="phenomenon" title={`${h.description}\nPremissa: ${context?.literal_premise||h.description}\nEvidências: ${JSON.stringify(h.evidence)}\nAusências: ${h.missing.join(', ')}`}>
+    <div><b>{h.kind==='progression'?'Progressão':h.kind==='absorption'?'Absorção':'Exaustão'} · {sideName(h.aggressor_side)}</b><span className={['observed','potential'].includes(h.status)?'green':'amber'}>{h.status==='observed'?'observada':h.status==='potential'?'hipótese local':h.status==='not_observed'?'não observada':'insuficiente'}</span></div>
+    <div className="noul-lines">{(['support','contradiction','insufficient'] as const).map((key,i)=><label key={key}><span>{['Apoio','Contradição','Insuficiência'][i]}</span><meter min={0} max={1} value={dimension?.[key]??0} className={!dimension?'unavailable':key}/><small>{fmt(dimension?.[key]==null?null:dimension[key]*100,'%')}</small></label>)}</div>
+    <small>{h.scenario_side?`Cenário: ${sideName(h.scenario_side)}`:h.kind==='exhaustion'?'Enfraquece agressor; reversão não confirmada':'Sem cenário confirmado'} · {h.missing.length?`${h.missing.length} limitações`: 'avaliação local'}</small>
+    <details><summary>Premissa e evidências</summary><p>{context?.literal_premise||h.description}</p><pre>{JSON.stringify(h.evidence,null,2)}</pre><small>{h.missing.join(' · ')}</small></details>
+  </div>;
 }
 
-export function LivePanel({data}:{data:Snapshot}) {
-  const [frozen,setFrozen] = useState<Snapshot|null>(null);
-  const [audioReady,setAudioReady] = useState(false);
-  const [audioError,setAudioError] = useState(false);
-  const played = useRef<number|null>(null);
-  const episode = data.alert.episode;
-  useEffect(() => {
-    if (episode && data.alert.active && played.current!==episode.id) {
-      played.current=episode.id;
-      if(data.context_settings.sound_enabled) tone(episode.side);
-    }
-  }, [episode, data.alert.active, data.context_settings.sound_enabled]);
-  const inspected = frozen ?? data, d = inspected.directional;
-  const f = inspected.market.computed_features, caps = inspected.source.capabilities;
-  const tape = !!caps.tape;
-  const delta = tape ? number(f.delta_contracts) : null;
-  const total = number(f.total_contracts) ?? 0;
-  const side = d.selected==='buy_continuation'?'buy':d.selected==='sell_continuation'?'sell':null;
-  const absorption = inspected.hypothesis_context.find(h=>h.family==='absorption' && h.side===side)?.dimensions;
-  const exhaustion = inspected.hypothesis_context.find(h=>h.family==='exhaustion' && h.side===side)?.dimensions;
-  const temperature = d.temperature;
-  const liveLabel = data.alert.active ? `Alerta contextual experimental: ${episode?.side==='buy'?'compra':'venda'}` : 'Sem alerta contextual válido';
-  const points = inspected.chart_points;
-  return <>
-    <div className={`live-alert ${data.alert.active?'triggered':''}`} role="status">
-      <strong>{liveLabel}</strong><span>Operação manual · contexto sem calibração financeira</span>
-      {data.context_settings.sound_enabled && <button className="button secondary" onClick={()=>void enableAudio().then(()=>{setAudioReady(true);setAudioError(false);}).catch(()=>setAudioError(true))}><Volume2 size={16}/>{audioError?'Áudio indisponível · tentar novamente':audioReady?'Áudio habilitado':'Habilitar áudio nesta janela'}</button>}
+export function LivePanel({data:raw,now,run}:{data:Snapshot;now:number;run:Run}) {
+  const data=liveSnapshot(raw,now), d=data.directional, f=data.market.computed_features;
+  const flow=data.market.order_flow, caps=data.source.capabilities;
+  const [reduced,setReduced]=useState(()=>localStorage.getItem('jeve-reduced-motion')==='true'||matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [audioReady,setAudioReady]=useState(false),[audioError,setAudioError]=useState(false);
+  const [latency,setLatency]=useState<{p95:number|null;count:number}>({p95:null,count:0});
+  const played=useRef<number|null>(null), episode=data.alert.episode;
+  useEffect(()=>{if(episode&&data.alert.active&&played.current!==episode.id){played.current=episode.id;if(data.context_settings.sound_enabled)tone(episode.side);}},[episode,data.alert.active,data.context_settings.sound_enabled]);
+  useLayoutEffect(()=>{let second=0;const first=requestAnimationFrame(()=>{second=requestAnimationFrame(()=>setLatency(paintLatency(raw.sequence)));});return()=>{cancelAnimationFrame(first);cancelAnimationFrame(second);};},[raw.sequence]);
+  const historical=['synthetic','replay'].includes(data.market.application_mode);
+  const tape=!!caps.tape, delta=tape?num(f.delta_contracts):null, intensity=tape?num(f.contracts_per_second):null;
+  const book=flow?.book, books=book?[...book.asks.slice(0,5)].reverse().map(x=>({...x,side:'sell'})).concat(book.bids.slice(0,5).map(x=>({...x,side:'buy'}))):[];
+  const maxBook=Math.max(1,...books.map(x=>x.quantity)), brokerMax=Math.max(1,...(flow?.brokers||[]).map(x=>Math.abs(x.net_contracts)));
+  const temperature=d.temperature;
+  const marks=d.geometry?['entry','stop','target'].map((key,i)=>({name:['Entrada','Stop','Alvo'][i],yAxis:num(d.geometry?.[key+'_points']),lineStyle:{color:['#8ea1ff','#ff6b87','#53ddbb'][i]},label:{formatter:['Entrada','Stop','Alvo'][i]}})).filter(m=>m.yAxis!=null):[];
+  const quoteAge=data.market.last_quote?.ts_ms==null?null:Math.max(0,now-data.market.last_quote.ts_ms);
+  return <section className={`flow-desk ${reduced?'reduced-motion':''}`} aria-label="Mesa de fluxo WIN">
+    <div className="desk-strip">
+      <strong>{data.market.symbol}</strong><span>{historical?data.market.application_mode==='synthetic'?'SINTÉTICO':'REPLAY':data.source.excel_running?'EXCEL RTD':'DESCONECTADO'}</span>
+      <span className={caps.quote_fresh?'green':'amber'}>Cotação {fmt(quoteAge,' ms')}</span><span>{caps.full_tape?'Tape integral da fixture':'Cobertura parcial'}</span>
+      <span title="Comprometido inclui reservas; faturamento real desconhecido">US$ {data.budget.committed_usd} / {data.budget.total_limit_usd}</span>
+      <button className={`jev-power ${data.jev.enabled?'on':''}`} onClick={()=>void run('jev.set_enabled',{enabled:!data.jev.enabled})}><Power size={14}/>JEV {data.jev.enabled?'ON':'OFF'}</button>
     </div>
-    <section className="panel live-panel">
-      {['synthetic','replay'].includes(inspected.market.application_mode) && <p className="notice">{inspected.market.application_mode==='synthetic'?'Demonstração sintética':'Replay histórico'} · estes dados não são captura atual do mercado.</p>}
-      <div className="panel-heading"><div><span className="eyebrow">FORÇA DIRECIONAL CONTEXTUAL — EXPERIMENTAL</span><h2>{temperature==null?'Aguardando evidência':`${temperature>0?'+':''}${temperature.toFixed(1)}`}</h2></div><button className="button secondary" onClick={()=>setFrozen(frozen?null:data)}>{frozen?<Play size={16}/>:<Pause size={16}/>} {frozen?'Retomar inspeção':'Congelar inspeção'}</button></div>
-      {frozen && <p className="notice">Inspeção histórica congelada às {clock(frozen.generated_at_ms)}. A faixa de alertas acima continua ao vivo.</p>}
-      <div className="thermometer" aria-label={`Força direcional ${display(temperature)}; experimental`}>
-        <div className="thermometer-track"><i style={{left:`${50+(temperature??0)/2}%`,opacity:temperature==null?0:1}}/></div>
-        <div className="thermometer-labels"><span>−100 · venda</span><span>0 · equilíbrio</span><span>+100 · compra</span></div>
+    {historical&&<div className="desk-note amber">{data.market.application_mode==='synthetic'?'Demonstração sintética ativada manualmente':'Replay histórico'} · não são dados atuais da B3.</div>}
+    <div className={`desk-alert ${data.alert.active?'triggered':''}`} role="status">
+      <b>{data.alert.active?`Alerta contextual: ${sideName(episode?.side||null)}`:!data.jev.enabled?'JEV desligado · coleta e cálculos locais continuam':'Aguardando contexto válido'}</b>
+      <span>{data.jev.status==='draining'?'Chamada enviada em conclusão; pode consumir API':data.jev.pending?'Analisando estado mais recente': 'Experimental · operação manual'}</span>
+    </div>
+    <div className="desk-main">
+      <div className="price-stream"><div className="desk-caption">PREÇO + NÍVEIS OBSERVADOS <span>{fmt(tape?num(f.price_progression_ticks):null,' ticks / 5s')}</span></div>
+        <Chart reducedMotion={reduced} label="Preço observado, entrada, stop e alvo contextuais" option={{grid:{left:52,right:12,top:20,bottom:26},tooltip:{trigger:'axis'},xAxis:{type:'time',axisLabel:{color:'#8492a8',fontSize:9}},yAxis:{type:'value',scale:true,axisLabel:{color:'#8492a8',fontSize:9},splitLine:{lineStyle:{color:'#202b3a'}}},series:[{id:'price',type:'line',showSymbol:false,data:data.chart_points,lineStyle:{color:'#97acff',width:2},markLine:{symbol:'none',data:marks}}]}}/>
+        {!data.chart_points.length&&<span className="stream-empty">Conecte uma fonte de preços</span>}
+        <div className="desk-levels">{['entry','stop','target'].map((key,i)=><span key={key}>{['Entrada','Stop','Alvo'][i]}<b>{fmt(num(d.geometry?.[key+'_points']))}</b></span>)}<span>Lote<b>{data.decision.quantity} · manual</b></span></div>
       </div>
-      <div className="live-summary"><span>Aguardar contextual <b>{display(d.wait==null?null:d.wait*100,'%')}</b></span><span>Validade até <b>{clock(d.expires_at_ms)}</b></span><span>Horizonte <b>{inspected.context_settings.horizon_seconds}s</b></span><span>Economia <b>aguardar · lote 0</b></span></div>
-      <div className="live-summary"><span>Idade do fluxo na inspeção <b>{display(inspected.market.flow_ts_ms==null?null:Math.max(0,inspected.generated_at_ms-inspected.market.flow_ts_ms),' ms')}</b></span><span>Latência da avaliação aceita <b>{display(d.latency_ms,' ms')}</b></span><span>Última avaliação aceita <b>{clock(d.evaluated_at_ms)}</b></span><span>Recuo da API <b>{data.jev_retry_in_ms ? display(data.jev_retry_in_ms,' ms') : 'sem pausa'}</b></span></div>
-      {data.jev_error && <p role="status" className="notice error">{data.jev_error}</p>}
-      <p className="muted">100 × (peso contextual de compra − peso contextual de venda). Esses pesos e Noul não são probabilidade de lucro.</p>
-      <div className="capabilities">{[['Cotação atual','quote_fresh'],['Negócios','tape'],['Agressor','aggression'],['PriceDepth','price_depth'],['Tape integral','full_tape']].map(([label,key])=><span key={key} className={caps[key]===true?'tag green':'tag amber'}>{label}: {caps[key]===true?'disponível':'ausente / parcial'}</span>)}</div>
-      <div className="live-gauges">
-        <Gauge label="Delta observado · 5s" value={delta} extent={total} detail="Compra agressora − venda agressora; amostra parcial"/>
-        <Gauge label="Intensidade · 5s" value={tape?number(f.contracts_per_second):null} extent={100} suffix=" contratos/s" detail="Escala visual de 100 contratos/s; sem limiar operacional"/>
-        <Gauge label="Progressão · 5s" value={tape?number(f.price_change_points):null} extent={100} suffix=" pts" detail="Deslocamento da amostra; escala visual de 100 pontos"/>
-        <Gauge label="Absorção · apoio contextual" value={absorption?.support==null?null:absorption.support*100} suffix="%" detail="Hipótese independente; não implica reversão"/>
-        <Gauge label="Exaustão · apoio contextual" value={exhaustion?.support==null?null:exhaustion.support*100} suffix="%" detail="Depende da hipótese e da cobertura; não implica reversão"/>
-        <Gauge label="Desequilíbrio do livro" value={caps.price_depth?number(f.book_imbalance):null} extent={1} detail="Somente níveis observados; Excel RTD não confirma profundidade"/>
+      <div className={`decision-temperature ${temperature==null?'unavailable':temperature>=0?'buy':'sell'}`}>
+        <div className="desk-caption">JEV · DIREÇÃO</div><strong>{temperature==null?'—':`${temperature>0?'+':''}${fmt(temperature)}`}</strong>
+        <div className="bipolar"><span>+100 compra</span><div className="bipolar-track"><div className="zero-line"/><i style={{bottom:`${50+(temperature??0)/2}%`,opacity:temperature==null?0:1}}/><div className="thermal-fill" style={{bottom:temperature!=null&&temperature<0?`${50+temperature/2}%`:'50%',height:`${Math.abs(temperature??0)/2}%`}}/></div><span>−100 venda</span></div>
+        <small>{temperature==null?'indisponível':Math.abs(temperature)<60?'equilíbrio contextual':temperature>0?'favorável à compra':'favorável à venda'}</small><small>Aguardar {fmt(d.wait==null?null:d.wait*100,'%')}</small>
       </div>
-      <div className="trade-values">{[['Entrada','entry_points'],['Stop estrutural','stop_points'],['Alvo estrutural','target_points']].map(([label,key])=><div key={key}><span>{label}</span><strong>{d.geometry ? String(d.geometry[key]??'—') : '—'}</strong></div>)}</div>
-      <small>Geometria experimental baseada nos níveis observados. Sem comando de compra a mercado. Stop e alvo não garantem execução.</small>
-      <Chart label="Preço observado com horários de origem" option={{grid:{left:65,right:16,top:24,bottom:48},tooltip:{trigger:'axis'},xAxis:{type:'time',axisLabel:{color:'#8d96ad'}},yAxis:{type:'value',scale:true,axisLabel:{color:'#8d96ad'},splitLine:{lineStyle:{color:'#252c3d'}}},dataZoom:[{type:'inside'},{type:'slider',height:18,bottom:0}],series:[{id:'observed-price',type:'line',showSymbol:false,data:points,lineStyle:{color:'#91a2ff',width:2}}]}}/>
-      {!points.length && <p className="muted">Sem preços observados. Conecte sua fonte na configuração.</p>}
-    </section>
-  </>;
+      <div className="book-ladder"><div className="desk-caption">LIVRO <span>{book?'snapshot':'indisponível'}</span></div>
+        {books.length?books.map(row=><div className={`book-row ${row.side}`} key={row.side+row.price_points}><i style={{width:`${row.quantity/maxBook*100}%`}}/><span>{fmt(Number(row.price_points))}</span><b>{row.quantity}</b></div>):<div className="stream-empty">Selecione a tabela do livro no Excel</div>}
+        <small>{book?`Captura ${fmt(Math.max(0,now-book.captured_at_ms),' ms')} · origem ${book.market_ts_ms==null?'sem horário':fmt(Math.max(0,now-book.market_ts_ms),' ms')}`:'Sem profundidade observada'}</small>
+        <div className="depth-history" title="Mudanças de quantidades visíveis; causa desconhecida">{flow?.book_history.slice(-24).map((b,i)=>{const buy=b.bids.reduce((s,x)=>s+x.quantity,0),sell=b.asks.reduce((s,x)=>s+x.quantity,0);return <i key={i} style={{height:`${Math.max(2,Math.abs(buy-sell)/Math.max(1,buy+sell)*100)}%`,background:buy>=sell?'#53ddbb':'#ff6b87'}}/>;})}</div>
+        <small>Histórico de desequilíbrio visível · não identifica cancelamentos</small>
+      </div>
+    </div>
+    <div className="flow-pulse">
+      <div><span>Delta · 5s</span><b className={(delta??0)>=0?'green':'red'}>{fmt(delta)}</b><div className="pulse-track"><i style={{width:`${Math.min(100,Math.abs(delta??0)/Math.max(1,Number(f.total_contracts)||0)*100)}%`,background:(delta??0)>=0?'#53ddbb':'#ff6b87'}}/></div></div>
+      <div><span>Contratos / segundo</span><b>{fmt(intensity)}</b><div className="pulse-track"><i style={{width:`${Math.min(100,(intensity??0)/100*100)}%`}}/></div><small>Escala visual: 100/s</small></div>
+      <div className="delta-spark"><span>Delta acumulado · janela 5s</span><Chart reducedMotion={reduced} label="Delta acumulado observado" option={{grid:{left:8,right:8,top:6,bottom:6},xAxis:{type:'time',show:false},yAxis:{type:'value',show:false},series:[{type:'line',showSymbol:false,data:(flow?.delta_path||[]).map(x=>[x.ts_ms,x.delta_contracts]),lineStyle:{color:(delta??0)>=0?'#53ddbb':'#ff6b87',width:2}}]}}/></div>
+    </div>
+    <div className="desk-bottom">
+      <div className="tape-stream"><div className="desk-caption">NEGÓCIOS <span>{tape?'amostra · 5s':'indisponível'}</span></div><div className="tape-columns"><span>Hora / preço</span><span>Contratos / agressor</span></div>
+        {(flow?.recent_trades||[]).slice(-8).reverse().map(t=><div className={`tape-row ${t.aggressor}`} key={t.id} title={`ID ${t.id} · compradora ${t.buyer_broker||'ausente'} · vendedora ${t.seller_broker||'ausente'}`}><i style={{width:`${Math.min(100,t.quantity/50*100)}%`}}/><span>{new Date(t.ts_ms).toLocaleTimeString('pt-BR')}<b>{fmt(Number(t.price_points))}</b></span><strong>{t.quantity} <small>{sideName(t.aggressor)}</small></strong></div>)}
+        {!flow?.recent_trades.length&&<small>Negócios com identidade verificável ausentes.</small>}
+      </div>
+      <div className="broker-stream"><div className="desk-caption">CORRETORAS <span>saldo da janela</span></div>
+        {(flow?.brokers||[]).slice(0,6).map(b=><div className="broker-row" key={b.broker}><span>{b.broker}</span><div><i className={b.net_contracts>=0?'buy':'sell'} style={{width:`${Math.abs(b.net_contracts)/brokerMax*100}%`}}/></div><b className={b.net_contracts>=0?'green':'red'}>{b.net_contracts>0?'+':''}{b.net_contracts}</b></div>)}
+        {!flow?.brokers.length&&<small>Campos de corretora ausentes. Posição dos investidores desconhecida.</small>}
+        {!!flow?.brokers.length&&<small>Contrapartes observadas · {flow.broker_identified_trades} negócios com ambas identificadas. Não representa posição real.</small>}
+        {!!flow?.volume_at_price.length&&<details><summary>Volume At Price · agregado separado</summary>{flow.volume_at_price.slice(0,12).map(v=><div className="vap-row" key={v.price_points}>{fmt(v.price_points)}<b>{v.quantity}</b></div>)}<small>Janela da exportação, não somada ao tape.</small></details>}
+      </div>
+    </div>
+    <div className="desk-caption">FENÔMENOS · OBSERVADO LOCALMENTE + CONTEXTO INDEPENDENTE</div>
+    <div className="phenomena-grid">{['absorption','exhaustion','progression'].map(kind=><div key={kind}>{['sell','buy'].map(side=>{const h=data.market.hypotheses?.find(h=>h.kind===kind&&h.side===side);return h?<Phenomenon key={side} h={h} data={data}/>:<div className="phenomenon" key={side}><b>{kind==='absorption'?'Absorção':kind==='exhaustion'?'Exaustão':'Progressão'} · {sideName(side)}</b><small>Dados indisponíveis</small></div>;})}</div>)}</div>
+    <div className="desk-controls"><label><input type="checkbox" checked={reduced} onChange={e=>{setReduced(e.target.checked);localStorage.setItem('jeve-reduced-motion',String(e.target.checked));}}/>Movimento reduzido</label><span title="Após recebimento no frontend até dois frames; fonte e JEV medidos separadamente">Render p95 {fmt(latency.p95,' ms')} · {latency.count} amostras</span><span>JEV {fmt(d.latency_ms,' ms')}</span>{data.context_settings.sound_enabled&&<button onClick={()=>void enableAudio().then(()=>{setAudioReady(true);setAudioError(false);}).catch(()=>setAudioError(true))}><Volume2 size={14}/>{audioError?'Tentar áudio':audioReady?'Áudio ativo':'Habilitar áudio'}</button>}</div>
+    {data.jev_error&&<p role="status" className="desk-note amber">{data.jev_error}</p>}
+    <details className="desk-explanation"><summary>Qualidade da fonte, janelas e significado do índice</summary><p>100 × (P_compra − P_venda). Pesos contextuais e Nouls independentes não são chance de lucro. Entrada, stop e alvo são hipóteses; não enviam ordens.</p><p>5s atual, 5s anterior e 30s. Resposta do preço: {fmt(tape?num(f.signed_points_per_100_aggressed_contracts):null,' pontos / 100 agredidos')}. Intensidade vs. janela anterior: {fmt(tape?num(f.intensity_ratio_to_previous_5s):null,'×')}.</p><p>COM efetivo: {fmt(flow?.capture_evidence.polling_effective_ms??null,' ms')}; mudanças amostradas: {fmt(flow?.capture_evidence.rtd_change_interval_ms??null,' ms')}. Atraso da fonte desconhecido. Modalidade: {flow?.capture_evidence.window_mode||'não informada'}; filtros: {flow?.capture_evidence.filters||'não informados'}.</p><p>{data.market.warnings.join(' · ')}</p></details>
+    {data.source.ocr?.enabled&&<details className="desk-explanation"><summary>OCR auxiliar · {data.source.ocr.status} · parcial</summary><pre>{data.source.ocr.observation?.text||data.source.ocr.error||'Capturando região selecionada…'}</pre><p>Legibilidade não calibrada; perdas de negócios desconhecidas. Nenhum volume é somado ao Excel.</p></details>}
+  </section>;
 }

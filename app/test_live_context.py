@@ -131,6 +131,27 @@ class LiveCaptureTests(unittest.TestCase):
         self.assertEqual(alert.update(-90, valid=True, geometry=True, now_ms=22000)['side'], 'sell')
         self.assertIsNone(alert.update(None, valid=False, geometry=False, now_ms=23000))
 
+    def test_alert_reset_cannot_reuse_episode_identity(self):
+        from live_context import ContextAlert
+        alert = ContextAlert()
+        first = alert.update(90, valid=True, geometry=True, now_ms=1000)
+        alert.reset()
+        second = alert.update(90, valid=True, geometry=True, now_ms=2000)
+        self.assertNotEqual(first['id'], second['id'])
+
+    def test_wait_tie_or_insufficient_context_has_no_temperature(self):
+        from desktop_service import DecisionService
+        result = {'interpretation': {'selected_candidate_key':'a', 'context_by_candidate':{'a':dict(support=.9, contradiction=.1, insufficient=.1)},
+                  'choice':dict(selected='buy_continuation', exact_tie=False, raw={'probabilities':dict(buy_continuation=.95, sell_continuation=.02, wait=.03)})}}
+        self.assertEqual(DecisionService.context_temperature(result), 93)
+        for key, value in [('selected','wait'), ('exact_tie',True)]:
+            old = result['interpretation']['choice'][key]
+            result['interpretation']['choice'][key] = value
+            self.assertIsNone(DecisionService.context_temperature(result))
+            result['interpretation']['choice'][key] = old
+        result['interpretation']['context_by_candidate']['a']['insufficient'] = .8
+        self.assertIsNone(DecisionService.context_temperature(result))
+
     def test_service_config_is_persistent_secret_is_not_in_snapshot_and_late_result_expires(self):
         from desktop_service import DecisionService
         class Vault:
@@ -190,10 +211,13 @@ class LiveCaptureTests(unittest.TestCase):
                     probabilities={'buy_continuation':.95,'sell_continuation':.02,'wait':.03})
                 finished.set()
                 return dict(model='jev-1.13.0', answers=answers, usage=dict(input_tokens=1000, output_tokens=100))
-        with tempfile.TemporaryDirectory() as directory, patch('desktop_service.ExcelCollector', Collector), patch('desktop_service.time.time', return_value=now/1000):
+        with tempfile.TemporaryDirectory() as directory, patch('desktop_service.ExcelCollector', Collector), patch('desktop_service.time.time', return_value=now/1000) as source_clock:
             service = DecisionService(directory, client_factory=Client)
             try:
                 service.api_key = 'local-fixture-only'
+                service.command('jev.set_enabled', {'enabled':True})
+                service.command('costs.update', {**service.snapshot()['costs'], 'verified':True, 'source':'offline fixture'})
+                service.command('account.update', dict(equity_brl='400', available_margin_brl='400', revision=service.store.account().revision))
                 service.command('source.excel', dict(symbol='WINV26', workbook='Mesa.xlsx', quote_sheet='Cotacoes', quote_range='A1:F2', tape_sheet='Negocios', tape_range='A1:F1000'))
                 service.tick()
                 self.assertTrue(finished.wait(2))
@@ -210,13 +234,36 @@ class LiveCaptureTests(unittest.TestCase):
                 self.assertTrue(any(h['family']=='exhaustion' for h in state['hypothesis_context']))
                 for _ in range(10): service.tick()
                 self.assertEqual(len(calls), 1)
+                from dataclasses import replace
+                service.costs = replace(service.costs, verified=False)
+                self.assertFalse(service.alert_conditions(service.latest_jev))
+                service.costs = replace(service.costs, verified=True)
+                service.store.update_account(dict(equity_brl='400', available_margin_brl='0'), service.store.account().revision)
+                self.assertFalse(service.alert_conditions(service.latest_jev))
+                service.store.update_account(dict(equity_brl='400', available_margin_brl='400'), service.store.account().revision)
+                old_episode = state['alert']['episode']
+                service.command('source.disconnect', {})
+                self.assertIsNone(service.snapshot()['alert']['episode'])
+                with patch('desktop_service.time.time', return_value=(now+1000)/1000):
+                    service.command('source.excel', dict(symbol='WINV26', workbook='Mesa.xlsx', quote_sheet='Cotacoes', quote_range='A1:F2', tape_sheet='Negocios', tape_range='A1:F1000'))
+                    service.tick()
+                    for _ in range(100):
+                        service.tick()
+                        if not service.pending_jev: break
+                        time.sleep(.001)
+                    reconnected = service.snapshot()
+                    self.assertTrue(reconnected['alert']['active'])
+                    self.assertNotEqual(old_episode['id'], reconnected['alert']['episode']['id'])
+                    self.assertEqual(reconnected['alert']['episode']['candidate_key'], reconnected['directional']['candidate_key'])
+                now += 1000
+                source_clock.return_value = now/1000
                 service.credential_revision += 1
                 self.assertIsNone(service.snapshot()['directional']['temperature'])
                 service.command('context.configure', {'validity_ms':500})
                 with patch('desktop_service.time.time', return_value=(now+600)/1000):
                     with self.assertRaisesRegex(ValueError, 'validade'):
                         service.request_jev()
-                    self.assertEqual(len(calls), 1)
+                    self.assertEqual(len(calls), 2)
                 with patch('desktop_service.time.time', return_value=(now+3000)/1000):
                     self.assertIsNone(service.snapshot()['directional']['temperature'])
                     self.assertFalse(service.snapshot()['alert']['active'])

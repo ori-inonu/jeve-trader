@@ -4,6 +4,7 @@ from decimal import Decimal
 import json
 import sqlite3
 from zoneinfo import ZoneInfo
+from context_cycle import observed_flow_context
 
 
 class ContextCadence:
@@ -36,6 +37,10 @@ class ContextAlert:
         self.armed = True
         self.last_ms = -1_000_000
         self.sequence = 0
+
+    def reset(self):
+        # A new capture/settings revision starts a new episode, never a reused ID.
+        self.armed, self.last_ms = True, -1_000_000
 
     def update(self, temperature, *, valid, geometry, now_ms, threshold=80, rearm=60, cooldown_ms=15000):
         # Missing data cannot rearm an episode. A measured neutral interval can.
@@ -85,12 +90,13 @@ def relevant_projection(market, rows, revision):
     import hashlib
     def stable(value):
         if isinstance(value, dict):
-            return {k: stable(v) for k,v in value.items() if k not in ('ts_ms', 'start_exclusive_ms', 'end_inclusive_ms', 'observed_at_ms', 'last_event_ts_ms', 'coverage_start_ms')}
+            return {k: stable(v) for k,v in value.items() if k not in ('ts_ms', 'start_exclusive_ms', 'end_inclusive_ms', 'observed_at_ms', 'last_event_ts_ms', 'coverage_start_ms', 'captured_at_ms', 'received_at_ms', 'market_ts_ms')}
         if isinstance(value, list):
             return [stable(v) for v in value]
         return value
     state = dict(symbol=market['symbol'], generation=market['source_generation'], revision=revision,
                  features=stable(market['computed_features']), coverage=stable(market['evidence_coverage']),
+                 order_flow=stable(observed_flow_context(market)), phenomena=stable(market.get('hypotheses',[])),
                  rows=stable(rows))
     return hashlib.sha256(json.dumps(state, sort_keys=True, allow_nan=False).encode()).hexdigest()
 

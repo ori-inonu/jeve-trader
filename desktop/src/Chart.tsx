@@ -6,7 +6,7 @@ import {CanvasRenderer} from 'echarts/renderers';
 
 echarts.use([LineChart, BarChart, GridComponent, TooltipComponent, MarkLineComponent, DataZoomComponent, CanvasRenderer]);
 
-export function Chart({option, label='Gráfico'}:{option:echarts.EChartsCoreOption;label?:string}) {
+export function Chart({option, label='Gráfico', reducedMotion=false}:{option:echarts.EChartsCoreOption;label?:string;reducedMotion?:boolean}) {
   const element = useRef<HTMLDivElement>(null);
   const instance = useRef<echarts.EChartsType|null>(null);
   useEffect(() => {
@@ -17,7 +17,7 @@ export function Chart({option, label='Gráfico'}:{option:echarts.EChartsCoreOpti
     return () => {observer.disconnect(); instance.current = null; chart.dispose();};
   }, []);
   useEffect(() => {
-    instance.current?.setOption({...option, animation:!matchMedia('(prefers-reduced-motion: reduce)').matches, animationDurationUpdate:180});
-  }, [option]);
+    instance.current?.setOption({...option, animation:!reducedMotion&&!matchMedia('(prefers-reduced-motion: reduce)').matches, animationDurationUpdate:180});
+  }, [option,reducedMotion]);
   return <div ref={element} className="chart" role="img" aria-label={label}/>;
 }

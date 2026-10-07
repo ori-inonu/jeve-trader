@@ -100,6 +100,11 @@ class ObservationSession:
         self.chart = deque(maxlen=500)
         self.warnings = []
         self.last_quote = None
+        self.last_book = None
+        self.book_history = deque(maxlen=64)
+        self.volume_at_price = []
+        self.source_capabilities = {}
+        self.capture_evidence = {}
 
     def reset(self, symbol=None):
         if symbol:
@@ -109,6 +114,11 @@ class ObservationSession:
         self.chart.clear()
         self.warnings = []
         self.last_quote = None
+        self.last_book = None
+        self.book_history.clear()
+        self.volume_at_price = []
+        self.source_capabilities = {}
+        self.capture_evidence = {}
         self.source_generation += 1
 
     def demo(self, mode="progression", side="buy") -> dict:
@@ -119,6 +129,8 @@ class ObservationSession:
         for event in fixture["events"]:
             if event["type"] == "book":
                 self.engine.set_book(event)
+                self.last_book = {**event, 'market_ts_ms':event['ts_ms'], 'captured_at_ms':event['ts_ms'], 'kind':'synthetic_book_snapshot'}
+                self.book_history.append(deepcopy(self.last_book))
             elif self.engine.add_trade(event)["accepted"]:
                 self.chart.append((event["ts_ms"], float(event["price_points"])))
         self.clock_ms = fixture["now_ms"]
@@ -145,8 +157,19 @@ class ObservationSession:
             result = self.engine.add_trade(data)
             if result["accepted"]:
                 self.chart.append((data["ts_ms"], float(data["price_points"])))
-            elif result["reason"] != "DUPLICATE_ID":
+            elif result["reason"] not in ("DUPLICATE_ID", "DUPLICATE_TRADE"):
                 self.warnings.append("Evento rejeitado: " + result["reason"])
+        self.source_capabilities = dict(batch.capabilities)
+        self.capture_evidence = {**batch.evidence, "received_at_ms": int(time.time() * 1000)}
+        self.volume_at_price = list(batch.aggregates)
+        for book in batch.books:
+            if book.get("market_ts_ms") is not None:
+                result = self.engine.set_book({**book, "ts_ms": book["market_ts_ms"]})
+                if not result["accepted"] and result["reason"] != "DUPLICATE_BOOK":
+                    self.warnings.append("Snapshot do livro rejeitado: " + result["reason"])
+                    continue
+            self.last_book = deepcopy(book)
+            self.book_history.append(deepcopy(book))
         for quote in batch.quotes:
             self.last_quote = quote
             # RTD DAT/HOR is not established as each book update's timestamp.
@@ -175,6 +198,10 @@ class ObservationSession:
         state["source_generation"] = self.source_generation
         state["warnings"] = list(self.warnings)
         state["last_quote"] = vars(self.last_quote) if self.last_quote is not None else None
+        state["order_flow"].update({"book": deepcopy(self.last_book), "book_history": list(self.book_history),
+                                    "volume_at_price": list(self.volume_at_price),
+                                    "source_capabilities": dict(self.source_capabilities),
+                                    "capture_evidence": dict(self.capture_evidence)})
         return state
 
 

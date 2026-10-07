@@ -11,6 +11,8 @@ Definir uma central dinâmica de decisão sustentada pelas fontes realmente disp
 
 ## Notes
 
+Incremento aprovado nesta conversa: [Mesa de fluxo](spec.md), especificação `ready` de 2026-10-07. Implementação local e evidência em [implementation-evidence.md](implementation-evidence.md), com revisão em [review-evidence.md](review-evidence.md). O estado de cada aceite é registrado separadamente do código; FW-06/FW-11/FW-12 não são encerrados por testes sintéticos ou por instalação.
+
 Em 2026-10-07 Gabriel autorizou “Implement the proposed plan”. [Implementação da central ao vivo](implementation.md) é o único incremento técnico em execução nesta sessão, com marcos internos A/B. A captura real continua pendente de arquivo, campos e contrato identificados; a licença DLL não está confirmada.
 
 Pedido atual de Gabriel: investigar com Wayfinder; instalar no computador com ícone; controlar commits/GitHub e apresentar atualizações. A autorização de instalação e atualização permite executar este incremento, além da pesquisa documental. Os mapas anteriores de [contratos](../wayfinder-evolucao-decisao/map.md) e [oportunidades](../wayfinder-proximas-oportunidades/map.md) permanecem com seu escopo original; não representam funcionalidades entregues.
@@ -27,7 +29,7 @@ Respostas humanas registradas: alertas experimentais identificados; horizonte de
 
 ## Next step
 
-[Piloto com dados reais](issues/04-piloto-real.md) permanece aberto. Confirmar o arquivo Excel, planilhas/intervalos, campos exportados e contrato WIN. A primeira verificação será do que a fonte realmente entrega e de sua atualidade; depois implementar e medir o ciclo e o termômetro. A pesquisa dos tickets 01/02 não significa integração ou interface já entregue.
+[Piloto com dados reais](issues/04-piloto-real.md) permanece aberto. A mesa, o controle OFF e os contratos de captura foram implementados e verificados localmente; confirmar arquivo Excel, planilhas/intervalos, campos exportados e contrato WIN para demonstrar atualização e cobertura reais. Medir 30 minutos, p95 após recebimento, atraso da fonte e latência JEV separadamente; colher reação humana lado a lado com Profit. Captura OCR textual é auxiliar e parcial, ainda sem validação de negócios/livro estruturados. Comparação contextual com inferências reais depende de casos autorizados e orçamento conhecido.
 
 ## Not yet specified
 

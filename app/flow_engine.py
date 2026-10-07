@@ -161,6 +161,11 @@ class FlowEngine:
                 raise ValueError("Invalid aggressor")
             trade = {"id": identity, "symbol": self.symbol, "ts_ms": ts, "price_points": price,
                      "quantity": quantity, "aggressor": aggressor.lower()}
+            for key in ("buyer_broker", "seller_broker"):
+                broker = event.get(key)
+                if broker is not None and (not isinstance(broker, str) or not broker.strip() or len(broker) > 80):
+                    raise ValueError("Invalid broker identity")
+                trade[key] = broker
             if identity in self.ids:
                 conflict = trade != self.ids[identity]
                 return self._reject("CONFLICTING_TRADE_ID" if conflict else "DUPLICATE_TRADE", "duplicates", conflict)
@@ -271,6 +276,7 @@ class FlowEngine:
         visible_bid = sum(q for _, q in book["bids"]) if book_fresh else None
         visible_ask = sum(q for _, q in book["asks"]) if book_fresh else None
         features = {**current, "windows": windows, "source": "normalized_event_calculation",
+                    "price_progression_ticks": _text(_decimal(current["price_change_points"]) / self.tick) if current["price_change_points"] is not None else None,
                     "spread_points": _text(ask - bid) if book_fresh else None,
                     "visible_bid_contracts": visible_bid, "visible_ask_contracts": visible_ask,
                     "book_imbalance": _text(Decimal(visible_bid - visible_ask) / (visible_bid + visible_ask)) if book_fresh else None,
@@ -293,7 +299,29 @@ class FlowEngine:
                 "observations": {"hypotheses": hypotheses, "description": "Observed flow patterns; no future outcome estimate.",
                                  "rule_status": self.rules["status"]},
                 "computed_features": features, "evidence_coverage": coverage, "hypotheses": hypotheses,
+                "order_flow": self.observed_flow(now_ms),
                 "actionable_live_signal": False, "strategy_validated": False, "win_probability": None}
+
+    def observed_flow(self, now_ms):
+        trades = [t for t in self.trades if now_ms - self.rules["short_window_ms"] < t["ts_ms"] <= now_ms]
+        brokers, path, delta = {}, [], 0
+        for trade in trades:
+            qty = trade["quantity"]
+            delta += qty if trade["aggressor"] == "buy" else -qty if trade["aggressor"] == "sell" else 0
+            path.append({"ts_ms": trade["ts_ms"], "delta_contracts": delta})
+            for key, side in (("buyer_broker", "buy"), ("seller_broker", "sell")):
+                name = trade.get(key)
+                if name:
+                    row = brokers.setdefault(name, {"broker": name, "buy_contracts": 0, "sell_contracts": 0, "net_contracts": 0})
+                    row[side + "_contracts"] += qty
+                    row["net_contracts"] += qty if side == "buy" else -qty
+        return {"window_ms": self.rules["short_window_ms"],
+                "recent_trades": [{**t, "price_points": _text(t["price_points"])} for t in trades[-40:]],
+                "delta_path": path[-400:],
+                "brokers": sorted(brokers.values(), key=lambda row: (-abs(row["net_contracts"]), row["broker"]))[:20],
+                "broker_identified_trades": sum(bool(t.get("buyer_broker") and t.get("seller_broker")) for t in trades),
+                "broker_scope": "Saldo da janela observada; não representa posição de investidores.",
+                "investor_positions_known": False}
 
     def _hypotheses(self, current, previous, reasons, book_fresh, now_ms):
         result = []
@@ -306,6 +334,9 @@ class FlowEngine:
         def record(kind, side, condition, missing, evidence, description):
             status = "inconclusive" if missing else ("observed" if kind == "progression" else "potential") if condition else "not_observed"
             result.append({"id": f"{kind}_{side}", "kind": kind, "side": side, "status": status,
+                           "aggressor_side": side if side in ("buy", "sell") else None,
+                           "scenario_side": ("sell" if side == "buy" else "buy") if kind == "absorption" else side if kind == "progression" else None,
+                           "scenario_effect": "weakens_aggressor_without_confirming_reversal" if kind == "exhaustion" else "supports_opposite_scenario_hypothesis" if kind == "absorption" else "supports_aggressor_scenario" if kind == "progression" else "observed_liquidity_only",
                            "description": description, "evidence": evidence, "missing": list(dict.fromkeys(missing)),
                            "descriptive_only": True, "future_profit_probability": None})
 

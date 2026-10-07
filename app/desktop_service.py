@@ -24,7 +24,8 @@ from live_context import PilotBudget, ContextCadence, ContextAlert, DEFAULT_LIVE
 from decision_engine import AccountState, CostSchedule, MarketSnapshot, compare_plans, select_plan
 from decision_store import DecisionStore
 from jev_client import JevClient
-from profit_bridge import CombinedExcelBridge, SourceBatch, MarketEvent, QuoteSnapshot, SourceHealth, read_csv_events
+from profit_bridge import CombinedExcelBridge, SourceBatch, MarketEvent, QuoteSnapshot, SourceHealth, RtdThrottleGuard, read_csv_events
+from profit_ocr import capture_profit, profit_windows, validate_selection, OcrPolicyError
 from release_updates import check_for_updates, current_version, update_state, trusted_release_url
 
 EXPERIMENT_RESOURCES = ('desktop_service.py', 'app_core.py', 'app_store.py', 'capital_example.py',
@@ -32,14 +33,15 @@ EXPERIMENT_RESOURCES = ('desktop_service.py', 'app_core.py', 'app_store.py', 'ca
                         'candidate_research.py', 'flow_engine.py', 'profit_bridge.py', 'recommendation_engine.py',
                         'jev_client.py', 'copilot.py', 'capital_planner.py', 'risk.py', 'risk_research.py',
                         'config.json', 'flow_rules.json', 'observer_questions.json')
-EXPERIMENT_RESOURCES += ('live_context.py', 'credential_vault.py', 'context_cycle.py', 'context_identity.py')
+EXPERIMENT_RESOURCES += ('live_context.py', 'credential_vault.py', 'context_cycle.py', 'context_identity.py', 'profit_ocr.py', 'profit_ocr.ps1')
 
 
 def batch_from_wire(data):
     health = data['health']
-    return SourceBatch(tuple(MarketEvent(x.get('id'), x['symbol'], x['ts_ms'], x['price_points'], x['quantity'], x['aggressor']) for x in data['events']),
+    return SourceBatch(tuple(MarketEvent(x.get('id'), x['symbol'], x['ts_ms'], x['price_points'], x['quantity'], x['aggressor'], x.get('buyer_broker'),x.get('seller_broker')) for x in data['events']),
                        tuple(QuoteSnapshot(**x) for x in data['quotes']),
-                       SourceHealth(**{k: health[k] for k in SourceHealth.__dataclass_fields__ if k in health}), tuple(data.get('warnings', [])))
+                       SourceHealth(**{k: health[k] for k in SourceHealth.__dataclass_fields__ if k in health}), tuple(data.get('warnings', [])),
+                       tuple(data.get('books',[])),tuple(data.get('aggregates',[])),dict(data.get('capabilities',{})),dict(data.get('evidence',{})))
 
 
 def own_command(*args):
@@ -74,7 +76,7 @@ class ExcelCollector:
     def poll(self):
         try:
             value = self.responses.get_nowait()
-            self.pending_at = None
+            if 'batch' in value or 'error' in value: self.pending_at = None
             return value
         except queue.Empty:
             pass
@@ -91,7 +93,11 @@ class ExcelCollector:
 
     def close(self):
         if self.process.poll() is None:
-            self.process.terminate()
+            try:
+                self._write({'close':True})
+                self.process.wait(timeout=2)
+            except (OSError, ValueError, subprocess.TimeoutExpired):
+                self.process.terminate()
             try:
                 self.process.wait(timeout=2)
             except subprocess.TimeoutExpired:
@@ -100,6 +106,14 @@ class ExcelCollector:
         for stream in (self.process.stdin, self.process.stdout):
             if stream:
                 stream.close()
+        result = None
+        while not self.responses.empty():
+            value = self.responses.get_nowait()
+            if 'rtd' in value: result = value['rtd']
+        return result
+
+    def control(self, value):
+        self._write(value)
 
 
 class DecisionService:
@@ -120,6 +134,10 @@ class DecisionService:
         self.client_factory = client_factory
         self.engine_session_id = str(uuid.uuid4())
         self.credential_revision = 0
+        # Permission to spend is deliberately not restored from disk.
+        self.jev_enabled = False
+        self.control_revision = 0
+        self.pending_call_id = None
         self.context_settings = dict(DEFAULT_LIVE_SETTINGS)
         saved_context = self.store.db.execute("SELECT body FROM state WHERE key='live_context'").fetchone()
         if saved_context:
@@ -139,6 +157,18 @@ class DecisionService:
         self.update_results = queue.Queue()
         self.discovery_results = queue.Queue()
         self.discovery = dict(status='idle', workbooks=[], scope='attached_excel_instance', cells_read=False)
+        self.source_audit = dict(status='idle', tables=[])
+        self.ocr = dict(enabled=False,status='off',windows=[],config={})
+        self.ocr_results = queue.Queue()
+        self.ocr_pending = False
+        self.ocr_revision = 0
+        self.ocr_next = 0.
+        self.rtd_state = dict(status='unchanged', enabled=False, current_ms=None, previous_ms=None)
+        rtd_recovery = self.store.db.execute("SELECT body FROM state WHERE key='rtd_recovery'").fetchone()
+        if rtd_recovery:
+            previous = json.loads(rtd_recovery[0])
+            if previous.get('enabled') or previous.get('status')=='restore_unconfirmed':
+                self.rtd_state = {**previous,'enabled':False,'status':'restore_unconfirmed'}
         self.update_checker = update_checker
         self.updates = update_state(current_version())
         self.collector = None
@@ -187,8 +217,9 @@ class DecisionService:
             key = interpretation['selected_candidate_key']
             dimensions = interpretation['context_by_candidate'].get(key)
             candidate = next((c for c in latest['bundle']['candidates'] if c['candidate_key']==key), None)
-            directional.update(temperature=100*(scores['buy_continuation']-scores['sell_continuation']), wait=scores['wait'],
-                               selected=choice['selected'], candidate_key=key, geometry=candidate['geometry'] if candidate else None,
+            temperature = self.context_temperature(latest)
+            directional.update(temperature=temperature, wait=scores['wait'],
+                               selected=choice['selected'], candidate_key=key, geometry=candidate['geometry'] if candidate and temperature is not None else None,
                                expires_at_ms=latest['expires_at_ms'], evaluated_at_ms=latest['submitted_at_ms'], latency_ms=latest['latency_ms'])
         history = self.store.history(200)
         equity_history = []
@@ -202,17 +233,25 @@ class DecisionService:
                 'market': market, 'account': account.to_dict(), 'costs': asdict(self.costs), 'decision': main,
                 'alternatives': plans[1:], 'technical': technical, 'context': dimensions,
                 'jev': {'configured': bool(self.api_key), 'calls': self.api_calls, 'limit': self.api_limit,
+                        'enabled': self.jev_enabled, 'control_revision': self.control_revision,
+                        'pending_call': self.pending_call_id,
+                        'status': ('pending' if self.jev_enabled else 'draining') if self.pending_jev else ('enabled' if self.jev_enabled else 'off'),
                         'pending': self.pending_jev, 'current': latest is not None, 'model': 'jev-1.13.0', 'financial_probability': None},
                 'directional': directional, 'context_settings': dict(self.context_settings),
                 'context_by_candidate': latest['interpretation']['context_by_candidate'] if latest else {},
-                'hypothesis_context': [dict(candidate_key=c['candidate_key'], family=c['family'], side=c['side'],
+                'hypothesis_context': [dict(candidate_key=c['candidate_key'], family=c['family'], side=c['side'], aggressor_side=c['aggressor_side'],scenario_side=c['scenario_side'],literal_premise=c['literal_premise'],
                     dimensions=latest['interpretation']['context_by_candidate'][c['candidate_key']])
                     for c in latest['bundle']['candidates']+latest['bundle']['absorption_candidates']+latest['bundle']['exhaustion_candidates']] if latest else [],
                 'budget': self.budget.snapshot(int(time.time()*1000)), 'jev_error': self.jev_error,
                 'jev_retry_in_ms': max(0, self.cadence.retry_at_ms-int(time.time()*1000)),
-                'alert': dict(episode=self.last_alert, active=bool(latest and self.last_alert and self.last_alert.get('side')==({'buy_continuation':'buy','sell_continuation':'sell'}.get(directional['selected'])) and self.alert_conditions(latest) and self.context_settings['alerts_enabled'])),
+                'alert': dict(episode=self.last_alert, active=bool(latest and self.last_alert
+                    and self.last_alert.get('source_generation') == self.session.source_generation
+                    and self.last_alert.get('engine_session_id') == self.engine_session_id
+                    and self.last_alert.get('side')==({'buy_continuation':'buy','sell_continuation':'sell'}.get(directional['selected']))
+                    and self.alert_conditions(latest) and self.context_settings['alerts_enabled'])),
                 'source': {'error': self.source_error, 'excel_running': self.collector is not None, 'config': self.source_config,
                            'discovery': dict(self.discovery),
+                           'audit': dict(self.source_audit), 'rtd': dict(self.rtd_state), 'ocr': dict(self.ocr),
                            'capabilities': capabilities, 'reconnect_enabled': self.reconnect_enabled,
                            'retry_in_ms': max(0, int((self.retry_at-time.monotonic())*1000)) if self.reconnect_enabled and not self.collector else None,
                            'observed_at_ms': market['evidence_coverage'].get('source_quality', {}).get('observed_at_ms')},
@@ -230,7 +269,8 @@ class DecisionService:
         original = [c['geometry'] for c in result.get('bundle', {}).get('candidates', [])]
         fields = ('id', 'premise', 'hypothesis_version', 'entry_points', 'stop_points', 'target_points')
         same = all(any(all(str(row.get(k)) == str(old.get(k)) for k in fields) for row in current) for old in original)
-        return (same and self.session.mode == 'excel_observation' and can_classify(market, now_ms=now)[0]
+        return (self.jev_enabled and result.get('control_revision') == self.control_revision
+                and same and self.session.mode == 'excel_observation' and can_classify(market, now_ms=now)[0]
                 and result.get('credential_revision') == self.credential_revision
                 and result.get('parameter_revision') == self.context_settings['revision']
                 and result.get('costs') == asdict(self.costs)
@@ -247,7 +287,10 @@ class DecisionService:
         return dict(quote=quote is not None, quote_fresh=quote_fresh, tape=tape,
                     aggression=tape and features.get('unknown_aggressor_contracts') != features.get('total_contracts'),
                     price_depth=bool(coverage.get('book_fresh')), full_tape=coverage.get('source_quality', {}).get('full_tape') is True,
-                    limitations=['Excel é captura parcial; não comprova continuidade.', 'Sem PriceDepth autorizado: desequilíbrio completo e cancelamentos indisponíveis.'])
+                    book_snapshot=bool(market.get('order_flow',{}).get('book')),
+                    buyer_broker=bool(market.get('order_flow',{}).get('source_capabilities',{}).get('buyer_broker')),
+                    seller_broker=bool(market.get('order_flow',{}).get('source_capabilities',{}).get('seller_broker')),
+                    limitations=['Excel é captura parcial; não comprova continuidade.', 'Snapshots do livro não comprovam cancelamentos nem tape integral.'])
 
     def save_state(self, key, value):
         with self.store.db:
@@ -286,7 +329,13 @@ class DecisionService:
             self.session.clock_ms = fixture['now_ms']
             self.session.engine.set_source_quality(fixture['source_quality'])
             for event in fixture['events']:
-                (self.session.engine.add_trade if event['type']=='trade' else self.session.engine.set_book)(event)
+                if event['type']=='trade':
+                    if self.session.engine.add_trade(event)['accepted']:
+                        self.session.chart.append((event['ts_ms'], float(event['price_points'])))
+                elif self.session.engine.set_book(event)['accepted']:
+                    book = {**event, 'market_ts_ms':event['ts_ms'], 'captured_at_ms':event['ts_ms'], 'kind':'synthetic_book_snapshot'}
+                    self.session.last_book = book
+                    self.session.book_history.append(book)
             self.session.warnings = ['Demonstração histórica sintética, sem dados atuais da B3.']
         elif method == 'account.update':
             self.store.update_account({k: v for k, v in params.items() if k != 'revision'}, params.get('revision'))
@@ -308,14 +357,16 @@ class DecisionService:
             import re
             if not isinstance(symbol, str) or re.fullmatch(r'WIN[FGHJKMNQUVXZ]\d{2}', symbol) is None:
                 raise ValueError('Informe o contrato WIN vigente')
-            allowed = ('symbol', 'workbook', 'quote_sheet', 'quote_range', 'tape_sheet', 'tape_range')
-            if set(params) != set(allowed) or any(not isinstance(v, str) or len(v)>256 or (not v.strip() and k not in ('tape_sheet','tape_range')) for k,v in params.items()):
+            required = {'symbol', 'workbook', 'quote_sheet', 'quote_range', 'tape_sheet', 'tape_range'}
+            optional = {'book_sheet','book_range','vap_sheet','vap_range','window_mode','filters'}
+            if not required <= set(params) or set(params)-required-optional or any(not isinstance(v, str) or len(v)>256 or (not v.strip() and k in ('symbol','workbook','quote_sheet','quote_range')) for k,v in params.items()):
                 raise ValueError('Informe pasta, planilhas e intervalos válidos')
-            if bool(params['tape_sheet']) != bool(params['tape_range']):
-                raise ValueError('Informe ambos os campos de negócios ou deixe ambos vazios')
             from profit_bridge import _validate_range
             _validate_range(params['quote_range'])
-            if params['tape_sheet']: _validate_range(params['tape_range'])
+            for kind in ('tape','book','vap'):
+                if bool(params.get(kind+'_sheet')) != bool(params.get(kind+'_range')):
+                    raise ValueError('Informe planilha e intervalo juntos: '+kind)
+                if params.get(kind+'_sheet'): _validate_range(params[kind+'_range'])
             self.disconnect()
             self.source_config = params
             self.reconnect_enabled = True
@@ -325,6 +376,23 @@ class DecisionService:
             self.settings.save_settings(dict(symbol=symbol, workbook=params['workbook'], sheet=params['quote_sheet'], cell_range=params['quote_range'], tape_sheet=params['tape_sheet'], tape_range=params['tape_range']))
             self.session.reset(symbol)
             self.session.mode = 'excel_observation'
+        elif method in ('source.audit','source.rtd'):
+            if not self.collector: raise ValueError('Conecte o perfil Excel primeiro')
+            if method == 'source.rtd':
+                if set(params) != {'enabled'} or type(params['enabled']) is not bool: raise ValueError('Informe enabled como booleano')
+                self.collector.control({'throttle':params['enabled']})
+            else:
+                self.source_audit = dict(status='checking',tables=[])
+                self.collector.control({'audit':True})
+        elif method == 'source.ocr_windows':
+            self.ocr['windows'] = profit_windows()
+        elif method == 'source.ocr':
+            if type(params.get('enabled')) is not bool or set(params)-{'enabled','selection'}:
+                raise ValueError('Informe enabled e uma região selecionada')
+            config = validate_selection(params.get('selection',{})) if params['enabled'] else {}
+            self.ocr_revision += 1
+            self.ocr = dict(enabled=params['enabled'],status='ready' if params['enabled'] else 'off',
+                            windows=self.ocr['windows'],config=config)
         elif method == 'source.disconnect':
             self.disconnect()
             self.reconnect_enabled = False
@@ -338,6 +406,19 @@ class DecisionService:
             self.session.reset(params.get('symbol') or (batch.events[0].symbol if batch.events else 'WIN_SIM'))
             self.session.ingest(batch, replay=True)
             self.store.record('replay_input', batch.to_dict())
+        elif method == 'jev.set_enabled':
+            if set(params) != {'enabled'} or type(params['enabled']) is not bool:
+                raise ValueError('Informe enabled como booleano')
+            if params['enabled'] != self.jev_enabled:
+                self.jev_enabled = params['enabled']
+                self.control_revision += 1
+                self.latest_jev = None
+                self.last_alert = None
+                self.alert.reset()
+                self.cadence.last_projection = None
+                self.cadence.retry_at_ms = 0
+                self.cadence.retry_delay_ms = 3000
+                self.jev_error = None
         elif method == 'jev.configure':
             key, limit = params.get('api_key', ''), params.get('limit', 10000)
             if not isinstance(key, str) or len(key)>4096 or type(limit) is not int or not 1 <= limit <= 10000:
@@ -360,7 +441,7 @@ class DecisionService:
             self.budget.daily = Decimal(configured['daily_limit_usd'])
             self.budget.total = Decimal(configured['total_limit_usd'])
             self.latest_jev = None
-            self.alert = ContextAlert()
+            self.alert.reset()
             self.last_alert = None
         elif method == 'jev.evaluate':
             self.request_jev()
@@ -382,6 +463,8 @@ class DecisionService:
         threading.Thread(target=check, daemon=True).start()
 
     def request_jev(self):
+        if not self.jev_enabled:
+            raise ValueError('JEV desligado; coleta e cálculos locais continuam ativos')
         if not self.api_key or self.pending_jev or self.api_calls >= self.api_limit:
             raise ValueError('Configure a chave e confira o limite de chamadas da sessão')
         market = self.session.snapshot()
@@ -408,38 +491,84 @@ class DecisionService:
         envelope = dict(experiment_schema_version=2, call_id=call_id, state=state, questions=questions, bundle=bundle,
                         questions_sha256=bundle['question_set_hash'], parameter_revision=self.context_settings['revision'],
                         credential_revision=self.credential_revision,
+                        control_revision=self.control_revision,
                         expires_at_ms=min(submitted_ms, market['flow_ts_ms'])+self.context_settings['validity_ms'],
                         code_sha256=self.code_hash, policy_version=bundle['question_version'], model_requested='jev-1.13.0',
                         submitted_at_ms=submitted_ms, clock_unit='unix_ms', latency_ms=None, api_cost_brl=None,
                         costs=asdict(self.costs), account=self.store.account().to_dict(),
                         flow_ts_ms=market.get('flow_ts_ms'), source_ts_ms=market['ts_ms'], source_generation=self.session.source_generation, account_revision=self.store.account().revision, mode=self.session.mode)
-        self.store.record('jev_submitted', envelope)
+        try:
+            self.store.record('jev_submitted', envelope)
+        except sqlite3.Error:
+            self.cadence.finish()
+            raise
         key = self.api_key
         self.jev_error = None
         self.pending_jev = True
+        self.pending_call_id = call_id
         self.api_calls += 1
         self.api_last_at = time.monotonic()
         def evaluate():
             try:
-                response = self.client_factory(api_key=key, timeout_seconds=3).evaluate(state, questions)
+                client = self.client_factory(api_key=key, timeout_seconds=3)
+                # No retries in the HTTP adapter. A request already dispatched
+                # may finish after OFF; its control revision cannot become live.
+                if not self.jev_enabled or envelope['control_revision'] != self.control_revision:
+                    self.results.put({'cancelled': envelope})
+                    return
+                response = client.evaluate(state, questions)
                 self.results.put({'result': {**envelope, 'response': response, 'received_at_ms': int(time.time()*1000), 'latency_ms': (time.monotonic()-submitted_monotonic)*1000}})
             except Exception:
                 self.results.put({'error': 'Falha na API JEV; confira a chave e a conexão', 'attempt': {**envelope, 'received_at_ms': int(time.time()*1000), 'latency_ms': (time.monotonic()-submitted_monotonic)*1000, 'status': 'FAILED_NO_VALID_RESPONSE'}})
         threading.Thread(target=evaluate, daemon=True).start()
         return True
 
+    @staticmethod
+    def context_temperature(result):
+        interpretation = result['interpretation']
+        scores = interpretation['choice']['raw']['probabilities']
+        dimension = interpretation['context_by_candidate'].get(interpretation['selected_candidate_key'])
+        selected = interpretation['choice']['selected']
+        available = bool(dimension and selected != 'wait' and not interpretation['choice']['exact_tie']
+                         and dimension['support'] >= .7 and dimension['contradiction'] <= .3 and dimension['insufficient'] <= .3)
+        return 100*(scores['buy_continuation']-scores['sell_continuation']) if available else None
+
     def alert_conditions(self, result):
         interpretation = result['interpretation']
         scores = interpretation['choice']['raw']['probabilities']
         dimension = interpretation['context_by_candidate'].get(interpretation['selected_candidate_key'])
         selected = interpretation['choice']['selected']
-        return bool(dimension and selected != 'wait' and not interpretation['choice']['exact_tie']
+        candidate = next((c for c in result['bundle']['candidates'] if c['candidate_key']==interpretation['selected_candidate_key']), None)
+        account = self.store.account()
+        admissible = bool(candidate and self.costs.verified and account.asof_ms > 0 and any(
+            plan['quantity'] == 1 for plan in compare_plans([candidate['geometry']], account, self.costs)))
+        return bool(admissible and dimension and selected != 'wait' and not interpretation['choice']['exact_tie']
                     and dimension['support'] >= .7 and dimension['contradiction'] <= .3 and dimension['insufficient'] <= .3
                     and scores['wait'] <= .2 and abs(100*(scores['buy_continuation']-scores['sell_continuation'])) >= self.context_settings['alert_threshold']
                     and self.capabilities(self.session.snapshot())['quote_fresh'])
 
     def tick(self):
         changed = False
+        try:
+            revision,value = self.ocr_results.get_nowait()
+            self.ocr_pending = False
+            if self.ocr['enabled'] and revision == self.ocr_revision:
+                self.ocr.update(value)
+                if value['status']=='unavailable': self.ocr_next=time.monotonic()+1
+                changed = True
+        except queue.Empty: pass
+        if self.ocr['enabled'] and not self.ocr_pending and time.monotonic()>=self.ocr_next:
+            self.ocr_pending=True
+            self.ocr_next=time.monotonic()+.25
+            revision,config=self.ocr_revision,dict(self.ocr['config'])
+            def read_ocr():
+                try: value=dict(status='partial',observation=capture_profit(config),error=None)
+                except OcrPolicyError as error:
+                    value=dict(status='unavailable',error=str(error),observation=None)
+                except Exception:
+                    value=dict(status='unavailable',error='Captura OCR indisponível. Confira a janela, região e idioma OCR Windows.',observation=None)
+                self.ocr_results.put((revision,value))
+            threading.Thread(target=read_ocr,daemon=True).start()
         try:
             self.discovery = {**self.discovery, **self.discovery_results.get_nowait()}
             changed = True
@@ -454,6 +583,9 @@ class DecisionService:
             try:
                 self.collector = ExcelCollector(self.source_config)
                 self.session.reset(self.source_config['symbol'])
+                self.alert.reset()
+                self.last_alert = None
+                self.cadence.last_projection = None
                 self.session.mode = 'excel_observation'
                 self.last_batch = None
             except (ValueError, OSError):
@@ -469,7 +601,9 @@ class DecisionService:
                     self.session.ingest(batch)
                     # Journal changed data only. Repeated COM polling timestamps
                     # are not a new market event or a continuity proof.
-                    signature = json.dumps({k:value['batch'][k] for k in ('events', 'quotes', 'warnings')}, sort_keys=True)
+                    content = {k:value['batch'].get(k) for k in ('events', 'quotes', 'warnings','aggregates','capabilities')}
+                    content['books'] = [{k:v for k,v in book.items() if k!='captured_at_ms'} for book in value['batch'].get('books',[])]
+                    signature = json.dumps(content, sort_keys=True)
                     if signature != self.last_batch:
                         self.store.record('market_batch', value['batch'])
                         self.last_batch = signature
@@ -478,6 +612,14 @@ class DecisionService:
                     changed = True
                 elif value and 'error' in value:
                     raise ValueError(value['error'])
+                elif value and 'rtd' in value:
+                    self.rtd_state = {**value['rtd'],'enabled':value['rtd'].get('status')=='changed'}
+                    self.save_state('rtd_recovery',self.rtd_state)
+                    changed = True
+                elif value and 'audit' in value:
+                    self.source_audit = value['audit']
+                    if self.source_audit.get('rtd_observed'): self.rtd_state.update(current_ms=self.source_audit['rtd_observed']['current_ms'])
+                    changed = True
             except (ValueError, OSError, KeyError):
                 self.source_error = 'Excel ocupado ou indisponível. Reconecte; houve interrupção na captura.'
                 self.disconnect(clear_error=False)
@@ -490,37 +632,48 @@ class DecisionService:
         try:
             value = self.results.get_nowait()
             self.pending_jev = False
+            self.pending_call_id = None
             self.cadence.finish()
-            if 'result' in value:
+            attempt = value.get('result', value.get('attempt', value.get('cancelled', {})))
+            controlled = self.jev_enabled and attempt.get('control_revision') == self.control_revision
+            if 'cancelled' in value:
+                self.budget.settle(attempt['call_id'], dict(input_tokens=0, output_tokens=0))
+                self.store.record('jev_cancelled_before_dispatch', attempt)
+            elif 'result' in value:
                 result = value['result']
                 try:
-                    result['interpretation'] = interpret_response(result['bundle'], result['response'])
-                    self.cadence.finish(success=True)
+                    # Consumption is independent of acceptance and OFF.
                     self.budget.settle(result['call_id'], result['response']['usage'])
+                    result['interpretation'] = interpret_response(result['bundle'], result['response'])
+                    if controlled:
+                        self.cadence.finish(success=True)
                     accepted = self.accepts(result)
                     self.store.record('jev_experiment', {**result, 'accepted_current': accepted})
                     if accepted:
                         self.latest_jev = result
                         scores = result['interpretation']['choice']['raw']['probabilities']
-                        episode = self.alert.update(100*(scores['buy_continuation']-scores['sell_continuation']),
+                        episode = self.alert.update(self.context_temperature(result),
                             valid=True, geometry=self.alert_conditions(result), now_ms=int(time.time()*1000),
                             threshold=self.context_settings['alert_threshold'], rearm=self.context_settings['alert_rearm'],
                             cooldown_ms=self.context_settings['alert_cooldown_ms'])
                         if episode and self.context_settings['alerts_enabled']:
-                            self.last_alert = {**episode, 'candidate_key':result['interpretation']['selected_candidate_key']}
+                            self.last_alert = {**episode, 'candidate_key':result['interpretation']['selected_candidate_key'],
+                                               'source_generation':self.session.source_generation, 'engine_session_id':self.engine_session_id}
                             self.store.record('context_alert', self.last_alert)
                 except (ValueError, KeyError, TypeError):
-                    self.cadence.fail(int(time.time()*1000))
-                    self.jev_error = 'Resposta ou uso inválido; reserva de custo mantida quando desconhecida.'
+                    if controlled:
+                        self.cadence.fail(int(time.time()*1000))
+                        self.jev_error = 'Resposta ou uso inválido; reserva de custo mantida quando desconhecida.'
                     self.store.record('jev_failed', {**result, 'status':'INVALID_RESPONSE'})
             else:
-                self.cadence.fail(int(time.time()*1000))
-                self.jev_error = value['error']
+                if controlled:
+                    self.cadence.fail(int(time.time()*1000))
+                    self.jev_error = value['error']
                 self.store.record('jev_failed', value.get('attempt', {'status': 'FAILED_NO_VALID_RESPONSE'}))
             changed = True
         except queue.Empty:
             pass
-        if self.context_settings['automatic'] and self.api_key and not self.pending_jev and self.session.mode == 'excel_observation':
+        if self.jev_enabled and self.context_settings['automatic'] and self.api_key and not self.pending_jev and self.session.mode == 'excel_observation':
             try:
                 changed = self.request_jev() or changed
             except ValueError as error:
@@ -533,13 +686,22 @@ class DecisionService:
 
     def disconnect(self, clear_error=True):
         if self.collector:
-            self.collector.close()
+            restored = self.collector.close()
+            if isinstance(restored,dict): self.rtd_state = {**restored,'enabled':False}
+            elif self.rtd_state.get('enabled'):
+                self.rtd_state.update(status='restore_unconfirmed',enabled=False)
+            self.save_state('rtd_recovery',self.rtd_state)
             self.collector = None
         self.latest_jev = None
+        self.alert.reset()
+        self.last_alert = None
+        self.cadence.last_projection = None
         if clear_error:
             self.source_error = None
 
     def close(self):
+        self.ocr['enabled']=False
+        self.ocr_revision+=1
         self.disconnect()
         self.budget.close()
         self.store.close()
@@ -550,15 +712,23 @@ class DecisionService:
 def excel_worker():
     config = json.loads(sys.stdin.readline())['config']
     bridge = CombinedExcelBridge(**config)
-    for line in sys.stdin:
-        try:
-            if json.loads(line).get('read'):
-                value = {'batch': bridge.read().to_dict()}
-            else:
-                continue
-        except Exception:
-            value = {'error': 'Excel indisponível ou exportação inválida'}
-        print(json.dumps(value, allow_nan=False), flush=True)
+    throttle = RtdThrottleGuard()
+    try:
+        for line in sys.stdin:
+            try:
+                command = json.loads(line)
+                if command.get('close'): break
+                if command.get('read'): value = {'batch':bridge.read().to_dict()}
+                elif command.get('audit'): value = {'audit':{**bridge.audit(), 'rtd_observed':throttle.observe()}}
+                elif 'throttle' in command: value = {'rtd':throttle.enable() if command['throttle'] else throttle.restore()}
+                else: continue
+            except Exception:
+                value = {'error':'Excel indisponível ou exportação inválida; confira o perfil selecionado'}
+            print(json.dumps(value,allow_nan=False),flush=True)
+    finally:
+        try: value = {'rtd':throttle.restore()}
+        except ValueError: value = {'rtd':dict(status='restore_unconfirmed',previous_ms=throttle.previous,restored=False)}
+        print(json.dumps(value,allow_nan=False),flush=True)
 
 
 def main():
