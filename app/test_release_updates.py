@@ -3,6 +3,7 @@ import json
 import tempfile
 import threading
 from urllib.error import HTTPError
+from unittest.mock import patch
 from release_updates import check_for_updates
 from desktop_service import DecisionService
 
@@ -65,7 +66,7 @@ class ReleaseUpdateTests(unittest.TestCase):
             started.set()
             finish.wait(3)
             return check_for_updates(version, fetch=lambda p, t: release())
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory() as directory, patch('desktop_service.current_version', return_value='0.4.9'):
             service = DecisionService(directory, update_checker=fetch)
             try:
                 self.assertEqual(service.snapshot()['updates']['status'], 'idle')

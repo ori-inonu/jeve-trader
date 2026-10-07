@@ -97,7 +97,7 @@ class SeenTradeIds:
         if capacity < 1:
             raise BridgeError('Capacidade de IDs deve ser positiva.')
         self.capacity = capacity
-        self.ids: OrderedDict[tuple[str, str, str], None] = OrderedDict()
+        self.ids: OrderedDict[tuple[str, str, str], MarketEvent] = OrderedDict()
         self.evictions = 0
 
     def accept(self, event: MarketEvent) -> bool:
@@ -106,9 +106,11 @@ class SeenTradeIds:
         date = datetime.fromtimestamp(event.ts_ms / 1000, timezone.utc).date().isoformat()
         key = (event.symbol, date, event.trade_id)
         if key in self.ids:
+            if self.ids[key] != event:
+                raise BridgeError('ID de negócio reutilizado com conteúdo diferente; reinicie a captura após corrigir a fonte.')
             self.ids.move_to_end(key)
             return False
-        self.ids[key] = None
+        self.ids[key] = event
         if len(self.ids) > self.capacity:
             self.ids.popitem(last=False)
             self.evictions += 1
@@ -334,7 +336,7 @@ def _parse_rows(rows: list[list[Any]], symbol: str, *, mode: str, kind: str,
     # Even a valid CSV is a replay subset, never proof of complete live tape.
     health = SourceHealth(kind, bool(events or quotes or raw_events), False,
                           max(timestamps, default=None), now_ms,
-                          '; '.join(warnings), sequence_ok=sequence_ok and bool(observed_events))
+                          '; '.join(warnings), sequence_ok=sequence_ok and bool(observed_events) and not invalid)
     return SourceBatch(tuple(events), tuple(quotes), health, tuple(warnings))
 
 
@@ -422,6 +424,45 @@ def _load_comtypes():
 
 def _read_excel_com_rows(workbook: str, sheet: str, cell_range: str, *, com_modules=None) -> list[list[Any]]:
     return _read_excel_com_ranges(workbook, [(sheet, cell_range)], com_modules=com_modules)[0]
+
+
+def discover_open_excel(*, com_modules=None):
+    """Metadata only, from the attached Excel instance; never open or read cells."""
+    modules = com_modules if com_modules is not None else _load_comtypes()
+    if modules is None:
+        raise BridgeError('Leitor COM não instalado.')
+    comtypes, client = modules
+    initialized = False
+    excel = books = book = sheets = sheet = None
+    try:
+        comtypes.CoInitialize()
+        initialized = True
+        excel = client.GetActiveObject('Excel.Application', dynamic=True)
+        books = excel.Workbooks
+        if type(books.Count) is not int or not 0 <= books.Count <= 100:
+            raise BridgeError('Quantidade de arquivos excede o limite de descoberta.')
+        found = []
+        for index in range(1, books.Count+1):
+            book = books.Item(index)
+            sheets = book.Worksheets
+            if type(sheets.Count) is not int or not 0 <= sheets.Count <= 100:
+                raise BridgeError('Quantidade de planilhas excede o limite de descoberta.')
+            names = []
+            for number in range(1, sheets.Count+1):
+                sheet = sheets.Item(number)
+                names.append(str(sheet.Name)[:256])
+                sheet = None
+            found.append(dict(workbook=str(book.Name)[:256], sheets=names))
+            sheets = book = None
+        return dict(workbooks=found, scope='attached_excel_instance', cells_read=False)
+    except BridgeError:
+        raise
+    except Exception:
+        raise BridgeError('Excel não encontrado ou ocupado na mesma sessão; abra a planilha e feche diálogos.') from None
+    finally:
+        sheet = sheets = book = books = excel = None
+        if initialized:
+            comtypes.CoUninitialize()
 
 
 def _read_excel_com_ranges(workbook: str, ranges: list[tuple[str, str]], *, com_modules=None) -> list[list[list[Any]]]:
@@ -597,13 +638,13 @@ class CombinedExcelBridge:
                  tape_sheet: str, tape_range: str, *, symbol: str,
                  timeout_seconds: float = 8):
         if not all(isinstance(value, str) and value.strip()
-                   for value in (workbook, quote_sheet, tape_sheet, symbol)):
-            raise BridgeError('Informe arquivo, duas planilhas e contrato explícito.')
+                   for value in (workbook, quote_sheet, symbol)) or bool(tape_sheet) != bool(tape_range):
+            raise BridgeError('Informe arquivo, cotação e contrato; negócios são opcionais com planilha e intervalo juntos.')
         if not 1 <= timeout_seconds <= 30:
             raise BridgeError('Timeout deve estar entre 1 e 30 segundos.')
         self.workbook, self.quote_sheet, self.tape_sheet = workbook, quote_sheet, tape_sheet
         self.quote_range = _validate_range(quote_range)
-        self.tape_range = _validate_range(tape_range)
+        self.tape_range = _validate_range(tape_range) if tape_sheet else ''
         self.symbol = symbol.strip().upper()
         self.timeout_seconds = timeout_seconds  # no hard interruption for native COM
         self.seen_ids = SeenTradeIds()
@@ -615,10 +656,17 @@ class CombinedExcelBridge:
         modules = self._com_modules if self._com_modules is not None else _load_comtypes()
         if modules is None:
             raise BridgeError('Leitura combinada requer COM nativo; use o pacote completo com comtypes.')
-        selections = [(self.quote_sheet, self.quote_range), (self.tape_sheet, self.tape_range)]
+        selections = [(self.quote_sheet, self.quote_range)]
+        if self.tape_sheet:
+            selections.append((self.tape_sheet, self.tape_range))
         matrices = _read_excel_com_ranges(self.workbook, selections, com_modules=modules)
-        if len(matrices) != 2:
+        if len(matrices) != len(selections):
             raise BridgeError('Leitura combinada incompleta; nenhuma tabela foi aplicada.')
+        if not self.tape_sheet:
+            batch = _parse_rows(matrices[0], self.symbol, mode='quote', kind='EXCEL_COMBINED_SNAPSHOT')
+            if not batch.health.connected:
+                raise BridgeError('Nenhuma cotação válida no intervalo selecionado.')
+            return batch
         # Parse each new cycle with a transactional dedup cache. Failure of one
         # table must not consume IDs or return the other table plus old values.
         staged_ids = SeenTradeIds(self.seen_ids.capacity)

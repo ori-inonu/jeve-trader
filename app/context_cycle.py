@@ -10,8 +10,8 @@ CHOICES = {'buy_continuation': 'Observed aggressive buying is accepted at higher
            'wait': 'Neither continuation has sufficient consistent observed evidence, or coverage prevents a contextual choice.'}
 
 
-def _candidate(row, market, market_session_id, family='continuation'):
-    premise = row['premise'] if family == 'continuation' else row['hypotheses']['absorption']
+def _candidate(row, market, market_session_id, family='continuation', horizon_ms=60000):
+    premise = row['premise'] if family == 'continuation' else row['hypotheses'][family]
     if not isinstance(premise, str) or not premise.strip() or len(premise) > 1000:
         raise ValueError('Literal premise required')
     refs = []
@@ -31,17 +31,20 @@ def _candidate(row, market, market_session_id, family='continuation'):
     spec = dict(schema_version=IDENTITY_VERSION, instrument_contract=market['symbol'],
                 market_session_id=market_session_id, generator_version=row.get('recipe', 'geometry-v1'),
                 family=family, hypothesis_id=row['side']+'-'+family,
-                hypothesis_version=row['hypothesis_version'] if family=='continuation' else 'absorption-v1',
+                hypothesis_version=row['hypothesis_version'] if family=='continuation' else family+'-v1',
                 literal_premise=premise, side=row['side'], **prices, tick_points='5',
-                observation_start=str(cut-5000), observation_end=str(cut), horizon_ms='60000',
+                observation_start=str(cut-5000), observation_end=str(cut), horizon_ms=str(horizon_ms),
                 entry_rule_version='structural-one-tick-v1', exit_rule_version='stop-target-horizon-v1', evidence_refs=refs)
     return dict(spec, candidate_key=content_hash('candidate', spec), display_id=row['id'], geometry=deepcopy(row))
 
 
-def build_context(market, rows, *, engine_session_id, market_session_id):
-    candidates = [_candidate(r, market, market_session_id) for r in rows]
-    absorption = [_candidate(r, market, market_session_id, 'absorption') for r in rows if r.get('hypotheses', {}).get('absorption')]
-    all_specs = {c['candidate_key']: c for c in candidates+absorption}
+def build_context(market, rows, *, engine_session_id, market_session_id, horizon_ms=60000):
+    if type(horizon_ms) is not int or not 5000 <= horizon_ms <= 120000:
+        raise ValueError('Horizon outside experimental range')
+    candidates = [_candidate(r, market, market_session_id, horizon_ms=horizon_ms) for r in rows]
+    absorption = [_candidate(r, market, market_session_id, 'absorption', horizon_ms) for r in rows if r.get('hypotheses', {}).get('absorption')]
+    exhaustion = [_candidate(r, market, market_session_id, 'exhaustion', horizon_ms) for r in rows if r.get('hypotheses', {}).get('exhaustion')]
+    all_specs = {c['candidate_key']: c for c in candidates+absorption+exhaustion}
     state = dict(instrument=market['symbol'], cut_at_ms=market['ts_ms'],
                  source_generation=market['source_generation'], mode=market['application_mode'],
                  computed_features=deepcopy(market['computed_features']),
@@ -68,7 +71,7 @@ def build_context(market, rows, *, engine_session_id, market_session_id):
     snapshot_doc = dict(schema_version=IDENTITY_VERSION, engine_session_id=engine_session_id,
                         market_session_id=market_session_id, source_generation=str(market['source_generation']),
                         instrument_contract=market['symbol'], cut_at=str(market['ts_ms']), context_projection_hash=projection)
-    return dict(state=state, questions=questions, bindings=bindings, candidates=candidates, absorption_candidates=absorption,
+    return dict(state=state, questions=questions, bindings=bindings, candidates=candidates, absorption_candidates=absorption, exhaustion_candidates=exhaustion,
                 context_projection_hash=projection, snapshot_key=content_hash('snapshot', snapshot_doc),
                 question_set_hash=content_hash('questions', identity_document(dict(questions=questions, choice_order=list(CHOICES)))),
                 question_version=QUESTION_VERSION)

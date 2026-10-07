@@ -65,7 +65,10 @@ def generate_candidates(snapshot: dict, tick_points=5, quantity_requested=1) -> 
                             "Hypothesis to test: recent aggressive selling is accepted at lower prices."
                         ),
                         "hypothesis_version": "continuation-v2",
-                        "hypotheses": {"absorption": "Recent selling fails to produce downward progress." if side == "buy" else "Recent buying fails to produce upward progress."},
+                        "hypotheses": {
+                            "absorption": "Recent selling fails to produce downward progress." if side == "buy" else "Recent buying fails to produce upward progress.",
+                            "exhaustion": "Recent buying loses intensity and upward price progress compared with the previous window." if side == "buy" else "Recent selling loses intensity and downward price progress compared with the previous window."
+                        },
                         "reference_evidence_ids": [unique[structural_stop], unique[target_reference]],
                         "recipe": "experimental_two_structural_levels_one_tick_buffer"
                     })

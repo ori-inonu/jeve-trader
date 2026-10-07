@@ -33,7 +33,8 @@ try {
     foreach ($resource in @('desktop_service.py', 'app_core.py', 'app_store.py', 'capital_example.py', 'decision_engine.py',
         'decision_store.py', 'context_requests.py', 'candidate_engine.py', 'candidate_research.py', 'flow_engine.py',
         'profit_bridge.py', 'recommendation_engine.py', 'jev_client.py', 'copilot.py', 'capital_planner.py', 'risk.py',
-        'risk_research.py', 'release_updates.py', 'version.json', 'config.json', 'flow_rules.json', 'observer_questions.json')) {
+        'risk_research.py', 'release_updates.py', 'live_context.py', 'credential_vault.py', 'context_cycle.py', 'context_identity.py',
+        'version.json', 'config.json', 'flow_rules.json', 'observer_questions.json')) {
         $pyinstallerArgs += @('--add-data', "$(Join-Path $workspace "app\$resource");.")
     }
     $pyinstallerArgs += (Join-Path $workspace 'app\desktop_service.py')
@@ -47,9 +48,9 @@ try {
     if ($LASTEXITCODE) { throw 'License notice collection failed' }
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Diagnosticar_JevWIN.cmd') -Destination $payload -Force
     @'
-Jeve Trader 0.4 — painel experimental Windows x64
+Jeve Trader — central contextual experimental Windows x64
 Extraia a pasta inteira e abra JevWIN.exe. Ordens permanecem manuais no Profit Pro.
-Requer WebView2 Evergreen. O instalador 0.4 preserva LOCALAPPDATA\JevWIN.
+Requer WebView2 Evergreen. O instalador preserva LOCALAPPDATA\JevWIN.
 Os dados locais incluem journal.sqlite3 e decision-lab.sqlite3; faça backup antes de migrar de máquina.
 Custos e margem iniciais são parâmetros manuais de demonstração, sem tarifa verificada.
 Probabilidade financeira permanece não estimada até validação empírica e integração de um modelo aprovado.

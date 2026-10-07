@@ -29,7 +29,7 @@ impl Drop for Engine {
 fn engine_send(message: String, engine: tauri::State<Engine>) -> Result<(), String> {
     if message.len() > 65536 { return Err("Mensagem excede o limite".into()); }
     let value: serde_json::Value = serde_json::from_str(&message).map_err(|_| "JSON inválido")?;
-    if value["schema_version"] != 1 || !value["id"].is_string() || !value["method"].is_string() {return Err("Contrato inválido".into());}
+    if (value["schema_version"] != 1 && value["schema_version"] != 2) || !value["id"].is_string() || !value["method"].is_string() {return Err("Contrato inválido".into());}
     let mut guard = engine.input.lock().map_err(|_| "Motor indisponível")?;
     let input = guard.as_mut().ok_or("Motor encerrado")?;
     writeln!(input, "{}", value).map_err(|_| "Motor Python encerrou")?;

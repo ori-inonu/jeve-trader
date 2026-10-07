@@ -11,6 +11,8 @@ Definir uma central dinâmica de decisão sustentada pelas fontes realmente disp
 
 ## Notes
 
+Em 2026-10-07 Gabriel autorizou “Implement the proposed plan”. [Implementação da central ao vivo](implementation.md) é o único incremento técnico em execução nesta sessão, com marcos internos A/B. A captura real continua pendente de arquivo, campos e contrato identificados; a licença DLL não está confirmada.
+
 Pedido atual de Gabriel: investigar com Wayfinder; instalar no computador com ícone; controlar commits/GitHub e apresentar atualizações. A autorização de instalação e atualização permite executar este incremento, além da pesquisa documental. Os mapas anteriores de [contratos](../wayfinder-evolucao-decisao/map.md) e [oportunidades](../wayfinder-proximas-oportunidades/map.md) permanecem com seu escopo original; não representam funcionalidades entregues.
 
 Wayfinder orienta o mapa, research os fatos, TDD o incremento especificado e code-review a revisão independente. Pesquisa realizada por dois agentes leitores; somente o principal escreve neste mapa e no incremento de instalação. Outro chat mantém a documentação geral; suas mudanças foram preservadas. O novo harness Desktop registrou o marco com revisão esperada, reconciliando o estado documental existente. Não depender de Mission Control para esta entrega.
