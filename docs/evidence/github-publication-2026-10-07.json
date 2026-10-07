@@ -1,0 +1,21 @@
+{
+  "verified_at_utc": "2026-10-07T01:22:41.850613+00:00",
+  "repository_url": "https://github.com/ori-inonu/jeve-trader",
+  "repository_id": 1408003317,
+  "visibility": "private",
+  "default_branch": "main",
+  "source_publication_commit": "4080f0f730fba89868a750677d4749526286cecd",
+  "source_publication_commit_url": "https://github.com/ori-inonu/jeve-trader/commit/4080f0f730fba89868a750677d4749526286cecd",
+  "source_publication_tree": "412ac9df8d9492b689e8b69c6a86ffd9e65b27cc",
+  "source_snapshot_files": 132,
+  "prepared_index_tree": "412ac9df8d9492b689e8b69c6a86ffd9e65b27cc",
+  "prepared_tree_matches_remote": true,
+  "remote_ref_confirmed": true,
+  "publication_scope": "application_source_research_documentation_and_prepublication_history_bundle",
+  "app_baseline": "JevWIN 0.3.0",
+  "software_test_evidence": "transfer-verification.json",
+  "app_integrity_evidence": "transfer-integrity.json",
+  "software_tests_rerun_for_publication": false,
+  "windows_native_validation": "pending",
+  "codex_environment_state": "See ../TRANSFER_STATUS.json; independent of source publication."
+}

@@ -13,15 +13,34 @@
     "repository_id": 1408003317,
     "visibility": "private",
     "default_branch": "main",
-    "publication_method": "github_connector_git_objects"
+    "publication_method": "github_connector_git_objects",
+    "source_publication_commit": "4080f0f730fba89868a750677d4749526286cecd",
+    "source_publication_tree": "412ac9df8d9492b689e8b69c6a86ffd9e65b27cc",
+    "source_snapshot_files": 132,
+    "evidence": "docs/evidence/github-publication-2026-10-07.json"
   },
   "codex": {
     "environment_name": "Jeve Trader",
     "environment_url": null,
-    "status": "environment_configuration_pending",
+    "status": "published_and_selectable",
     "setup_command": "bash scripts/setup-codex.sh",
     "verify_command": ".venv/bin/python scripts/verify.py",
-    "development_task_started": false
+    "development_task_started": false,
+    "setup_chat_url": "https://chatgpt.com/local/01a113f1-e024-75b3-9113-723a82fd30f9?hostId=local",
+    "new_chat_url": "https://chatgpt.com/",
+    "selection_label": "Jeve Trader",
+    "repository": "ori-inonu/jeve-trader",
+    "repository_default_branch": "main",
+    "setup_checkout_branch_reported": "main",
+    "branch_configuration_field_observed": false,
+    "visibility": "personal_only",
+    "setup_model_observed": "GPT-6.1 Sol Leve",
+    "setup_task_executed": true,
+    "api_credentials_added": false,
+    "quota_usage_reported": null,
+    "published_status_verified": true,
+    "selection_in_new_chat_verified": true,
+    "evidence": "docs/evidence/codex-publication-2026-10-07.json"
   },
   "empirical_validation": {
     "windows_native_installation": "pending",
@@ -31,9 +50,11 @@
   },
   "local_git": {
     "branch": "main",
-    "status": "local_prepublication_history_preserved_separately",
+    "status": "aligned_with_github_main",
     "remote_configured": true,
     "prepublication_commit": "4ad7e9ff923cac45685464496f6cae4676b246b1",
-    "historical_bundle": "docs/archive/Jeve_Trader_Historico_2026-10-06.bundle"
-  }
+    "historical_bundle": "docs/archive/Jeve_Trader_Historico_2026-10-06.bundle",
+    "prepublication_archive_branch_local_only": "archive/prepublication-2026-10-06"
+  },
+  "publication_confirmed_at_utc": "2026-10-07T01:27:39.537180+00:00"
 }

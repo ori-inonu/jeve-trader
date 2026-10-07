@@ -2,13 +2,17 @@
 
 Data de consolidação: 06/10/2026, America/Sao_Paulo.
 
+Publicação no GitHub e no Codex confirmada em 07/10/2026 (UTC).
+
 ## Goal & Scope
 
 Gabriel quer continuar este projeto no Codex e GitHub. O produto acompanha o mini índice WIN no Profit Pro/Windows, interpreta fluxo com JEV e pesquisa decisões e dimensionamento condicionados ao capital. O objetivo econômico exige avaliação fora da amostra após custos e limites explícitos; crescimento garantido não foi estabelecido.
 
 ## Current State
 
-- Repositório privado confirmado: [ori-inonu/jeve-trader](https://github.com/ori-inonu/jeve-trader), branch `main`. A publicação tem história remota própria; o ambiente remoto no Codex ainda não foi confirmado como criado. Estado detalhado em `docs/TRANSFER_STATUS.json`.
+- Repositório privado publicado: [ori-inonu/jeve-trader](https://github.com/ori-inonu/jeve-trader), branch `main`. A árvore do commit de publicação corresponde integralmente aos 132 arquivos preparados. A história remota preserva o commit inicial do GitHub e arquiva o histórico local anterior em bundle.
+- Ambiente **Jeve Trader publicado no Codex** e confirmado na lista de ambientes de um novo chat. Setup: `bash scripts/setup-codex.sh`; verificação: `.venv/bin/python scripts/verify.py`. O [chat de configuração](https://chatgpt.com/local/01a113f1-e024-75b3-9113-723a82fd30f9?hostId=local) registra a preparação com GPT-6.1 Sol. A interface não forneceu URL exclusiva do ambiente nem um campo de branch; o setup confirmou checkout `main`. Estado detalhado em `docs/TRANSFER_STATUS.json`.
+- A tarefa de preparação registrou Python 3.12.14, 166 testes e autoteste aprovados, 71 arquivos do aplicativo intactos e Git limpo. Essa preparação não implementou o backlog e não configurou credenciais, Profit ou chamadas JEV. A implementação fica para a próxima sessão solicitada por Gabriel.
 - `app/` conserva a baseline JevWIN v0.3.0. A transferência organiza código/documentos e ferramentas de desenvolvimento; não aplica as melhorias da pesquisa.
 - Interface Tk, COM Excel quote/tape/combined, importação CSV, fluxo, geometria, risco, diário e cliente JEV existem. Conta manual, cobertura parcial, nenhuma ordem.
 - Empacotamento NSIS existe. Instalação/UI/Profit reais no Windows permanecem sem verificação. A causa da falha anterior do EXE não foi determinada.
@@ -25,7 +29,7 @@ O histórico local pré-publicação está arquivado em `docs/archive/Jeve_Trade
 
 ## Active Blockers
 
-Continuam pendentes a criação/configuração confirmada do ambiente Codex e, para validação externa, instalação Windows, contrato real de exportação do Profit, acesso/licença de dados e conta, amostra de mercado reconciliável e chamadas JEV autorizadas com orçamento. Nenhum desses bloqueios impede a correção do payload e a instrumentação local sobre um clone do repositório.
+Para validação externa, continuam pendentes instalação Windows, contrato real de exportação do Profit, acesso/licença de dados e conta, amostra de mercado reconciliável e chamadas JEV autorizadas com orçamento. Nenhum desses bloqueios impede a correção do payload e a instrumentação local no ambiente Codex publicado ou sobre um clone do repositório.
 
 ## Suggested Skills
 
@@ -33,7 +37,7 @@ Use skills disponíveis no novo ambiente, sem presumir os caminhos desta sessão
 
 ## Exact Next Action
 
-Obtenha a base atual pelo repositório privado:
+No Codex, crie um novo chat, selecione o ambiente **Jeve Trader** e use `docs/CODEX_NEXT_TASK.md` quando desejar iniciar a implementação. Para trabalhar no computador, obtenha a base atual pelo repositório privado:
 
 ```bash
 git clone https://github.com/ori-inonu/jeve-trader.git
