@@ -13,7 +13,7 @@ Definir uma central dinâmica de decisão sustentada pelas fontes realmente disp
 
 Pedido atual de Gabriel: investigar com Wayfinder; instalar no computador com ícone; controlar commits/GitHub e apresentar atualizações. A autorização de instalação e atualização permite executar este incremento, além da pesquisa documental. Os mapas anteriores de [contratos](../wayfinder-evolucao-decisao/map.md) e [oportunidades](../wayfinder-proximas-oportunidades/map.md) permanecem com seu escopo original; não representam funcionalidades entregues.
 
-Wayfinder orienta o mapa, research os fatos, TDD o incremento especificado e code-review a revisão independente. Pesquisa já realizada por dois agentes leitores; somente o principal escreve. Novo harness Desktop consultado após a substituição de AGENTS; snapshot sem tarefas. Não depender de Mission Control para esta entrega.
+Wayfinder orienta o mapa, research os fatos, TDD o incremento especificado e code-review a revisão independente. Pesquisa realizada por dois agentes leitores; somente o principal escreve neste mapa e no incremento de instalação. Outro chat mantém a documentação geral; suas mudanças foram preservadas. O novo harness Desktop registrou o marco com revisão esperada, reconciliando o estado documental existente. Não depender de Mission Control para esta entrega.
 
 Respostas humanas registradas: alertas experimentais identificados; horizonte de segundos a dois minutos; Profit e Excel disponíveis. Manter ordens manuais, identificadores JevWIN e dados existentes. Não confundir força contextual, confiança ou Noul com probabilidade de lucro. Não consultar API paga nos testes. Questões humanas pendentes permanecem abertas.
 
@@ -21,6 +21,11 @@ Respostas humanas registradas: alertas experimentais identificados; horizonte de
 
 - [Fontes reais e capacidade do Excel](issues/01-fontes.md): RTD é parcial; velocidade de leitura não elimina limites da fonte; DLL exige SDK/licença próprios.
 - [Cadência e termômetro contextual](issues/02-cadencia.md): dois ciclos separados; alvo inicial JEV de até 1 Hz por mudança relevante, condicionado a validade e orçamento; índice contextual tipado proposto.
+- [Instalação e releases](issues/03-instalacao-updates.md): 0.4.1 instalada com ícone, release privada publicada e consulta de versão verificada. Download/instalação de versões futuras permanecem manuais.
+
+## Next step
+
+[Piloto com dados reais](issues/04-piloto-real.md) permanece aberto. Confirmar o arquivo Excel, planilhas/intervalos, campos exportados e contrato WIN. A primeira verificação será do que a fonte realmente entrega e de sua atualidade; depois implementar e medir o ciclo e o termômetro. A pesquisa dos tickets 01/02 não significa integração ou interface já entregue.
 
 ## Not yet specified
 
