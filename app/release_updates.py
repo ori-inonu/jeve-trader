@@ -83,17 +83,23 @@ def check_for_updates(version, *, fetch=github_fetch, credential=git_read_creden
         try:
             release = fetch('/releases/latest', token)
         except HTTPError as error:
+            error.close()
             if error.code not in (401, 404):
                 raise
             token = credential()
             try:
                 release = fetch('/releases/latest', token)
             except HTTPError as retry:
+                retry.close()
+                if retry.code == 401:
+                    result['status'] = 'auth_required'
+                    return result
                 if retry.code != 404:
                     raise
                 try:
                     fetch('', token)
                 except HTTPError as repo_error:
+                    repo_error.close()
                     if repo_error.code in (401, 404):
                         result['status'] = 'auth_required'
                         return result
@@ -116,7 +122,9 @@ def check_for_updates(version, *, fetch=github_fetch, credential=git_read_creden
         result.update(status='available' if target > _version(version) else 'current',
                       latest_version=latest, release_url=release['html_url'],
                       notes=str(release.get('body') or '')[:6000])
-    except Exception:
+    except Exception as error:
+        if isinstance(error, HTTPError):
+            error.close()
         # Raw transport errors can contain credentials or local paths.
         result['status'] = 'unavailable'
     return result

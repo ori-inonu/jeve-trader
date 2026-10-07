@@ -50,6 +50,13 @@ class ReleaseUpdateTests(unittest.TestCase):
         self.assertEqual(result['status'], 'unavailable')
         self.assertNotIn('secret-token', json.dumps(result))
 
+    def test_revoked_git_credential_requests_authentication(self):
+        def revoked(path, token):
+            raise HTTPError('https://api.github.com', 401 if token else 404, 'Denied', {}, None)
+        result = check_for_updates('0.4.9', fetch=revoked, credential=lambda: 'revoked-token')
+        self.assertEqual(result['status'], 'auth_required')
+        self.assertNotIn('revoked-token', json.dumps(result))
+
     def test_slow_check_does_not_block_account_and_does_not_start_on_snapshot(self):
         started, finish = threading.Event(), threading.Event()
         calls = []

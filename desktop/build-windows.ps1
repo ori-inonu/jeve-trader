@@ -7,7 +7,7 @@ if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid canonical application
 $packageVersion = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'package.json') -Raw | ConvertFrom-Json).version
 $tauriVersion = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'src-tauri\tauri.conf.json') -Raw | ConvertFrom-Json).version
 $cargoConfig = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'src-tauri\Cargo.toml') -Raw
-if ($version -ne $packageVersion -or $version -ne $tauriVersion -or $cargoConfig -notmatch ('(?m)^version = "'+[regex]::Escape($version)+'"$')) { throw 'Application version metadata differs' }
+if ($version -ne $packageVersion -or $version -ne $tauriVersion -or $cargoConfig -notmatch ('(?m)^version = "'+[regex]::Escape($version)+'"\r?$')) { throw 'Application version metadata differs' }
 $python = Join-Path $workspace '.venv\Scripts\python.exe'
 $cargo = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
 $nsis = Join-Path ${env:ProgramFiles(x86)} 'NSIS\makensis.exe'
