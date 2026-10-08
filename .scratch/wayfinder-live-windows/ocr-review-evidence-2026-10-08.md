@@ -1,0 +1,15 @@
+# Revisão independente — OCR local 0.5.2
+
+Candidato: baseline `3ee94e2af7dc71ffebf26479110dfe319b422d91`, 21 arquivos listados em `review-input.json`, remoção de `app/profit_ocr.ps1`. SHA256 do índice: `b05b48a71edff0244e5a552f0de5b182c9791119e806d6c2e3fd7bffc404f280`. Runtime manifest: `36964c0032a728999bcafb7b92c4084580b888a5a87a6f044317a800c7707bc3`; 40/40 payloads conferidos. Aceites originais e contrato OCR permaneceram congelados.
+
+Os agentes independentes `ocr_spec_review` e `ocr_standards_review` trabalharam em cópias isoladas somente para leitura, sem Git compartilhado, sem preparar dependências, sem capturar Profit e sem chamadas pagas. Modelo, tier e sandbox efetivos não foram comprovados; os papéis não certificam essas propriedades.
+
+A revisão de correção aprovou o candidato final, sem bloqueios, após conferir 21/21 hashes, 40/40 payloads, executar 12 testes offline e reconhecer texto gerado no diagnóstico Tesseract 5.5.3. Conferiu seleção revalidada, limites, timeouts, limpeza, estado OFF e descarte de resposta tardia. O aditamento leu as evidências de build e atualização: OCR-N06 PASS no escopo exercitado de 0.5.1 → 0.5.2, sem alegar teste da rota 0.4.1. Essa versão não estava instalada nesta verificação; nenhum downgrade foi realizado.
+
+A revisão de engenharia não encontrou bloqueio no candidato final. Os dois achados foram tratados: variáveis de overlay externo agora são rejeitadas antes dos efeitos e a recuperação de cache binário é desativada; o manifesto passou a declarar `installed_packages_may_be_reused=true`, como possibilidade, sem afirmar reutilização observada em todo build. Testes offline 12/12, diagnóstico e dependências somente de DLLs Windows foram conferidos. O revisor leu a evidência de atualização, mas não abriu bancos privados nem reexecutou o instalador.
+
+Limite de proveniência registrado no aditamento: o log vcpkg inicial registra zero pacotes restaurados e 20 construções em 34 minutos, além de submissões para cache. O build final do pacote reutilizou as dependências já instaladas e não é uma segunda compilação independente dessas bibliotecas. O log inicial não prova uso do wrapper endurecido posteriormente. Não se afirma ausência de escrita a cache. Manifesto, inventário, registros ABI, hashes e notices acompanham o runtime; isso não representa auditoria comercial de licenças.
+
+244 testes Python e checks desktop passaram no Windows; build frontend/Windows e diagnóstico empacotado passaram. A instalação observada preservou dois arquivos locais após encerramento gracioso, confirmou três hashes do payload, registro 0.5.2 e atalho. O smoke isolado do motor instalado encontrou runtime disponível, OCR OFF, JEV OFF, zero chamadas e ordens desabilitadas. Esses registros foram fornecidos aos dois revisores separadamente do candidato congelado.
+
+FW-06, FW-11 e FW-12 permanecem abertos. O diagnóstico usa texto gerado, com `real_profit_tested=false` e `continuity_verified=false`; não comprova pixels reais, extração estruturada, legibilidade, perdas, continuidade, latência de mercado, qualidade das inferências ou rentabilidade. A verificação de processo não encontrou Profit nem Excel.

@@ -15,6 +15,8 @@ Incremento aprovado nesta conversa: [Mesa de fluxo](spec.md), especificação `r
 
 Continuação 2026-10-08: instrumento local do piloto 0.5.1, com cobertura, interrupções, cenários declarados e latências separadas. Checkpoints visuais e recuperação após reinício foram revisados independentemente; 238 testes Python e 9 frontend passaram. A fronteira continua em `04-piloto-real.md`, sem certificação de fluxo completo, inferência JEV ou rentabilidade.
 
+Entrega parcial 2026-10-08: OCR local nativo 0.5.2 instalado e publicado, com dados preservados e consulta de atualizações verificada. [Evidência e auditoria](ocr-implementation-evidence-2026-10-08.md), [revisão independente](ocr-review-evidence-2026-10-08.md) e [registro da release](release-evidence-0.5.2.json). O diagnóstico reconheceu texto gerado; captura e extração estruturada reais continuam pendentes. A próxima fronteira permanece em [Contrato da captura real e reação ao painel](issues/04-piloto-real.md).
+
 Em 2026-10-07 Gabriel autorizou “Implement the proposed plan”. [Implementação da central ao vivo](implementation.md) é o único incremento técnico em execução nesta sessão, com marcos internos A/B. A captura real continua pendente de arquivo, campos e contrato identificados; a licença DLL não está confirmada.
 
 Pedido atual de Gabriel: investigar com Wayfinder; instalar no computador com ícone; controlar commits/GitHub e apresentar atualizações. A autorização de instalação e atualização permite executar este incremento, além da pesquisa documental. Os mapas anteriores de [contratos](../wayfinder-evolucao-decisao/map.md) e [oportunidades](../wayfinder-proximas-oportunidades/map.md) permanecem com seu escopo original; não representam funcionalidades entregues.
