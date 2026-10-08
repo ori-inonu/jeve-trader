@@ -6,7 +6,7 @@ import {Chart} from './Chart';
 import {LivePanel} from './LivePanel';
 import {LiveConfiguration} from './LiveConfiguration';
 import {liveSnapshot} from './liveView';
-import {receivedSnapshot} from './visualLatency';
+import {receivedSnapshot,discardBackgroundReceipts} from './visualLatency';
 const currency=(value:string|number)=>Number(value).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const time=(ms:number)=>ms ? new Date(ms).toLocaleTimeString('pt-BR') : '—';
 type Run=(method:string,params?:Record<string,unknown>)=>Promise<void>;
@@ -39,7 +39,26 @@ function Configuration({data,run}:{data:Snapshot;run:Run}) {
 export function App(){
   const [data,setData]=useState<Snapshot|null>(null),[page,setPage]=useState('decision'),[error,setError]=useState(''),[tick,setTick]=useState(Date.now());
   const sequence=useRef(-1);
-  useEffect(()=>{let disposed=false;let cleanup:(()=>void)|undefined;const receive=(value:Snapshot)=>{if(value.schema_version!==2||value.sequence<=sequence.current)return;sequence.current=value.sequence;if(!disposed){receivedSnapshot(value.sequence);setData(value);}};connect(receive).then(stop=>{if(disposed)stop();else cleanup=stop;return command('snapshot').then(()=>command('updates.check'));}).catch(e=>setError(String(e)));return()=>{disposed=true;cleanup?.();};},[]);
+  useEffect(()=>{let disposed=false;let lastCapture='';let cleanup:(()=>void)|undefined;
+    const receive=(value:Snapshot)=>{
+      if(value.schema_version!==2||value.sequence<=sequence.current)return;
+      sequence.current=value.sequence;
+      if(!disposed){
+        const pilot=value.pilot, stamp=value.market.order_flow?.capture_evidence.received_at_ms;
+        const key=`${pilot.id}:${value.market.source_generation}:${stamp}`;
+        const active=pilot.status==='recording';
+        const eligible=active&&value.market.application_mode==='excel_observation'&&value.source.excel_running
+          &&value.market.symbol===pilot.symbol&&stamp!=null&&stamp>=(pilot.started_at_ms??Infinity)&&key!==lastCapture;
+        receivedSnapshot(value.sequence,active?pilot.id:null,eligible);
+        if(eligible)lastCapture=key;
+        setData(value);
+      }
+    };
+    const visibility=()=>{if(document.visibilityState!=='visible')discardBackgroundReceipts();};
+    document.addEventListener('visibilitychange',visibility);
+    connect(receive).then(stop=>{if(disposed)stop();else cleanup=stop;return command('snapshot').then(()=>command('updates.check'));}).catch(e=>setError(String(e)));
+    return()=>{disposed=true;cleanup?.();document.removeEventListener('visibilitychange',visibility);};
+  },[]);
   const run:Run=async(method,params={})=>{setError('');try{await command(method,params);}catch(e){setError(e instanceof Error?e.message:String(e));}};
   useEffect(()=>{const timer=setInterval(()=>setTick(Date.now()),100);return()=>clearInterval(timer);},[]);
   const stale=!!data&&data.market.application_mode==='excel_observation'&&!liveSnapshot(data,tick).source.capabilities.quote_fresh;

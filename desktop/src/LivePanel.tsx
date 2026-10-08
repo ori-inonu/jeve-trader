@@ -3,7 +3,8 @@ import {Power, Volume2} from 'lucide-react';
 import {type Snapshot, type FlowHypothesis} from './transport';
 import {Chart} from './Chart';
 import {liveSnapshot} from './liveView';
-import {paintLatency} from './visualLatency';
+import {paintLatency,discardSnapshot} from './visualLatency';
+import {PilotControls} from './PilotControls';
 
 let audio:AudioContext|null = null;
 export async function enableAudio() { audio ??= new AudioContext(); await audio.resume(); }
@@ -38,7 +39,7 @@ export function LivePanel({data:raw,now,run}:{data:Snapshot;now:number;run:Run})
   const [latency,setLatency]=useState<{p95:number|null;count:number}>({p95:null,count:0});
   const played=useRef<number|null>(null), episode=data.alert.episode;
   useEffect(()=>{if(episode&&data.alert.active&&played.current!==episode.id){played.current=episode.id;if(data.context_settings.sound_enabled)tone(episode.side);}},[episode,data.alert.active,data.context_settings.sound_enabled]);
-  useLayoutEffect(()=>{let second=0;const first=requestAnimationFrame(()=>{second=requestAnimationFrame(()=>setLatency(paintLatency(raw.sequence)));});return()=>{cancelAnimationFrame(first);cancelAnimationFrame(second);};},[raw.sequence]);
+  useLayoutEffect(()=>{let second=0;const first=requestAnimationFrame(()=>{second=requestAnimationFrame(()=>setLatency(paintLatency(raw.sequence)));});return()=>{cancelAnimationFrame(first);cancelAnimationFrame(second);discardSnapshot(raw.sequence);};},[raw.sequence]);
   const historical=['synthetic','replay'].includes(data.market.application_mode);
   const tape=!!caps.tape, delta=tape?num(f.delta_contracts):null, intensity=tape?num(f.contracts_per_second):null;
   const book=flow?.book, books=book?[...book.asks.slice(0,5)].reverse().map(x=>({...x,side:'sell'})).concat(book.bids.slice(0,5).map(x=>({...x,side:'buy'}))):[];
@@ -96,6 +97,7 @@ export function LivePanel({data:raw,now,run}:{data:Snapshot;now:number;run:Run})
     <div className="desk-caption">FENÔMENOS · OBSERVADO LOCALMENTE + CONTEXTO INDEPENDENTE</div>
     <div className="phenomena-grid">{['absorption','exhaustion','progression'].map(kind=><div key={kind}>{['sell','buy'].map(side=>{const h=data.market.hypotheses?.find(h=>h.kind===kind&&h.side===side);return h?<Phenomenon key={side} h={h} data={data}/>:<div className="phenomenon" key={side}><b>{kind==='absorption'?'Absorção':kind==='exhaustion'?'Exaustão':'Progressão'} · {sideName(side)}</b><small>Dados indisponíveis</small></div>;})}</div>)}</div>
     <div className="desk-controls"><label><input type="checkbox" checked={reduced} onChange={e=>{setReduced(e.target.checked);localStorage.setItem('jeve-reduced-motion',String(e.target.checked));}}/>Movimento reduzido</label><span title="Após recebimento no frontend até dois frames; fonte e JEV medidos separadamente">Render p95 {fmt(latency.p95,' ms')} · {latency.count} amostras</span><span>JEV {fmt(d.latency_ms,' ms')}</span>{data.context_settings.sound_enabled&&<button onClick={()=>void enableAudio().then(()=>{setAudioReady(true);setAudioError(false);}).catch(()=>setAudioError(true))}><Volume2 size={14}/>{audioError?'Tentar áudio':audioReady?'Áudio ativo':'Habilitar áudio'}</button>}</div>
+    <PilotControls data={raw} run={run}/>
     {data.jev_error&&<p role="status" className="desk-note amber">{data.jev_error}</p>}
     <details className="desk-explanation"><summary>Qualidade da fonte, janelas e significado do índice</summary><p>100 × (P_compra − P_venda). Pesos contextuais e Nouls independentes não são chance de lucro. Entrada, stop e alvo são hipóteses; não enviam ordens.</p><p>5s atual, 5s anterior e 30s. Resposta do preço: {fmt(tape?num(f.signed_points_per_100_aggressed_contracts):null,' pontos / 100 agredidos')}. Intensidade vs. janela anterior: {fmt(tape?num(f.intensity_ratio_to_previous_5s):null,'×')}.</p><p>COM efetivo: {fmt(flow?.capture_evidence.polling_effective_ms??null,' ms')}; mudanças amostradas: {fmt(flow?.capture_evidence.rtd_change_interval_ms??null,' ms')}. Atraso da fonte desconhecido. Modalidade: {flow?.capture_evidence.window_mode||'não informada'}; filtros: {flow?.capture_evidence.filters||'não informados'}.</p><p>{data.market.warnings.join(' · ')}</p></details>
     {data.source.ocr?.enabled&&<details className="desk-explanation"><summary>OCR auxiliar · {data.source.ocr.status} · parcial</summary><pre>{data.source.ocr.observation?.text||data.source.ocr.error||'Capturando região selecionada…'}</pre><p>Legibilidade não calibrada; perdas de negócios desconhecidas. Nenhum volume é somado ao Excel.</p></details>}

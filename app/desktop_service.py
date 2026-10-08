@@ -20,6 +20,7 @@ from app_store import resource_path, UserStore
 from candidate_research import build_market_candidates, generate_candidate_scenario
 from context_cycle import build_context, interpret_response
 from credential_vault import WindowsCredentialVault
+from capture_pilot import CapturePilot
 from live_context import PilotBudget, ContextCadence, ContextAlert, DEFAULT_LIVE_SETTINGS, update_live_settings, relevant_projection
 from decision_engine import AccountState, CostSchedule, MarketSnapshot, compare_plans, select_plan
 from decision_store import DecisionStore
@@ -33,7 +34,7 @@ EXPERIMENT_RESOURCES = ('desktop_service.py', 'app_core.py', 'app_store.py', 'ca
                         'candidate_research.py', 'flow_engine.py', 'profit_bridge.py', 'recommendation_engine.py',
                         'jev_client.py', 'copilot.py', 'capital_planner.py', 'risk.py', 'risk_research.py',
                         'config.json', 'flow_rules.json', 'observer_questions.json')
-EXPERIMENT_RESOURCES += ('live_context.py', 'credential_vault.py', 'context_cycle.py', 'context_identity.py', 'profit_ocr.py', 'profit_ocr.ps1')
+EXPERIMENT_RESOURCES += ('live_context.py', 'credential_vault.py', 'context_cycle.py', 'context_identity.py', 'profit_ocr.py', 'profit_ocr.ps1', 'capture_pilot.py')
 
 
 def batch_from_wire(data):
@@ -120,6 +121,7 @@ class DecisionService:
     def __init__(self, directory=None, *, update_checker=check_for_updates, credential_vault=None, client_factory=JevClient):
         self.store = DecisionStore(directory)
         self.settings = UserStore(directory)
+        self.pilot = CapturePilot(self.settings.directory)
         self.session = ObservationSession()
         self.costs = CostSchedule()
         self.latest_jev = None
@@ -229,6 +231,7 @@ class DecisionService:
         equity_history.append({'ts_ms': account.asof_ms or int(time.time()*1000), 'equity_brl': account.equity_brl})
         self.sequence += 1
         capabilities = self.capabilities(market)
+        self.pilot.observe(market, connected=self.collector is not None, caps=capabilities)
         return {'schema_version': 2, 'sequence': self.sequence, 'generated_at_ms': int(time.time()*1000),
                 'market': market, 'account': account.to_dict(), 'costs': asdict(self.costs), 'decision': main,
                 'alternatives': plans[1:], 'technical': technical, 'context': dimensions,
@@ -257,7 +260,7 @@ class DecisionService:
                            'observed_at_ms': market['evidence_coverage'].get('source_quality', {}).get('observed_at_ms')},
                 'chart_points': list(self.session.chart),
                 'equity_history': equity_history, 'history': [event for event in history if event['kind'].startswith('actual_manual') or event['kind'] == 'account_reconciliation'][:40],
-                'updates': dict(self.updates),
+                'updates': dict(self.updates), 'pilot': self.pilot.snapshot(),
                 'research': {'status': 'EMPIRICAL_VALIDATION_PENDING', 'logistic_baseline': 'offline CLI: scripts/run_decision_lab.py',
                              'profitdll': 'SDK_AUTHORIZED_REQUIRED', 'risk_catalog': ['fixed_lot', 'fixed_cash', 'initial_fraction', 'current_fraction', 'kelly', 'fractional_kelly', 'drawdown_kelly', 'volatility', 'optimal_f', 'fixed_ratio', 'paroli', 'partial_reinvest', 'pyramiding', 'martingale', 'dalembert', 'fibonacci', 'labouchere'],
                              'profit_target': None, 'drawdown_pause': None}, 'orders_enabled': False}
@@ -301,6 +304,19 @@ class DecisionService:
             raise ValueError('Parâmetros inválidos')
         if method == 'snapshot':
             pass
+        elif method == 'pilot.start':
+            if params: raise ValueError('O piloto não aceita parâmetros de mercado')
+            self.pilot.start(connected=self.collector is not None, mode=self.session.mode,
+                             symbol=self.session.symbol, generation=self.session.source_generation)
+        elif method == 'pilot.stop':
+            if 'pilot_id' not in params or set(params) - {'pilot_id', 'visual'}: raise ValueError('Informe o piloto e a medição visual opcional')
+            self.pilot.stop(params['pilot_id'], visual=params.get('visual'))
+        elif method == 'pilot.mark':
+            if set(params) != {'pilot_id','scenario'}: raise ValueError('Informe somente piloto e cenário')
+            self.pilot.mark(params['pilot_id'], params['scenario'])
+        elif method == 'pilot.save':
+            if set(params) != {'pilot_id'}: raise ValueError('Informe somente o piloto vigente')
+            self.pilot.save(params['pilot_id'])
         elif method == 'source.discover':
             if self.discovery['status'] != 'checking':
                 self.discovery = {**self.discovery, 'status':'checking', 'error':None}
@@ -635,6 +651,7 @@ class DecisionService:
             self.pending_call_id = None
             self.cadence.finish()
             attempt = value.get('result', value.get('attempt', value.get('cancelled', {})))
+            self.pilot.record_jev_attempt(attempt, 'cancelled' if 'cancelled' in value else 'response_received' if 'result' in value else 'failed')
             controlled = self.jev_enabled and attempt.get('control_revision') == self.control_revision
             if 'cancelled' in value:
                 self.budget.settle(attempt['call_id'], dict(input_tokens=0, output_tokens=0))
@@ -700,6 +717,7 @@ class DecisionService:
             self.source_error = None
 
     def close(self):
+        self.pilot.close()
         self.ocr['enabled']=False
         self.ocr_revision+=1
         self.disconnect()

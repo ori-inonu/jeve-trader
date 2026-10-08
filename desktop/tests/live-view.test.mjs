@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {liveSnapshot} from '../src/liveView.ts';
-import {receivedSnapshot,paintLatency} from '../src/visualLatency.ts';
+import {receivedSnapshot,paintLatency,visualPilotReport,discardBackgroundReceipts,discardSnapshot} from '../src/visualLatency.ts';
 
 const snapshot = () => ({
   generated_at_ms:10000,
@@ -25,6 +25,33 @@ test('visual measurement excludes background receipt and background paint', () =
   receivedSnapshot(3);
   assert.equal(paintLatency(3).count,1);
   assert.equal(paintLatency(3).count,1); // a sequence is counted only once
+  delete globalThis.document;
+});
+
+test('pilot exposes canceled paints, pending frames and intermediate background periods', () => {
+  Object.defineProperty(globalThis,'document',{value:{visibilityState:'visible'},configurable:true});
+  receivedSnapshot(201,'pilot-C',true);discardSnapshot(201);paintLatency(201);
+  receivedSnapshot(202,'pilot-C',true);
+  assert.equal(visualPilotReport('pilot-C').excluded,2); // includes the pending frame
+  document.visibilityState='hidden';discardBackgroundReceipts();
+  document.visibilityState='visible';paintLatency(202);
+  assert.equal(visualPilotReport('pilot-C').excluded,2);
+  assert.equal(visualPilotReport('pilot-C').buckets.length,0);
+  delete globalThis.document;
+});
+
+test('pilot visual samples have one session, exclude non-live mode and count once', () => {
+  Object.defineProperty(globalThis,'document',{value:{visibilityState:'visible'},configurable:true});
+  receivedSnapshot(101,'pilot-A',true);paintLatency(101);paintLatency(101);
+  receivedSnapshot(102,'pilot-A',false);paintLatency(102);
+  document.visibilityState='hidden';receivedSnapshot(103,'pilot-A',true);
+  document.visibilityState='visible';paintLatency(103);
+  const report=visualPilotReport('pilot-A');
+  assert.equal(report.buckets.reduce((n,[,count])=>n+count,0),1);
+  assert.equal(report.excluded,2);
+  receivedSnapshot(104,'pilot-B',true);paintLatency(104);
+  assert.equal(visualPilotReport('pilot-A').buckets.length,0);
+  assert.equal(visualPilotReport('pilot-B').buckets.reduce((n,[,count])=>n+count,0),1);
   delete globalThis.document;
 });
 

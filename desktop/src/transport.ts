@@ -7,11 +7,13 @@ export type Snapshot = LiveSnapshot & {updates:UpdateState;schema_version:number
 export type LiveSettings = {revision:number;automatic:boolean;cadence_ms:number;validity_ms:number;horizon_seconds:number;alert_threshold:number;alert_rearm:number;alert_cooldown_ms:number;alerts_enabled:boolean;sound_enabled:boolean;daily_limit_usd:string;total_limit_usd:string};
 export type Dimensions = {support:number|null;contradiction:number|null;insufficient:number|null};
 export type LiveSnapshot = {
+  pilot:CapturePilotState;
   directional:{temperature:number|null;wait:number|null;selected:string;candidate_key:string|null;geometry:Record<string,unknown>|null;expires_at_ms:number|null;evaluated_at_ms:number|null;latency_ms:number|null};
   context_settings:LiveSettings; context_by_candidate:Record<string,Dimensions>; hypothesis_context:{candidate_key:string;family:string;side:string;aggressor_side:string;scenario_side:string|null;literal_premise:string;dimensions:Dimensions}[];
   budget:{estimated_usd:string;reserved_usd:string;today_usd:string;committed_usd:string;daily_limit_usd:string;total_limit_usd:string;unknown_attempts:number;billed_usd:null};
   jev_error:string|null; jev_retry_in_ms:number; alert:{active:boolean;episode:{id:number;side:string;at_ms:number;temperature:number}|null}; chart_points:[number,number][];
 };
+export type CapturePilotState={status:'idle'|'recording'|'finished'|'interrupted';id:string|null;symbol?:string;started_at_ms?:number;duration_ms?:number;capture_samples?:number;interruptions?:number;contract_changes?:number;coverage?:Record<string,number>;scenarios?:{scenario:string;evidence_kind:string;elapsed_ms:number}[];timings?:Record<string,{count:number;p95_ms:number|null;excluded?:number}>;pending?:string[];acceptance?:string;report_path?:string|null;save_error?:string|null};
 const native = '__TAURI_INTERNALS__' in window;
 const pending = new Map<string,{resolve:(value:Snapshot)=>void;reject:(error:Error)=>void;timer:ReturnType<typeof setTimeout>}>();
 let onSnapshot: (value:Snapshot)=>void = ()=>{};

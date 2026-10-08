@@ -41,4 +41,14 @@ Instalação preserva identificadores JevWIN, dados e ícone existentes. Os arte
 
 ## Próximo aceite externo
 
+## Continuação 2026-10-08 — instrumento do piloto (0.5.1)
+
+Sob FW-11, a interface passa a iniciar/encerrar um piloto apenas com captura Excel conectada. Registra duração monotônica, amostras de cobertura, interrupções, mudança de contrato, cenários declarados pelo operador e histogramas limitados de idade da cotação, transporte ao motor, resposta JEV e atualização após dois frames no frontend. Medição visual do piloto inclui somente novas capturas Excel em primeiro plano; perdas de renderização e períodos ocultos ficam excluídos e contados. Uma resposta após OFF pode entrar na medição, sem reativar contexto ou alertas. O piloto não habilita JEV nem solicita chamadas.
+
+Relatórios locais não contêm preços, negócios, fórmulas, texto OCR, credenciais ou estado da conta. Checkpoints a cada 30 segundos; reinício conserva o último checkpoint como interrompido, sem retomar o piloto. Falha de gravação fica visível e permite tentar novamente. O relatório conserva `PENDING_REAL_REVIEW`, inclusive após 30 minutos e p95 abaixo da meta: marcas de cenário não certificam continuidade do feed.
+
+Verificação Windows local após o incremento: `scripts/verify.py` PASS, **235 testes** e desktop PASS; `npm test` **7/7**; `npm run build` PASS. Seis testes Python cobrem fonte desconectada/sintética, relógio monotônico, cobertura, interrupção/reinício, relatório privado, histograma inválido/latência acima da meta, respostas tardias/falhas JEV e recuperação de gravação. Dois testes frontend adicionais cobrem sessão do piloto, captura elegível, cancelamentos, frames pendentes e períodos ocultos. São testes isolados sem COM/feed real e sem chamadas pagas.
+
+Profit e Excel continuam ausentes na consulta de processos. FW-06 (OCR estruturado), FW-11 (piloto real/latência) e FW-12 (comparação da inferência JEV) seguem abertos. Este instrumento prepara a coleta de evidências e não certifica operação completa ou rentabilidade.
+
 Identificar contrato WIN, arquivo/intervalos Excel e ferramentas/filtros do Profit; auditar campos realmente exportados e identidade/continuidade dos negócios. Executar o piloto de 30 minutos com rajadas, rolagem, filtros, abas ocultas e fechamento/reconexão; medir fonte, frontend e JEV separadamente. Captura estruturada OCR exige contrato observado e validação local sob a política vigente. Comparação contextual exige casos anotados autorizados e orçamento conhecido. Feed gratuito completo, ProfitDLL/MT5 e posição real de investidores não foram demonstrados por este incremento. Ordens permanecem fora do escopo.

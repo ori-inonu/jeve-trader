@@ -2,6 +2,7 @@
 
 Type: grilling
 Status: open
+Assigned to: conversation 01a11717-73b1-7070-8d20-ad6d6e61188a
 Blocked by: 01-fontes, 02-cadencia
 
 ## Question
@@ -9,6 +10,8 @@ Blocked by: 01-fontes, 02-cadencia
 Quais campos/intervalos reais estão disponíveis e o que Gabriel consegue interpretar no painel lado a lado com Profit em uma sessão de segundos a dois minutos?
 
 ## Comments
+
+Retomada 2026-10-08 — Profit, Excel e JevWIN não estavam abertos na consulta de processos. A pergunta de arquivo/abas/intervalos/contrato permanece pendente. Sob FW-11, preparar registro local do piloto via `DecisionService.command/snapshot`: iniciar somente com captura Excel; duração por relógio monotônico, cobertura e interrupções, idade da cotação e transporte de captura separados da medição visual após dois frames. Cenários de rajada/rolagem/filtro/aba oculta/fechamento/reconexão serão marcas declaradas pelo operador, sem certificar continuidade. Relatório não conterá conta, credenciais, fórmulas, preços, negócios nem texto OCR. Reinício não retomará um piloto ativo. Este preparo não fecha o aceite real nem substitui a reação humana.
 
 Marco 2026-10-07 — plano mesa de fluxo aprovado: [especificação ready](../spec.md), [evidência do incremento](../implementation-evidence.md), [revisão independente](../review-evidence.md). WIN, mesa integrada e JEV desligável mantendo cálculos locais foram confirmados pelo plano. O incremento inclui perfis Excel de cotação/negócios/livro/VAP, auditoria e throttle opt-in restaurável; testes locais não demonstram o feed disponível no Profit.
 

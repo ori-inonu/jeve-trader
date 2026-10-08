@@ -32,7 +32,7 @@ try {
         '--exclude-module', 'tkinter', '--exclude-module', 'numpy', '--exclude-module', 'scipy', '--exclude-module', 'sklearn')
     foreach ($resource in @('desktop_service.py', 'app_core.py', 'app_store.py', 'capital_example.py', 'decision_engine.py',
         'decision_store.py', 'context_requests.py', 'candidate_engine.py', 'candidate_research.py', 'flow_engine.py',
-        'profit_bridge.py', 'profit_ocr.py', 'profit_ocr.ps1', 'recommendation_engine.py', 'jev_client.py', 'copilot.py', 'capital_planner.py', 'risk.py',
+        'profit_bridge.py', 'profit_ocr.py', 'profit_ocr.ps1', 'capture_pilot.py', 'recommendation_engine.py', 'jev_client.py', 'copilot.py', 'capital_planner.py', 'risk.py',
         'risk_research.py', 'release_updates.py', 'live_context.py', 'credential_vault.py', 'context_cycle.py', 'context_identity.py',
         'version.json', 'config.json', 'flow_rules.json', 'observer_questions.json')) {
         $pyinstallerArgs += @('--add-data', "$(Join-Path $workspace "app\$resource");.")
