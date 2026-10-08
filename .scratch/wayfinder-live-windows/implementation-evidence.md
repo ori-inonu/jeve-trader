@@ -61,6 +61,12 @@ PowerShell 7, PyInstaller, Cargo release e NSIS passaram; diagnóstico empacotad
 | `jeve-engine.exe` instalado | `d76aa76da567ba53594ca58f56d3aee0c6cd92d774189e1450282c00c8479c79` |
 | `package-manifest.json` instalado | `6e0fc1629aa712b1978bfd8922438acf4977cfb5e019af8fb9f6c417d6043daa` |
 
+### Publicação e aviso de atualização 0.5.1
+
+Release privada [v0.5.1](https://github.com/ori-inonu/jeve-trader/releases/tag/v0.5.1) publicada no commit `ee54938aaacf1f02ae2c4679e803e0a0aebe7ce7`. Instalador, portable e `SHA256SUMS-0.5.1.txt` tiveram tamanho e digest remoto conferidos contra os arquivos locais antes da publicação. A branch `codex/windows-updates-and-live-roadmap` foi enviada ao origin; alterações de outra conversa foram preservadas fora dos commits desta etapa. O repositório continua privado.
+
+Consulta real pelo mesmo código usado no aplicativo confirmou `available` para a versão 0.5.0 e `current` para 0.5.1, ambas apontando para a release publicada. A consulta reutilizou a credencial Git existente sem prompt ou exposição à interface; nenhuma chamada JEV foi feita. A atualização continua manual pelo instalador após abrir a release. Evidência sanitizada: [entrega 0.5.1](release-evidence-0.5.1.json).
+
 ## Próximo aceite externo
 
 Identificar contrato WIN, arquivo/intervalos Excel e ferramentas/filtros do Profit; auditar campos realmente exportados e identidade/continuidade dos negócios. Executar o piloto de 30 minutos com rajadas, rolagem, filtros, abas ocultas e fechamento/reconexão; medir fonte, frontend e JEV separadamente. Captura estruturada OCR exige contrato observado e validação local sob a política vigente. Comparação contextual exige casos anotados autorizados e orçamento conhecido. Feed gratuito completo, ProfitDLL/MT5 e posição real de investidores não foram demonstrados por este incremento. Ordens permanecem fora do escopo.
