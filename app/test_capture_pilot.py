@@ -20,6 +20,68 @@ PROFILE = dict(symbol='WINV26', workbook='Private.xlsx', quote_sheet='Cotacoes',
 
 
 class CapturePilotTests(unittest.TestCase):
+    def test_damaged_or_invalid_local_checkpoint_cannot_break_startup_or_escape_directory(self):
+        for report in (dict(schema_version=1,status='finished',id='../escaped',pending=[]),
+                       dict(schema_version=1,status='recording',id='ed35255c-3e59-42f7-ad99-bf725c072917',pending=None)):
+            with self.subTest(report=report), tempfile.TemporaryDirectory() as directory:
+                folder = Path(directory)/'capture-pilots'
+                folder.mkdir()
+                (folder/'latest.json').write_text(json.dumps(report),encoding='utf-8')
+                service = DecisionService(directory)
+                try:
+                    snapshot = service.snapshot()['pilot']
+                    self.assertEqual(snapshot['status'], 'idle')
+                    self.assertTrue(snapshot['save_error'])
+                    with self.assertRaises(ValueError): service.command('pilot.save',dict(pilot_id=report['id']))
+                    self.assertFalse((Path(directory)/'escaped.json').exists())
+                finally: service.close()
+
+    def test_visual_checkpoints_survive_renderer_reload_close_and_restart(self):
+        with tempfile.TemporaryDirectory() as directory, patch('desktop_service.ExcelCollector', Collector):
+            service = DecisionService(directory)
+            try:
+                service.command('source.excel', PROFILE)
+                pid = service.command('pilot.start', {})['pilot']['id']
+                first = dict(pilot_id=pid, visual_session='renderer-1', visual=dict(buckets=[[100,94],[251,6]],excluded=2,overflow=0))
+                service.command('pilot.checkpoint', first)
+                service.command('pilot.checkpoint', first)  # same cumulative checkpoint is idempotent
+                with self.assertRaises(ValueError):
+                    service.command('pilot.checkpoint', {**first, 'visual':dict(buckets=[],excluded=0,overflow=0)})
+                service.command('pilot.checkpoint', dict(pilot_id=pid, visual_session='renderer-2', visual=dict(buckets=[[80,5]],excluded=1,overflow=0)))
+                report = service.snapshot()['pilot']
+                metric = report['timings']['visual_after_receive_ms']
+                self.assertEqual(metric['count'], 105)
+                self.assertEqual(metric['p95_ms'], 251)
+                self.assertEqual(metric['excluded'], 3)
+                self.assertEqual(json.loads(Path(report['report_path']).read_text(encoding='utf-8'))['timings']['visual_after_receive_ms'], metric)
+                service.close()
+                restarted = DecisionService(directory)
+                try:
+                    result = restarted.snapshot()['pilot']
+                    self.assertEqual(result['status'], 'interrupted')
+                    self.assertEqual(result['timings']['visual_after_receive_ms'], metric)
+                    self.assertIn('process_interrupted', result['pending'])
+                finally: restarted.close()
+            finally:
+                if not service.closed: service.close()
+
+    def test_crash_recovery_persists_interrupted_status_in_both_report_files(self):
+        with tempfile.TemporaryDirectory() as directory, patch('desktop_service.ExcelCollector', Collector):
+            service = DecisionService(directory)
+            service.command('source.excel', PROFILE)
+            report = service.command('pilot.start', {})['pilot']
+            restarted = DecisionService(directory)  # the last checkpoint still says recording
+            try:
+                for path in (Path(report['report_path']), Path(directory)/'capture-pilots'/'latest.json'):
+                    saved = json.loads(path.read_text(encoding='utf-8'))
+                    self.assertEqual(saved['status'], 'interrupted')
+                    self.assertIn('process_interrupted', saved['pending'])
+                    self.assertEqual(saved['acceptance'], 'PENDING_REAL_REVIEW')
+                self.assertEqual(restarted.snapshot()['pilot']['status'], 'interrupted')
+            finally:
+                restarted.close()
+                service.close()
+
     def test_pilot_requires_the_real_capture_mode_and_never_sends_jev(self):
         with tempfile.TemporaryDirectory() as directory:
             service = DecisionService(directory, client_factory=lambda **kw: self.fail('Pilot must not call JEV'))

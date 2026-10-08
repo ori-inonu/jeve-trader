@@ -6,7 +6,7 @@ import {Chart} from './Chart';
 import {LivePanel} from './LivePanel';
 import {LiveConfiguration} from './LiveConfiguration';
 import {liveSnapshot} from './liveView';
-import {receivedSnapshot,discardBackgroundReceipts} from './visualLatency';
+import {createVisualCaptureReceiver,discardBackgroundReceipts,visualPilotReport,visualSessionId} from './visualLatency';
 const currency=(value:string|number)=>Number(value).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const time=(ms:number)=>ms ? new Date(ms).toLocaleTimeString('pt-BR') : '—';
 type Run=(method:string,params?:Record<string,unknown>)=>Promise<void>;
@@ -39,7 +39,8 @@ function Configuration({data,run}:{data:Snapshot;run:Run}) {
 export function App(){
   const [data,setData]=useState<Snapshot|null>(null),[page,setPage]=useState('decision'),[error,setError]=useState(''),[tick,setTick]=useState(Date.now());
   const sequence=useRef(-1);
-  useEffect(()=>{let disposed=false;let lastCapture='';let cleanup:(()=>void)|undefined;
+  useEffect(()=>{let disposed=false;let cleanup:(()=>void)|undefined;
+    const receiveCapture=createVisualCaptureReceiver();
     const receive=(value:Snapshot)=>{
       if(value.schema_version!==2||value.sequence<=sequence.current)return;
       sequence.current=value.sequence;
@@ -48,9 +49,8 @@ export function App(){
         const key=`${pilot.id}:${value.market.source_generation}:${stamp}`;
         const active=pilot.status==='recording';
         const eligible=active&&value.market.application_mode==='excel_observation'&&value.source.excel_running
-          &&value.market.symbol===pilot.symbol&&stamp!=null&&stamp>=(pilot.started_at_ms??Infinity)&&key!==lastCapture;
-        receivedSnapshot(value.sequence,active?pilot.id:null,eligible);
-        if(eligible)lastCapture=key;
+          &&value.market.symbol===pilot.symbol&&stamp!=null&&stamp>=(pilot.started_at_ms??Infinity);
+        receiveCapture(value.sequence,active?pilot.id:null,eligible,stamp==null?null:key);
         setData(value);
       }
     };
@@ -60,6 +60,22 @@ export function App(){
     return()=>{disposed=true;cleanup?.();document.removeEventListener('visibilitychange',visibility);};
   },[]);
   const run:Run=async(method,params={})=>{setError('');try{await command(method,params);}catch(e){setError(e instanceof Error?e.message:String(e));}};
+  const pilotId=data?.pilot.status==='recording'?data.pilot.id:null;
+  useEffect(()=>{
+    if(!pilotId)return;
+    let inFlight=false,disposed=false;
+    const checkpoint=async()=>{
+      if(inFlight||disposed)return;
+      inFlight=true;
+      try{await command('pilot.checkpoint',{pilot_id:pilotId,visual:visualPilotReport(pilotId,false),visual_session:visualSessionId()});}
+      catch(e){if(!disposed)setError(`Checkpoint do piloto: ${e instanceof Error?e.message:String(e)}`);}
+      finally{inFlight=false;}
+    };
+    const visibility=()=>{if(document.visibilityState!=='visible'){discardBackgroundReceipts();void checkpoint();}};
+    const interval=setInterval(()=>void checkpoint(),5000);
+    document.addEventListener('visibilitychange',visibility);
+    return()=>{disposed=true;clearInterval(interval);document.removeEventListener('visibilitychange',visibility);};
+  },[pilotId]);
   useEffect(()=>{const timer=setInterval(()=>setTick(Date.now()),100);return()=>clearInterval(timer);},[]);
   const stale=!!data&&data.market.application_mode==='excel_observation'&&!liveSnapshot(data,tick).source.capabilities.quote_fresh;
   const navigation=[['decision','Decisão',Activity],['capital','Capital',Wallet],['research','Pesquisa',FlaskConical],['configuration','Configuração',Settings2]] as const;

@@ -39,16 +39,28 @@ Instalação preserva identificadores JevWIN, dados e ícone existentes. Os arte
 | `jeve-engine.exe` instalado | `17cd501f1575ed9d535cc69ecac10f05d73909179679210dd29c1e028d171df5` |
 | `package-manifest.json` instalado | `6a55d6305904338230db5fb7ac2a136ddf07337e9a3f4dbec25951a07c8dcd5d` |
 
-## Próximo aceite externo
-
 ## Continuação 2026-10-08 — instrumento do piloto (0.5.1)
 
-Sob FW-11, a interface passa a iniciar/encerrar um piloto apenas com captura Excel conectada. Registra duração monotônica, amostras de cobertura, interrupções, mudança de contrato, cenários declarados pelo operador e histogramas limitados de idade da cotação, transporte ao motor, resposta JEV e atualização após dois frames no frontend. Medição visual do piloto inclui somente novas capturas Excel em primeiro plano; perdas de renderização e períodos ocultos ficam excluídos e contados. Uma resposta após OFF pode entrar na medição, sem reativar contexto ou alertas. O piloto não habilita JEV nem solicita chamadas.
+Sob FW-11, a interface passa a iniciar/encerrar um piloto apenas com vínculo Excel ativo. Essa condição permite registrar falhas e ausência de leituras; não prova captura bem-sucedida. Registra duração monotônica, amostras de cobertura, interrupções, mudança de contrato, cenários declarados pelo operador e histogramas limitados de idade da cotação, transporte ao motor, resposta JEV e atualização após dois frames no frontend. Medição visual do piloto inclui somente novas capturas Excel em primeiro plano; perdas de renderização e períodos ocultos ficam excluídos e contados. Snapshots repetidos não contam como exclusões. Uma resposta após OFF pode entrar na medição, sem reativar contexto ou alertas. O piloto não habilita JEV nem solicita chamadas.
 
-Relatórios locais não contêm preços, negócios, fórmulas, texto OCR, credenciais ou estado da conta. Checkpoints a cada 30 segundos; reinício conserva o último checkpoint como interrompido, sem retomar o piloto. Falha de gravação fica visível e permite tentar novamente. O relatório conserva `PENDING_REAL_REVIEW`, inclusive após 30 minutos e p95 abaixo da meta: marcas de cenário não certificam continuidade do feed.
+Relatórios locais não contêm preços, negócios, fórmulas, texto OCR, credenciais ou estado da conta. Checkpoint do motor a cada 30 segundos e envio visual a cada 5 segundos, também ao ocultar a janela; o envio visual salva o relatório completo. Interrupções preservam somente o último checkpoint recebido: recibos ainda não enviados são desconhecidos, portanto o relatório interrompido não comprova contagem integral de exclusões ou desempenho. Reinício grava o estado interrompido nos dois arquivos locais, sem retomar o piloto. Histogramas cumulativos são vinculados à sessão do renderer, com até oito sessões por piloto; reload não substitui as medições anteriores e regressões são rejeitadas. O primeiro snapshot de cada renderer estabelece a referência de captura, sem gerar amostra do piloto; snapshots retidos após reload não são medidos novamente. Frames pendentes só são excluídos no encerramento final. Checkpoint inválido ou ID adulterado não bloqueia o aplicativo nem autoriza gravação fora do diretório. Falha de gravação fica visível e permite tentar novamente. O relatório conserva `PENDING_REAL_REVIEW`, inclusive após 30 minutos e p95 abaixo da meta: marcas de cenário não certificam continuidade do feed.
 
-Verificação Windows local após o incremento: `scripts/verify.py` PASS, **235 testes** e desktop PASS; `npm test` **7/7**; `npm run build` PASS. Seis testes Python cobrem fonte desconectada/sintética, relógio monotônico, cobertura, interrupção/reinício, relatório privado, histograma inválido/latência acima da meta, respostas tardias/falhas JEV e recuperação de gravação. Dois testes frontend adicionais cobrem sessão do piloto, captura elegível, cancelamentos, frames pendentes e períodos ocultos. São testes isolados sem COM/feed real e sem chamadas pagas.
+Verificação Windows local após o incremento: `scripts/verify.py` PASS, **238 testes** e desktop PASS; `npm test` **9/9**; `npm run build` PASS. Nove testes Python cobrem fonte desconectada/sintética, relógio monotônico, cobertura, interrupção/reinício durável, relatório privado, histograma inválido/latência acima da meta, respostas tardias/falhas JEV, recuperação de gravação, reload visual e checkpoint local inválido. Quatro testes frontend adicionais cobrem sessão do piloto, captura elegível, snapshots repetidos, cancelamentos, frames pendentes, períodos ocultos e recarga do renderer. São testes isolados sem COM/feed real e sem chamadas pagas.
 
 Profit e Excel continuam ausentes na consulta de processos. FW-06 (OCR estruturado), FW-11 (piloto real/latência) e FW-12 (comparação da inferência JEV) seguem abertos. Este instrumento prepara a coleta de evidências e não certifica operação completa ou rentabilidade.
+
+### Pacote e instalação 0.5.1
+
+PowerShell 7, PyInstaller, Cargo release e NSIS passaram; diagnóstico empacotado `PASS`. Atualização instalada **0.5.0 → 0.5.1**, saída 0: dois bancos locais byte-idênticos por SHA256, backup local ignorado pelo Git, atalho Desktop e registro 0.5.1 conferidos. Executável, motor e manifesto instalados coincidem com o pacote. Smoke do motor instalado, em diretório temporário, passou: fonte `idle`, piloto `idle`, JEV OFF, 0 chamadas, termômetro indisponível e ordens desabilitadas. Nenhum diário/credencial real foi usado no smoke. O build conserva o aviso conhecido de chunk frontend acima de 500 kB; isso não demonstra latência de renderização.
+
+| Artefato | SHA256 |
+|---|---|
+| `JevWIN_0.5.1_setup.exe` | `8c925c4a51055063e011d64486b1f3178b0740fe5c2cabcfcbc05a12c148c476` |
+| `JevWIN_0.5.1_portable.zip` | `26e8a62492be98aeae411c84e8b4ea465adf8897a8c9842bef721fef6dd810e6` |
+| `JevWIN.exe` instalado | `cce9c0c7ef4a419a89b94c59ee0935ec85cdac28bcbed75bcb4710727910c476` |
+| `jeve-engine.exe` instalado | `d76aa76da567ba53594ca58f56d3aee0c6cd92d774189e1450282c00c8479c79` |
+| `package-manifest.json` instalado | `6e0fc1629aa712b1978bfd8922438acf4977cfb5e019af8fb9f6c417d6043daa` |
+
+## Próximo aceite externo
 
 Identificar contrato WIN, arquivo/intervalos Excel e ferramentas/filtros do Profit; auditar campos realmente exportados e identidade/continuidade dos negócios. Executar o piloto de 30 minutos com rajadas, rolagem, filtros, abas ocultas e fechamento/reconexão; medir fonte, frontend e JEV separadamente. Captura estruturada OCR exige contrato observado e validação local sob a política vigente. Comparação contextual exige casos anotados autorizados e orçamento conhecido. Feed gratuito completo, ProfitDLL/MT5 e posição real de investidores não foram demonstrados por este incremento. Ordens permanecem fora do escopo.

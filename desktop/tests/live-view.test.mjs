@@ -3,6 +3,25 @@ import assert from 'node:assert/strict';
 import {liveSnapshot} from '../src/liveView.ts';
 import {receivedSnapshot,paintLatency,visualPilotReport,discardBackgroundReceipts,discardSnapshot} from '../src/visualLatency.ts';
 
+test('renderer reload establishes a capture baseline instead of remeasuring the retained snapshot', async () => {
+  Object.defineProperty(globalThis,'document',{value:{visibilityState:'visible'},configurable:true});
+  const first=await import('../src/visualLatency.ts?first-renderer');
+  const receive=first.createVisualCaptureReceiver();
+  receive(401,null,false,null);first.paintLatency(401);
+  receive(402,'pilot-reload',true,'pilot-reload:1:10000');first.paintLatency(402);
+  assert.equal(first.visualPilotReport('pilot-reload').buckets.reduce((n,[,count])=>n+count,0),1);
+  const reloaded=await import('../src/visualLatency.ts?reloaded-renderer');
+  const resumed=reloaded.createVisualCaptureReceiver();
+  resumed(403,'pilot-reload',true,'pilot-reload:1:10000');reloaded.paintLatency(403);
+  resumed(404,'pilot-reload',true,'pilot-reload:1:10000');reloaded.paintLatency(404);
+  assert.equal(reloaded.visualPilotReport('pilot-reload').buckets.length,0);
+  resumed(405,'pilot-reload',true,'pilot-reload:1:10250');reloaded.paintLatency(405);
+  resumed(406,'pilot-reload',true,'pilot-reload:1:10250');reloaded.paintLatency(406);
+  assert.equal(reloaded.visualPilotReport('pilot-reload').buckets.reduce((n,[,count])=>n+count,0),1);
+  assert.equal(reloaded.visualPilotReport('pilot-reload').excluded,0);
+  delete globalThis.document;
+});
+
 const snapshot = () => ({
   generated_at_ms:10000,
   market:{application_mode:'excel_observation',flow_ts_ms:10000,last_quote:{ts_ms:10000}},
@@ -40,15 +59,28 @@ test('pilot exposes canceled paints, pending frames and intermediate background 
   delete globalThis.document;
 });
 
-test('pilot visual samples have one session, exclude non-live mode and count once', () => {
+test('periodic checkpoints leave pending frames for a later completed sample', () => {
+  Object.defineProperty(globalThis,'document',{value:{visibilityState:'visible'},configurable:true});
+  receivedSnapshot(301,'pilot-checkpoint',true);
+  assert.equal(visualPilotReport('pilot-checkpoint',false).excluded,0);
+  assert.equal(visualPilotReport('pilot-checkpoint').excluded,1);
+  paintLatency(301);
+  assert.equal(visualPilotReport('pilot-checkpoint',false).excluded,0);
+  assert.equal(visualPilotReport('pilot-checkpoint',false).buckets.reduce((n,[,count])=>n+count,0),1);
+  delete globalThis.document;
+});
+
+test('pilot visual exclusions count actual captures instead of repeated polling snapshots', () => {
   Object.defineProperty(globalThis,'document',{value:{visibilityState:'visible'},configurable:true});
   receivedSnapshot(101,'pilot-A',true);paintLatency(101);paintLatency(101);
   receivedSnapshot(102,'pilot-A',false);paintLatency(102);
+  receivedSnapshot(105,'pilot-A',false);paintLatency(105);
   document.visibilityState='hidden';receivedSnapshot(103,'pilot-A',true);
+  receivedSnapshot(106,'pilot-A',false);
   document.visibilityState='visible';paintLatency(103);
   const report=visualPilotReport('pilot-A');
   assert.equal(report.buckets.reduce((n,[,count])=>n+count,0),1);
-  assert.equal(report.excluded,2);
+  assert.equal(report.excluded,1);
   receivedSnapshot(104,'pilot-B',true);paintLatency(104);
   assert.equal(visualPilotReport('pilot-A').buckets.length,0);
   assert.equal(visualPilotReport('pilot-B').buckets.reduce((n,[,count])=>n+count,0),1);

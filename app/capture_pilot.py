@@ -72,6 +72,30 @@ def visual_measurement(payload):
     return {**result, 'excluded': excluded, 'measurement': 'frontend_receive_to_two_frames_foreground'}
 
 
+def validate_saved_report(report):
+    """Local checkpoints are input too; never trust their paths or UI shapes."""
+    if not isinstance(report, dict) or type(report.get('schema_version')) is not int or report['schema_version'] != 1:
+        raise ValueError('Checkpoint inválido')
+    if (report.get('status') not in ('recording', 'finished', 'interrupted')
+            or str(uuid.UUID(report.get('id', ''))) != report['id']):
+        raise ValueError('Checkpoint inválido')
+    for field in ('duration_ms','capture_samples','interruptions','contract_changes','started_at_ms'):
+        if type(report.get(field)) is not int or report[field] < 0: raise ValueError('Checkpoint inválido')
+    if not isinstance(report.get('symbol'), str): raise ValueError('Checkpoint inválido')
+    if not isinstance(report.get('pending'), list) or not all(isinstance(p,str) for p in report['pending']):
+        raise ValueError('Checkpoint inválido')
+    if not isinstance(report.get('scenarios'), list) or not all(isinstance(s,dict)
+            and s.get('scenario') in SCENARIOS and s.get('evidence_kind') == 'operator_declaration'
+            and type(s.get('elapsed_ms')) is int and s['elapsed_ms'] >= 0 for s in report['scenarios']):
+        raise ValueError('Checkpoint inválido')
+    if not isinstance(report.get('timings'), dict): raise ValueError('Checkpoint inválido')
+    for metric in report['timings'].values():
+        if (not isinstance(metric,dict) or type(metric.get('count')) is not int or metric['count'] < 0
+                or metric.get('p95_ms') is not None and (type(metric['p95_ms']) not in (int,float)
+                    or not math.isfinite(metric['p95_ms']) or metric['p95_ms'] < 0)):
+            raise ValueError('Checkpoint inválido')
+
+
 class CapturePilot:
     def __init__(self, directory):
         self.active = None
@@ -80,16 +104,19 @@ class CapturePilot:
         self.directory = Path(directory) / 'capture-pilots'
         self.last = dict(status='idle', id=None)
         latest = self.directory / 'latest.json'
-        if latest.is_file() and latest.stat().st_size <= 65536:
-            try:
+        try:
+            if latest.is_file():
+                if latest.stat().st_size > 524288: raise ValueError('Checkpoint grande demais')
                 report = json.loads(latest.read_text(encoding='utf-8'))
-                if report.get('schema_version') == 1 and report.get('status') in ('recording','finished','interrupted'):
-                    self.last = report
-                    if self.last['status'] == 'recording':
-                        self.last.update(status='interrupted', acceptance='PENDING_REAL_REVIEW')
-                        self.last['pending'] = list(set(self.last.get('pending', [])+['process_interrupted']))
-            except (OSError, ValueError, AttributeError):
-                pass
+                validate_saved_report(report)
+                report.update(acceptance='PENDING_REAL_REVIEW', report_path=str((self.directory/(report['id']+'.json')).resolve()))
+                self.last = report
+                if self.last['status'] == 'recording':
+                    self.last.update(status='interrupted')
+                    self.last['pending'] = list(dict.fromkeys(self.last['pending']+['process_interrupted']))
+                    self._persist(self.last)
+        except (OSError, ValueError, AttributeError, TypeError):
+            self.last = dict(status='idle', id=None, save_error='Checkpoint local do piloto inválido ou indisponível; não foi retomado')
 
     def start(self, *, connected, mode, symbol, generation):
         if not connected or mode != 'excel_observation':
@@ -112,6 +139,8 @@ class CapturePilot:
         self.metrics = {k:Measurements() for k in ('quote_age_on_receive_ms','capture_to_receive_ms','jev_response_ms')}
         self.polling = dict(polling_effective_ms=None, rtd_change_interval_ms=None)
         self.visual = dict(count=0, p95_ms=None, excluded=0, measurement='frontend_receive_to_two_frames_foreground')
+        self.visual_sessions = {}
+        self.visual_checkpoint_at_ms = None
         self._persist(self.snapshot())
 
     def observe(self, market, *, connected, caps):
@@ -170,11 +199,40 @@ class CapturePilot:
         if len(self.active['events']) < 64:
             self.active['events'].append(dict(kind=kind, elapsed_ms=int((time.monotonic()-self.started)*1000)))
 
-    def stop(self, pilot_id, *, interrupted=False, visual=None):
+    def checkpoint(self, pilot_id, visual, session):
+        self._update_visual(pilot_id, visual, session)
+        self._persist(self.snapshot())
+
+    def _update_visual(self, pilot_id, visual, session):
+        if not self.active or pilot_id != self.active['id']:
+            raise ValueError('O piloto vigente mudou ou não está ativo')
+        if (not isinstance(session, str) or not 1 <= len(session) <= 64
+                or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in session)):
+            raise ValueError('Sessão visual inválida')
+        updated = visual_measurement(visual)
+        previous = self.visual_sessions.get(session)
+        if previous:
+            old = visual_measurement(previous)
+            old_buckets, new_buckets = dict(previous['buckets']), dict(visual['buckets'])
+            if (updated['excluded'] < old['excluded'] or updated['overflow_over_60s'] < old['overflow_over_60s']
+                    or any(new_buckets.get(k, 0) < count for k, count in old_buckets.items())):
+                raise ValueError('Checkpoint visual regressivo')
+        elif len(self.visual_sessions) >= 8:
+            raise ValueError('Limite de sessões visuais do piloto atingido')
+        sessions = {**self.visual_sessions, session: visual}
+        buckets, excluded, overflow = {}, 0, 0
+        for value in sessions.values():
+            for upper, count in value['buckets']: buckets[upper] = buckets.get(upper, 0)+count
+            excluded += value['excluded']; overflow += value['overflow']
+        total = visual_measurement(dict(buckets=[[k,v] for k,v in buckets.items()], excluded=excluded, overflow=overflow))
+        self.visual_sessions, self.visual = sessions, total
+        self.visual_checkpoint_at_ms = int(time.time()*1000)
+
+    def stop(self, pilot_id, *, interrupted=False, visual=None, visual_session='legacy'):
         if not self.active or pilot_id != self.active['id']:
             raise ValueError('O piloto vigente mudou ou não está ativo')
         if visual is not None:
-            self.visual = visual_measurement(visual)
+            self._update_visual(pilot_id, visual, visual_session)
         report = self.snapshot()
         report.update(status='interrupted' if interrupted else 'finished', ended_at_ms=int(time.time()*1000))
         if interrupted: report['pending'].append('process_interrupted')
@@ -222,6 +280,7 @@ class CapturePilot:
         report['duration_ms'] = max(0, int((time.monotonic()-self.started)*1000))
         report['timings'] = {k:v.summary() for k,v in self.metrics.items()}
         report['timings']['visual_after_receive_ms'] = dict(self.visual)
+        report['visual_checkpoint_at_ms'] = self.visual_checkpoint_at_ms
         report['polling_last_observed'] = dict(self.polling)
         report['jev_attempts'] = dict(self.jev_attempts)
         pending = ['source_continuity_not_demonstrated', 'operator_review_required']
@@ -238,6 +297,7 @@ class CapturePilot:
                       measurement_limits=['A idade da cotação usa relógios distintos; não é latência da bolsa.',
                         'O intervalo RTD é a última mudança amostrada, não todos os negócios.',
                         'Marcas de cenário são declarações do operador.',
+                        'Medições visuais são salvas a cada 5 segundos; interrupções preservam somente o último checkpoint recebido.',
                         'Latência JEV inclui respostas recebidas e falhas do piloto, mesmo após OFF; cancelamentos sem envio não têm latência.',
                         'Não valida rentabilidade, inferência JEV nem tape completo.'])
         return report

@@ -29,3 +29,15 @@ Aceites ainda abertos: FW-06 é snapshot textual auxiliar, sem extração estrut
 ## Configuração de revisão
 
 `docs/agents/issue-tracker.md` não existe. A skill recomenda `/setup-matt-pocock-skills` para configurar o rastreador; isso não bloqueou a revisão local nem autorizou alterações em documentação de outro chat. Os achados ficaram neste registro e no ticket canônico 04, sem criar duplicatas externas.
+
+## Continuação 2026-10-08 — registro do piloto 0.5.1
+
+Baseline fixa `548801e0a9de14903180bd3e54ba97e1d728276a`. Revisores `pilot_spec_review` e `pilot_standards_review`, distintos do integrador, trabalharam em cópias isoladas de leitura, fora do checkout compartilhado. Configuração solicitada: GPT-6 Luna/max; modelo e tier efetivos não observados, portanto a configuração não certifica a execução. Nenhum revisor chamou API paga ou alterou dados privados. Escopo: registro local do piloto, integração do serviço/frontend e empacotamento do módulo; os aceites integrais continuam congelados em `spec.md`.
+
+Achados iniciais: reinício publicava interrupção sem persistir nos dois JSONs; medição visual só chegava ao serviço ao encerrar manualmente; snapshots repetidos contavam como exclusões. Corrigidos com recuperação durável, checkpoints visuais cumulativos a cada 5 segundos e elegibilidade de novas capturas. Testes adicionais verificam fechamento/reinício, recuperação de relatório inválido, sessão visual recarregada, regressões de histograma e snapshots repetidos.
+
+Follow-up spec encontrou P2 adicional: um renderer recarregado podia medir novamente o snapshot retido. Corrigido: primeiro snapshot estabelece baseline; só mudanças posteriores entram no histograma do piloto. Teste com dois módulos independentes simula a recarga, ignora o snapshot retido e polling repetido e mede a captura nova.
+
+Reverificação final spec: “Não encontrei achado de bloqueio neste incremento”; **9/9 testes frontend** executados na cópia isolada. Standards: “Não encontrei novo bloqueio de código nesta revisão”; inspecionou a correção, sem executar a suíte ou instalação nessa rodada. A verificação Windows do integrador passou em **238 testes Python**, desktop, **9/9 frontend** e build TypeScript/Vite. Esses resultados verificam o instrumento preparatório, sem certificar FW-11.
+
+Limites aceitos explicitamente pelos dois leitores: o vínculo Excel ativo não comprova leitura bem-sucedida; relatório interrompido preserva somente o último checkpoint recebido, sem contagem integral dos recibos não enviados. Nenhum desses limites encerra a fronteira. FW-06, FW-11 e FW-12 permanecem abertos; o relatório conserva `PENDING_REAL_REVIEW` e exige captura/continuidade e revisão humana reais.

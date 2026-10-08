@@ -309,8 +309,11 @@ class DecisionService:
             self.pilot.start(connected=self.collector is not None, mode=self.session.mode,
                              symbol=self.session.symbol, generation=self.session.source_generation)
         elif method == 'pilot.stop':
-            if 'pilot_id' not in params or set(params) - {'pilot_id', 'visual'}: raise ValueError('Informe o piloto e a medição visual opcional')
-            self.pilot.stop(params['pilot_id'], visual=params.get('visual'))
+            if 'pilot_id' not in params or set(params) - {'pilot_id', 'visual', 'visual_session'}: raise ValueError('Informe o piloto e a medição visual opcional')
+            self.pilot.stop(params['pilot_id'], visual=params.get('visual'), visual_session=params.get('visual_session','legacy'))
+        elif method == 'pilot.checkpoint':
+            if set(params) != {'pilot_id','visual','visual_session'}: raise ValueError('Informe o piloto e a sessão visual')
+            self.pilot.checkpoint(params['pilot_id'], params['visual'], params['visual_session'])
         elif method == 'pilot.mark':
             if set(params) != {'pilot_id','scenario'}: raise ValueError('Informe somente piloto e cenário')
             self.pilot.mark(params['pilot_id'], params['scenario'])

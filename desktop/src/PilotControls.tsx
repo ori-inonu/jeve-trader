@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {type Snapshot} from './transport';
-import {visualPilotReport} from './visualLatency';
+import {visualPilotReport,visualSessionId} from './visualLatency';
 
 type Run=(method:string,params?:Record<string,unknown>)=>Promise<void>;
 const scenarios=[['burst','Rajada'],['scroll','Rolagem'],['filter','Filtro'],['hidden_tab','Aba oculta'],['window_close','Janela fechada'],['reconnect','Reconexão']] as const;
@@ -19,7 +19,7 @@ export function PilotControls({data,run}:{data:Snapshot;run:Run}) {
       <div className="pilot-status"><b>{pilot.symbol} · {pilot.capture_samples} capturas</b><span>{pilot.interruptions} interrupções</span><span>{pilot.contract_changes} mudanças de contrato</span></div>
       <p>Marque cada situação somente após observá-la. Essas marcas são declarações suas.</p>
       <div className="pilot-actions">{scenarios.map(([id,label])=>{const marked=pilot.scenarios?.some(s=>s.scenario===id);return <button key={id} disabled={busy||marked} onClick={()=>void act('pilot.mark',{pilot_id:pilot.id,scenario:id})}>{marked?'✓ ':''}{label}</button>;})}
-        <button className="button secondary" disabled={busy} onClick={()=>void act('pilot.stop',{pilot_id:pilot.id,visual:visualPilotReport(pilot.id!)})}>Encerrar e salvar relatório</button>
+        <button className="button secondary" disabled={busy} onClick={()=>void act('pilot.stop',{pilot_id:pilot.id,visual:visualPilotReport(pilot.id!),visual_session:visualSessionId()})}>Encerrar e salvar relatório</button>
       </div>
     </>:<button className="button secondary" disabled={busy||data.market.application_mode!=='excel_observation'||!data.source.excel_running} onClick={()=>void act('pilot.start')}>Iniciar piloto real</button>}
     {pilot.timings&&<div className="pilot-timings">{[['quote_age_on_receive_ms','Idade da cotação'],['capture_to_receive_ms','Captura → motor'],['visual_after_receive_ms','Recebimento → 2 frames'],['jev_response_ms','Resposta JEV']].map(([key,label])=><span key={key}>{label}<b>{timing(pilot.timings?.[key]?.p95_ms)} · {pilot.timings?.[key]?.count??0} amostras</b></span>)}</div>}
