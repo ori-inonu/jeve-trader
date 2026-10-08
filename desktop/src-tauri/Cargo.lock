@@ -1507,7 +1507,7 @@ dependencies = [
 
 [[package]]
 name = "jeve-trader"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "serde_json",
  "tauri",

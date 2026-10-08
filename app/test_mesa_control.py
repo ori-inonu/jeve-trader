@@ -21,21 +21,47 @@ class MesaControlTests(unittest.TestCase):
                 self.assertFalse(state['jev']['enabled'])
             finally: service.close()
 
-    def test_ocr_policy_diagnostic_reaches_the_public_state(self):
-        from profit_ocr import OcrPolicyError
+    def test_missing_ocr_runtime_is_visible_without_starting_capture(self):
         with tempfile.TemporaryDirectory() as directory:
             service = DecisionService(directory)
             try:
-                service.command('source.ocr', dict(enabled=True, selection=dict(handle=42, title='Profit Pro', x=0, y=0, width=640, height=400, region_kind='book')))
-                with patch('desktop_service.capture_profit', side_effect=OcrPolicyError()):
+                with patch('desktop_service.runtime_status', return_value=dict(available=False, engine='tesseract', version=None, error='Runtime OCR local ausente')), patch('desktop_service.capture_profit') as capture:
+                    service.command('source.ocr', dict(enabled=True, selection=dict(handle=42, title='Profit Pro', x=0, y=0, width=640, height=400, region_kind='book')))
                     service.tick()
-                    for _ in range(100):
-                        time.sleep(.005)
-                        service.tick()
-                        if service.ocr['status']=='unavailable': break
-                self.assertIn('política de execução', service.snapshot()['source']['ocr']['error'])
-                self.assertIsNone(service.snapshot()['source']['ocr']['observation'])
+                    capture.assert_not_called()
+                state=service.snapshot()
+                self.assertIn('Runtime OCR local ausente', state['source']['ocr']['error'])
+                self.assertFalse(state['source']['ocr']['runtime']['available'])
+                self.assertIsNone(state['source']['ocr'].get('observation'))
+                self.assertFalse(state['jev']['enabled'])
             finally: service.close()
+
+    def test_ocr_off_discards_a_late_observation(self):
+        entered, release=threading.Event(), threading.Event()
+        def capture(config):
+            entered.set(); release.wait(2)
+            return dict(rows=['private OCR text'], coverage='partial')
+        with tempfile.TemporaryDirectory() as directory:
+            service=DecisionService(directory)
+            try:
+                self.assertFalse(service.snapshot()['source']['ocr']['enabled'])
+                with patch('desktop_service.runtime_status', return_value=dict(available=True, engine='tesseract', version='5.5.3', error=None)), patch('desktop_service.capture_profit', side_effect=capture):
+                    service.command('source.ocr', dict(enabled=True, selection=dict(handle=42, title='Profit Pro', x=0, y=0, width=640, height=400, region_kind='book')))
+                    service.tick()
+                    self.assertTrue(entered.wait(2))
+                    service.command('source.ocr', dict(enabled=False))
+                    release.set()
+                    for _ in range(100):
+                        service.tick()
+                        if not service.ocr_pending: break
+                        time.sleep(.005)
+                state=service.snapshot()
+                self.assertEqual(state['source']['ocr']['status'], 'off')
+                self.assertIsNone(state['source']['ocr'].get('observation'))
+                self.assertFalse(state['jev']['enabled'])
+                self.assertEqual(state['jev']['calls'], 0)
+            finally:
+                release.set(); service.close()
 
     def test_off_during_call_accounts_usage_without_reviving_context_or_backoff(self):
         for failure in (False, True):

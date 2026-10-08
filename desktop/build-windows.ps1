@@ -1,5 +1,5 @@
 #requires -Version 7.0
-param([switch]$SkipInstallDependencies, [switch]$IsolatedInstaller)
+param([switch]$SkipInstallDependencies, [switch]$IsolatedInstaller, [string]$VcpkgTool)
 $ErrorActionPreference = 'Stop'
 $workspace = Split-Path $PSScriptRoot -Parent
 $version = (Get-Content -LiteralPath (Join-Path $workspace 'app\version.json') -Raw | ConvertFrom-Json).version
@@ -24,6 +24,10 @@ try {
         Push-Location $PSScriptRoot
         try { & npm.cmd ci; if ($LASTEXITCODE) { throw 'npm ci failed' } } finally { Pop-Location }
     }
+    $ocrPreparation = @('scripts\prepare_ocr_runtime.py')
+    if ($VcpkgTool) { $ocrPreparation += @('--vcpkg-tool', $VcpkgTool) }
+    & $python @ocrPreparation
+    if ($LASTEXITCODE) { throw 'Pinned local OCR runtime preparation failed' }
     Push-Location $PSScriptRoot
     try { & npm.cmd run build; if ($LASTEXITCODE) { throw 'Frontend build failed' } } finally { Pop-Location }
     $pyinstallerArgs = @('-m', 'PyInstaller', '--noconfirm', '--clean', '--onefile', '--console', '--name', 'jeve-engine',
@@ -32,11 +36,12 @@ try {
         '--exclude-module', 'tkinter', '--exclude-module', 'numpy', '--exclude-module', 'scipy', '--exclude-module', 'sklearn')
     foreach ($resource in @('desktop_service.py', 'app_core.py', 'app_store.py', 'capital_example.py', 'decision_engine.py',
         'decision_store.py', 'context_requests.py', 'candidate_engine.py', 'candidate_research.py', 'flow_engine.py',
-        'profit_bridge.py', 'profit_ocr.py', 'profit_ocr.ps1', 'capture_pilot.py', 'recommendation_engine.py', 'jev_client.py', 'copilot.py', 'capital_planner.py', 'risk.py',
+        'profit_bridge.py', 'profit_ocr.py', 'profit_capture.cs', 'capture_pilot.py', 'recommendation_engine.py', 'jev_client.py', 'copilot.py', 'capital_planner.py', 'risk.py',
         'risk_research.py', 'release_updates.py', 'live_context.py', 'credential_vault.py', 'context_cycle.py', 'context_identity.py',
         'version.json', 'config.json', 'flow_rules.json', 'observer_questions.json')) {
         $pyinstallerArgs += @('--add-data', "$(Join-Path $workspace "app\$resource");.")
     }
+    $pyinstallerArgs += @('--add-data', "$(Join-Path $workspace 'app\ocr_runtime');ocr_runtime")
     $pyinstallerArgs += (Join-Path $workspace 'app\desktop_service.py')
     & $python @pyinstallerArgs
     if ($LASTEXITCODE) { throw 'Python sidecar build failed' }
@@ -46,6 +51,9 @@ try {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'LICENSES.txt') -Destination $payload -Force
     & $python scripts\collect_desktop_licenses.py --output (Join-Path $payload 'licenses')
     if ($LASTEXITCODE) { throw 'License notice collection failed' }
+    $ocrNotices = Join-Path $payload 'licenses\local-ocr'
+    New-Item -ItemType Directory -Force -Path $ocrNotices | Out-Null
+    Copy-Item -LiteralPath (Get-ChildItem -LiteralPath (Join-Path $workspace 'app\ocr_runtime\licenses') -File).FullName -Destination $ocrNotices -Force
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Diagnosticar_JevWIN.cmd') -Destination $payload -Force
     @'
 Jeve Trader — central contextual experimental Windows x64
@@ -58,6 +66,8 @@ Diagnosticar_JevWIN.cmd testa o motor em pasta temporária, sem chamar a API.
 '@ | Set-Content -LiteralPath (Join-Path $payload 'LEIA-ME.txt') -Encoding utf8
     $diagnostic = & (Join-Path $payload 'jeve-engine.exe') --diagnose
     if ($LASTEXITCODE) { throw 'Packaged Python diagnostic failed' }
+    $packagedDiagnostic = $diagnostic | ConvertFrom-Json
+    if (-not $packagedDiagnostic.ocr_runtime.available -or $packagedDiagnostic.ocr_diagnostic.status -ne 'PASS') { throw 'Packaged OCR runtime diagnostic failed' }
     $diagnostic | Set-Content -LiteralPath (Join-Path $artifacts 'sidecar-diagnostic.json') -Encoding utf8
     $files = Get-ChildItem -LiteralPath $payload -File -Recurse | Where-Object { $_.Name -ne 'package-manifest.json' } | ForEach-Object {
         [ordered]@{ name=[IO.Path]::GetRelativePath($payload, $_.FullName); bytes=$_.Length; sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash }

@@ -26,7 +26,7 @@ from decision_engine import AccountState, CostSchedule, MarketSnapshot, compare_
 from decision_store import DecisionStore
 from jev_client import JevClient
 from profit_bridge import CombinedExcelBridge, SourceBatch, MarketEvent, QuoteSnapshot, SourceHealth, RtdThrottleGuard, read_csv_events
-from profit_ocr import capture_profit, profit_windows, validate_selection, OcrPolicyError
+from profit_ocr import capture_profit, profit_windows, validate_selection, OcrUnavailableError, runtime_status
 from release_updates import check_for_updates, current_version, update_state, trusted_release_url
 
 EXPERIMENT_RESOURCES = ('desktop_service.py', 'app_core.py', 'app_store.py', 'capital_example.py',
@@ -34,7 +34,7 @@ EXPERIMENT_RESOURCES = ('desktop_service.py', 'app_core.py', 'app_store.py', 'ca
                         'candidate_research.py', 'flow_engine.py', 'profit_bridge.py', 'recommendation_engine.py',
                         'jev_client.py', 'copilot.py', 'capital_planner.py', 'risk.py', 'risk_research.py',
                         'config.json', 'flow_rules.json', 'observer_questions.json')
-EXPERIMENT_RESOURCES += ('live_context.py', 'credential_vault.py', 'context_cycle.py', 'context_identity.py', 'profit_ocr.py', 'profit_ocr.ps1', 'capture_pilot.py')
+EXPERIMENT_RESOURCES += ('live_context.py', 'credential_vault.py', 'context_cycle.py', 'context_identity.py', 'profit_ocr.py', 'profit_capture.cs', 'capture_pilot.py')
 
 
 def batch_from_wire(data):
@@ -160,7 +160,7 @@ class DecisionService:
         self.discovery_results = queue.Queue()
         self.discovery = dict(status='idle', workbooks=[], scope='attached_excel_instance', cells_read=False)
         self.source_audit = dict(status='idle', tables=[])
-        self.ocr = dict(enabled=False,status='off',windows=[],config={})
+        self.ocr = dict(enabled=False,status='off',windows=[],config={},runtime=runtime_status())
         self.ocr_results = queue.Queue()
         self.ocr_pending = False
         self.ocr_revision = 0
@@ -183,6 +183,8 @@ class DecisionService:
         self.last_batch = None
         self.context_valid = False
         self.code_hash = hashlib.sha256(b''.join(name.encode() + b'\0' + resource_path(name).read_bytes() for name in EXPERIMENT_RESOURCES)).hexdigest()
+        ocr_manifest = resource_path('ocr_runtime/manifest.json')
+        self.code_hash = hashlib.sha256(self.code_hash.encode() + (ocr_manifest.read_bytes() if ocr_manifest.is_file() else b'OCR_RUNTIME_UNAVAILABLE')).hexdigest()
         legacy_settings = self.settings.settings()
         self.source_config = {k: v for k, v in legacy_settings.items() if k in ('symbol', 'workbook', 'tape_sheet', 'tape_range')}
         self.source_config.update({new: legacy_settings[old] for old, new in (('sheet', 'quote_sheet'), ('cell_range', 'quote_range')) if old in legacy_settings})
@@ -405,13 +407,16 @@ class DecisionService:
                 self.collector.control({'audit':True})
         elif method == 'source.ocr_windows':
             self.ocr['windows'] = profit_windows()
+            self.ocr['runtime'] = runtime_status()
         elif method == 'source.ocr':
             if type(params.get('enabled')) is not bool or set(params)-{'enabled','selection'}:
                 raise ValueError('Informe enabled e uma região selecionada')
             config = validate_selection(params.get('selection',{})) if params['enabled'] else {}
+            runtime = runtime_status()
             self.ocr_revision += 1
-            self.ocr = dict(enabled=params['enabled'],status='ready' if params['enabled'] else 'off',
-                            windows=self.ocr['windows'],config=config)
+            self.ocr = dict(enabled=params['enabled'],status=('ready' if runtime['available'] else 'unavailable') if params['enabled'] else 'off',
+                            windows=self.ocr['windows'],config=config,runtime=runtime,
+                            error=runtime['error'] if params['enabled'] else None)
         elif method == 'source.disconnect':
             self.disconnect()
             self.reconnect_enabled = False
@@ -576,16 +581,16 @@ class DecisionService:
                 if value['status']=='unavailable': self.ocr_next=time.monotonic()+1
                 changed = True
         except queue.Empty: pass
-        if self.ocr['enabled'] and not self.ocr_pending and time.monotonic()>=self.ocr_next:
+        if self.ocr['enabled'] and self.ocr['runtime']['available'] and not self.ocr_pending and time.monotonic()>=self.ocr_next:
             self.ocr_pending=True
             self.ocr_next=time.monotonic()+.25
             revision,config=self.ocr_revision,dict(self.ocr['config'])
             def read_ocr():
                 try: value=dict(status='partial',observation=capture_profit(config),error=None)
-                except OcrPolicyError as error:
+                except OcrUnavailableError as error:
                     value=dict(status='unavailable',error=str(error),observation=None)
                 except Exception:
-                    value=dict(status='unavailable',error='Captura OCR indisponível. Confira a janela, região e idioma OCR Windows.',observation=None)
+                    value=dict(status='unavailable',error='Captura OCR indisponível. Confira a janela Profit, região e módulo OCR local.',observation=None)
                 self.ocr_results.put((revision,value))
             threading.Thread(target=read_ocr,daemon=True).start()
         try:
@@ -774,6 +779,9 @@ def main():
     if args.diagnose:
         import platform
         import tempfile
+        from profit_ocr import diagnose_runtime
+        ocr_runtime = runtime_status()
+        ocr_diagnostic = diagnose_runtime() if ocr_runtime['available'] else dict(status='UNAVAILABLE', real_profit_tested=False)
         with tempfile.TemporaryDirectory() as directory:
             service = DecisionService(directory)
             try:
@@ -781,7 +789,7 @@ def main():
                 print(json.dumps(dict(status='PASS', platform=platform.platform(), python=platform.python_version(),
                                       schema_version=snapshot['schema_version'], experimental=True, alternatives=len(snapshot['alternatives']),
                                       orders_enabled=False, financial_probability=snapshot['decision']['profit_probability'],
-                                      code_sha256=service.code_hash), allow_nan=False), flush=True)
+                                      code_sha256=service.code_hash, ocr_runtime=ocr_runtime, ocr_diagnostic=ocr_diagnostic), allow_nan=False), flush=True)
             finally:
                 service.close()
         return
