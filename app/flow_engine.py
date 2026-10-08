@@ -229,18 +229,42 @@ class FlowEngine:
         sell = sum(t["quantity"] for t in trades if t["aggressor"] == "sell")
         unknown = sum(t["quantity"] for t in trades if t["aggressor"] == "unknown")
         prices = [t["price_points"] for t in trades]
-        progress = prices[-1] - prices[0] if prices else None
-        span = max(prices) - min(prices) if prices else None
-        total = buy + sell + unknown
         complete = (self.tape_coverage_start_ms is not None and self.tape_coverage_start_ms <= start
                     and (self.truncated_trade_through_ms is None or self.truncated_trade_through_ms <= start)
                     and self.source_quality["full_tape"] is True)
+        progress = prices[-1] - prices[0] if prices else None
+        span = max(prices) - min(prices) if prices else None
+        path = None
+        if len(prices) >= 2:
+            first, last = prices[0], prices[-1]
+            highest, lowest = max(prices), min(prices)
+            path = {
+                "observation_count": len(prices),
+                "basis": "first_observed_trade",
+                "upward_excursion_ticks": _text((highest - first) / self.tick),
+                "downward_excursion_ticks": _text((first - lowest) / self.tick),
+                "buy_retracement_ticks": _text((highest - last) / self.tick),
+                "sell_retracement_ticks": _text((last - lowest) / self.tick),
+                "scope": "complete" if complete else "partial",
+            }
+        else:
+            path = {
+                "observation_count": len(prices),
+                "basis": "first_observed_trade",
+                "upward_excursion_ticks": None,
+                "downward_excursion_ticks": None,
+                "buy_retracement_ticks": None,
+                "sell_retracement_ticks": None,
+                "scope": "complete" if complete else "partial",
+            }
+        total = buy + sell + unknown
         return {"window_ms": duration_ms, "start_exclusive_ms": start, "end_inclusive_ms": end_ms,
                 "trade_count": len(trades), "buy_aggressed_contracts": buy, "sell_aggressed_contracts": sell,
                 "unknown_aggressor_contracts": unknown, "total_contracts": total, "delta_contracts": buy - sell,
                 "price_change_points": _text(progress), "price_range_points": _text(span),
                 "first_price_points": _text(prices[0]) if prices else None,
                 "last_price_points": _text(prices[-1]) if prices else None,
+                "price_path": path,
                 "contracts_per_second": _text(Decimal(total) * 1000 / duration_ms),
                 "trades_per_second": _text(Decimal(len(trades)) * 1000 / duration_ms),
                 "buy_dominance_fraction": _text(Decimal(buy) / (buy + sell)) if buy + sell else None,

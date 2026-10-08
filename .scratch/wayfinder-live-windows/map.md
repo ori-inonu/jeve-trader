@@ -30,6 +30,8 @@ Respostas humanas registradas: alertas experimentais identificados; horizonte de
 - [Fontes reais e capacidade do Excel](issues/01-fontes.md): RTD é parcial; velocidade de leitura não elimina limites da fonte; DLL exige SDK/licença próprios.
 - [Cadência e termômetro contextual](issues/02-cadencia.md): dois ciclos separados; alvo inicial JEV de até 1 Hz por mudança relevante, condicionado a validade e orçamento; índice contextual tipado proposto.
 - [Instalação e releases](issues/03-instalacao-updates.md): 0.4.1 instalada com ícone, release privada publicada e consulta de versão verificada. Download/instalação de versões futuras permanecem manuais.
+- [Profundidade visual orientada pelos dados](issues/05-profundidade-visual.md): projeção fixa CSS/SVG com movimento por dados recebidos; WebGL depende de uma dimensão analítica demonstrada.
+- [Evidências adicionais para interpretar o fluxo WIN](issues/06-contexto-fluxo.md): distâncias observadas de início, extremos e último negócio enriquecem o estado comum sem inferir causalidade ou aprendizagem.
 
 ## Next step
 

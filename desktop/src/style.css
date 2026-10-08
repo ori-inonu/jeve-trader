@@ -165,3 +165,26 @@
 .pilot-timings { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:12px 0; color:#8e9db6; }
 .pilot-timings b { display:block; color:#d7e1f5; margin-top:4px; }
 .pilot-path code { display:block; overflow-wrap:anywhere; color:#9baae2; }
+
+/* Fixed 2.5D projection. Faces carry no extra market signal. */
+.flow-desk { background:linear-gradient(120deg,#182231,#101620 42%); box-shadow:0 12px 30px #0004,inset 0 1px #60718c30; }
+.depth-instrument { width:88px; max-width:100%; height:155px; }
+.depth-instrument svg { display:block; width:100%; height:100%; overflow:visible; }
+.instrument-marker { transition:transform 180ms ease; }
+.instrument-fluid { transition:y 180ms ease,height 180ms ease; }
+.book-row.depth-row { overflow:visible; margin:5px 0; isolation:isolate; background:#08101c80; border-bottom:1px solid #41516d35; }
+.depth-row i { top:2px; bottom:2px; max-width:100%; background:linear-gradient(0deg,#3f1825,#9d465c80); box-shadow:0 3px 3px #0004; }
+.depth-row.buy i { background:linear-gradient(0deg,#12382d,#42947d80); }
+.depth-row i::before { content:''; position:absolute; left:0; right:0; top:-3px; height:3px; background:#bb637d66; transform:skewX(-35deg); transform-origin:bottom; }
+.depth-row.buy i::before { background:#67b99f66; }
+.depth-row i::after { content:''; position:absolute; left:-3px; top:0; bottom:0; width:3px; background:#301b2c; transform:skewY(-55deg); transform-origin:right; }
+.depth-row.buy i::after { background:#18372e; }
+.price-path { padding:8px 12px; border-bottom:1px solid #28334a; }
+.price-path .desk-caption { padding:0 0 7px; }
+.path-sides { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.path-sides>div { display:grid; grid-template-columns:1fr auto; gap:5px; align-items:center; font-size:10px; color:#91a3bf; }
+.path-sides b { color:#cad7f0; font-weight:500; }
+.path-sides .path-rail { grid-column:1/-1; display:flex; height:8px; gap:2px; background:#080f1c; box-shadow:inset 0 2px 3px #0008; }
+.path-rail i { display:block; height:100%; transition:width 180ms ease; }
+.path-sides small { grid-column:1/-1; font-size:8px; }
+@media(max-width:1000px){.depth-instrument{height:128px}}
