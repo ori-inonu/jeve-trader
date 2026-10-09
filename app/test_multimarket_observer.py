@@ -1,6 +1,7 @@
 """The owner projection uses actual contracts with injected offline transport."""
 import unittest
 from dataclasses import replace
+from decimal import Decimal
 
 from multimarket_observer import MultimarketObserver, synthetic_batch
 
@@ -36,7 +37,9 @@ class MultimarketObserverTests(unittest.TestCase):
         observer.poll()
         first = observer.snapshot()
         self.assertEqual(first['features']['volume_at_price']['trade_count'], 3)
-        self.assertEqual(first['features']['volume_at_price']['total_quantity'], '0.35000')
+        quantity = first['features']['volume_at_price']['total_quantity']
+        self.assertIsInstance(quantity, str)
+        self.assertEqual(Decimal(quantity), Decimal('0.35'))
         self.assertIsNone(first['target_probability'])
         self.assertFalse(first['orders_enabled'])
         observer.poll()

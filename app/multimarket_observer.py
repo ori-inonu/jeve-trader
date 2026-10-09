@@ -121,7 +121,7 @@ def synthetic_batch(now_ms):
     from public_crypto_feed import BinanceSpotAdapter, LocalOrderBook
     adapter = BinanceSpotAdapter(session_epoch='synthetic-demo')
     instrument = adapter.instrument_from_exchange_info({'symbols': [{
-        'symbol': 'BTCUSDT', 'baseAsset': 'BTC', 'quoteAsset': 'USDT',
+        'symbol': 'BTCUSDT', 'baseAsset': 'BTC', 'quoteAsset': 'USDT', 'status': 'TRADING',
         'filters': [{'filterType': 'PRICE_FILTER', 'tickSize': '0.01'},
                     {'filterType': 'LOT_SIZE', 'stepSize': '0.00001'}],
     }]}, as_of_ms=now_ms)

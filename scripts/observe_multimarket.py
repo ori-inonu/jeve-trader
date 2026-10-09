@@ -30,6 +30,9 @@ def diagnostics(snapshot):
 
 
 def main(argv=None):
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, 'reconfigure'):
+            stream.reconfigure(encoding='utf-8')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--live', action='store_true', help='Observar BTCUSDT spot público explicitamente')
     parser.add_argument('--duration-seconds', type=duration, default=60)
