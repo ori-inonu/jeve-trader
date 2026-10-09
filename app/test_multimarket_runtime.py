@@ -400,6 +400,28 @@ class PublicSpotAdapterTests(unittest.TestCase):
         self.assertFalse(caps.full_tape)
         self.assertEqual((caps.sequence_scope, caps.book_mode, caps.retention, caps.export), ("unknown", "unavailable", "unknown", "unknown"))
 
+    def test_metadata_version_tracks_canonical_contract_not_server_clock(self):
+        metadata = _exchange_info()
+        metadata["serverTime"] = 1_800_000_000_000
+        transport = _SpotTransport(metadata=metadata)
+        adapter = PublicSpotAdapter(transport, clock=_FixedClock())
+
+        original = adapter.discover()
+        transport.metadata = _exchange_info()
+        transport.metadata["serverTime"] = 1_800_000_001_000
+        clock_only_change = adapter.discover()
+        self.assertEqual(clock_only_change.metadata_version, original.metadata_version)
+
+        transport.metadata["symbols"][0]["filters"][0]["tickSize"] = "0.05"
+        tick_change = adapter.discover()
+        self.assertNotEqual(tick_change.metadata_version, clock_only_change.metadata_version)
+        self.assertEqual(str(tick_change.price_tick), "0.05")
+
+        transport.metadata["symbols"][0]["filters"][1]["stepSize"] = "0.00002"
+        step_change = adapter.discover()
+        self.assertNotEqual(step_change.metadata_version, tick_change.metadata_version)
+        self.assertEqual(str(step_change.quantity_step), "0.00002")
+
     def test_trade_maps_buyer_is_maker_to_sell_aggressor(self):
         adapter = PublicSpotAdapter(_SpotTransport(), clock=_FixedClock())
         spec = adapter.discover()

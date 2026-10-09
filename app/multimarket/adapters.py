@@ -214,7 +214,18 @@ class PublicSpotAdapter:
             and quantity_min is not None
             and minimum_notional is not None
         )
-        metadata_version = "sha256:" + hashlib.sha256(_json_text(raw).encode("utf-8")).hexdigest()
+        # exchangeInfo also carries volatile response-wide fields such as
+        # serverTime. Version only the selected instrument's contract inputs.
+        canonical_contract = {
+            "symbol": "BTCUSDT",
+            "status": status,
+            "baseAsset": base,
+            "quoteAsset": quote,
+            "filters": [by_type[name] for name in sorted(by_type)],
+        }
+        metadata_version = "sha256:" + hashlib.sha256(
+            _json_text(canonical_contract).encode("utf-8")
+        ).hexdigest()
         return InstrumentSpec(
             instrument_id="binance:spot:BTCUSDT",
             venue="binance",
