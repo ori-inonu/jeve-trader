@@ -1,4 +1,4 @@
-# Integração multimercado — evidência em andamento
+# Integração multimercado — evidência do recorte de software
 
 Baseline independente: `da96c6ad4187030a98c4daa86a6b96e1e5b809a9`.
 SPEC congelada: `7e8d20347360bfa6423b00208f8acdb03565b8d0f3a69118dfadbd3b41200612`.
@@ -44,7 +44,15 @@ Revisões isoladas do candidato `52464af` passaram 343 testes e self-test, mas r
 
 No commit `280580fa975c88d5d99cc5999fbee1396dddccf5`, duas novas regressões falharam antes e passaram após a correção: a recuperação preserva `sequence_gap` e a parada solicitada preserva `stopped`. O teste de falha remota genuína continua expondo `websocket_transport_error`. O fechamento local marca a tentativa como em fechamento antes de chamar o transporte e o reader não cria erro para essa tentativa. O marcador é reiniciado ao começar outra tentativa. Invalidação do livro, limites de helpers e a política `U <= S <= u` permanecem exigidos.
 
-Integração `41230ae81b434e30b197f78ea715b0c7cdd5c6df`: o integrador executou `python -E -s -B scripts/verify.py` no Windows e passou 345 testes em 12,654 s e self-test em 0,866 s, com sockets Python bloqueados. Nenhum quarto ensaio público foi realizado. A correção de diagnóstico não comprova a causa do livro inválido no terceiro ensaio nem a estabilidade live; nova revisão independente está pendente.
+Integração `41230ae81b434e30b197f78ea715b0c7cdd5c6df`: o integrador executou `python -E -s -B scripts/verify.py` no Windows e passou 345 testes em 12,654 s e self-test em 0,866 s, com sockets Python bloqueados. Nenhum quarto ensaio público foi realizado. A correção de diagnóstico não comprova a causa do livro inválido no terceiro ensaio nem a estabilidade live.
+
+## Revisões independentes finais
+
+Standards e Spec revisaram o candidato fixo `e4bcdccfa6cd137d469432274fc3538fb83a5454` em cópias isoladas de archive Git, contra a baseline e as duas SPECs congeladas. Cada revisor executou 345 testes e o self-test com sucesso; o diff-check passou. Ambos emitiram PASS limitado ao recorte de software exercitado, sem achado bloqueador novo. Os testes confirmam `stopped` na parada solicitada, `sequence_gap` no fechamento de recuperação e `websocket_transport_error` em falha remota genuína. O bloqueio de sockets pelo verificador Python não equivale a sandbox do sistema operacional.
+
+Relatórios privados preservados com SHA-256: Standards `ba49470350753dedd73a55ea98c0b3c5e100df5d0c59e4c3208f88b7029a29f9`; Spec `de280344958a558347b047e9f992ecc6a7973e19f8a24251c060f71888900c89`. O relatório Spec mapeia todos CM-01–12, AC-01–07 e IM-01–09, distinguindo cobertura local, parcial e pendente. Permanece um P3 não bloqueante de manutenção: a estimativa de memória lê os campos internos `_book._bids/_asks`; encapsulamento futuro não foi implementado neste recorte.
+
+O painel foi conferido no navegador Windows com sidecar Python e fixture sintética; isso não certifica janela ou instalador Tauri, Profit ou Excel nativos. A avaliação financeira executada pelo revisor continua `pending`, amostra 0 e probabilidades nulas. A documentação final fecha esta entrega de software e conserva as dependências abaixo; nenhum aceite empírico foi substituído.
 
 ## Limites atuais
 
