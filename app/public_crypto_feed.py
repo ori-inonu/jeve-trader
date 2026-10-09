@@ -415,7 +415,9 @@ class _WebsocketClientTransport:
         self._ws.pong(payload)
 
     def close(self) -> None:
-        self._ws.close()
+        # The websocket-client default waits up to three seconds for the peer's
+        # close frame, beyond this feed's two-second shutdown budget.
+        self._ws.close(timeout=0)
 
 
 @dataclass
@@ -854,6 +856,14 @@ class PublicCryptoFeed:
             snapshot = self._adapter.parse_snapshot(response.data, receive_time_ms=self._utc(),
                                                     receive_monotonic_ns=self._mono(), origin="live")
             with self._lock:
+                # Include deltas accumulated while REST was in flight in the
+                # bridge check. Keep the drain and install atomic with respect
+                # to reader ingress; later messages apply to the live book.
+                ingress_error = self._process_available()
+                if ingress_error:
+                    raise RuntimeError(ingress_error)
+                if self._stop_event.is_set():
+                    return False
                 ok = self._book.install_snapshot(snapshot)
                 if ok:
                     self._depth_last_mono = snapshot.envelope.receive_monotonic_ns

@@ -1,3 +1,4 @@
+import json
 import time
 import unittest
 from collections import deque
@@ -9,6 +10,7 @@ from public_crypto_feed import (
     HttpResponse,
     LocalOrderBook,
     PublicCryptoFeed,
+    _WebsocketClientTransport,
     _Ingress,
 )
 
@@ -208,6 +210,52 @@ class FakeRest:
 
 
 class PublicFeedTests(unittest.TestCase):
+    def test_websocket_client_wrapper_does_not_wait_for_peer_close_handshake(self):
+        class CloseSpy:
+            def __init__(self):
+                self.timeout = 3.0
+
+            def close(self, timeout=3.0):
+                self.timeout = timeout
+
+        transport = _WebsocketClientTransport.__new__(_WebsocketClientTransport)
+        transport._ws = CloseSpy()
+
+        transport.close()
+
+        self.assertEqual(transport._ws.timeout, 0)
+
+    def test_sync_drains_depth_received_during_snapshot_request_before_install(self):
+        depth_calls = []
+        adapter = BinanceSpotAdapter(session_epoch="sync-race")
+        feed = None
+
+        def rest_get(path, params, timeout_s):
+            depth_calls.append(path)
+            payload = {"stream": "btcusdt@depth@100ms", "data": delta(2, 3)}
+            raw_size = len(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8"))
+            with feed._lock:
+                feed._ingress.append(_Ingress(payload, raw_size, 20, 20))
+                feed._ingress_bytes += raw_size
+                feed._managed_update_locked()
+                feed._ingress_event.set()
+            return HttpResponse(200, snapshot(2), {})
+
+        feed = PublicCryptoFeed(rest_get=rest_get, clock_utc_ms=lambda: 20,
+                                clock_mono_ns=time.monotonic_ns)
+        feed._adapter = adapter
+        initial = adapter.parse_delta(
+            {"stream": "btcusdt@depth@100ms", "data": delta(1, 1)},
+            receive_time_ms=10, receive_monotonic_ns=10, origin="live",
+        )
+        self.assertTrue(feed._book.buffer_delta(initial))
+
+        self.assertTrue(feed._sync_depth())
+
+        self.assertEqual(depth_calls, ["/api/v3/depth"])
+        self.assertTrue(feed._book.view().valid)
+        self.assertEqual(feed._book.view().last_update_id, 3)
+
     def test_start_is_nonblocking_connects_before_snapshot_and_stop_owns_transport(self):
         ws = FakeWebSocket([
             {"_control": "ping", "payload": "heartbeat"},
