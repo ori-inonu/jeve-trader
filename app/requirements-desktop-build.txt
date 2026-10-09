@@ -1,3 +1,4 @@
 pyinstaller==6.22.3
 comtypes==1.4.17
 tzdata==2025.2
+websocket-client==1.9.2

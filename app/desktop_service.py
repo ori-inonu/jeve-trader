@@ -28,6 +28,7 @@ from jev_client import JevClient
 from profit_bridge import CombinedExcelBridge, SourceBatch, MarketEvent, QuoteSnapshot, SourceHealth, RtdThrottleGuard, read_csv_events
 from profit_ocr import capture_profit, profit_windows, validate_selection, OcrUnavailableError, runtime_status
 from release_updates import check_for_updates, current_version, update_state, trusted_release_url
+from multimarket.service import MultimarketService
 
 EXPERIMENT_RESOURCES = ('desktop_service.py', 'app_core.py', 'app_store.py', 'capital_example.py',
                         'decision_engine.py', 'decision_store.py', 'context_requests.py', 'candidate_engine.py',
@@ -35,6 +36,8 @@ EXPERIMENT_RESOURCES = ('desktop_service.py', 'app_core.py', 'app_store.py', 'ca
                         'jev_client.py', 'copilot.py', 'capital_planner.py', 'risk.py', 'risk_research.py',
                         'config.json', 'flow_rules.json', 'observer_questions.json')
 EXPERIMENT_RESOURCES += ('live_context.py', 'credential_vault.py', 'context_cycle.py', 'context_identity.py', 'profit_ocr.py', 'profit_capture.cs', 'capture_pilot.py')
+EXPERIMENT_RESOURCES += tuple('multimarket/'+name+'.py' for name in
+                             ('contracts', 'market_state', 'accounts', 'risk', 'adapters', 'network', 'scheduler', 'journal', 'service'))
 
 
 def batch_from_wire(data):
@@ -196,6 +199,18 @@ class DecisionService:
         saved = self.store.db.execute("SELECT body FROM state WHERE key='costs'").fetchone()
         if saved:
             self.costs = CostSchedule(**json.loads(saved[0]))
+        self.multimarket = MultimarketService(self.settings.directory)
+        self.multimarket.configure_jev(
+            self.evaluate_multimarket,
+            lambda call_id: self.budget.reserve(call_id, now_ms=int(time.time()*1000)),
+            self.budget.settle, lambda: (bool(self.api_key), self.credential_revision))
+
+    def evaluate_multimarket(self, state, questions):
+        # The key stays in the existing credential owner, outside projections/journals.
+        key = self.api_key
+        if not key:
+            raise ValueError('Credencial JEV indisponível')
+        return self.client_factory(api_key=key, timeout_seconds=3).evaluate(state, questions)
 
     def technical(self, market):
         # Reuse only the causal geometry recipe; legacy fixed-stop risk remains
@@ -304,6 +319,8 @@ class DecisionService:
     def command(self, method, params):
         if not isinstance(params, dict):
             raise ValueError('Parâmetros inválidos')
+        if isinstance(method, str) and method.startswith('multimarket.'):
+            return self.multimarket.command(method, params)
         if method == 'snapshot':
             pass
         elif method == 'pilot.start':
@@ -572,7 +589,7 @@ class DecisionService:
                     and self.capabilities(self.session.snapshot())['quote_fresh'])
 
     def tick(self):
-        changed = False
+        changed = self.multimarket.tick()
         try:
             revision,value = self.ocr_results.get_nowait()
             self.ocr_pending = False
@@ -725,6 +742,7 @@ class DecisionService:
             self.source_error = None
 
     def close(self):
+        self.multimarket.close()
         self.pilot.close()
         self.ocr['enabled']=False
         self.ocr_revision+=1
@@ -801,6 +819,7 @@ def main():
         requests.put(None)
     threading.Thread(target=read, daemon=True).start()
     last_push = 0
+    last_multimarket_push = 0
     pending_publish = False
     def emit(value):
         print(json.dumps(value, ensure_ascii=False, allow_nan=False), flush=True)
@@ -824,6 +843,9 @@ def main():
             except queue.Empty:
                 pass
             pending_publish = service.tick() or pending_publish
+            if time.monotonic()-last_multimarket_push >= .25:
+                emit({'schema_version': 2, 'event': 'multimarket.snapshot', 'result': service.multimarket.snapshot()})
+                last_multimarket_push = time.monotonic()
             if time.monotonic()-last_push >= .1 and (pending_publish or time.monotonic()-last_push >= 1):
                 emit({'schema_version': 2, 'event': 'snapshot', 'result': service.snapshot()})
                 last_push = time.monotonic()

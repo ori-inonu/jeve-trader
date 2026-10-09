@@ -20,6 +20,7 @@ const pending = new Map<string,{resolve:(value:Snapshot)=>void;reject:(error:Err
 let onSnapshot: (value:Snapshot)=>void = ()=>{};
 function receive(message:Wire) {
   if(![1,2].includes(message.schema_version))return;
+  if(message.event==='multimarket.snapshot' || message.result?.schema_version===3)return;
   if(message.id && pending.has(message.id)) {
     const request=pending.get(message.id)!;pending.delete(message.id);clearTimeout(request.timer);
     if(message.error)request.reject(new Error(message.error));else if(message.result){request.resolve(message.result);onSnapshot(message.result);}

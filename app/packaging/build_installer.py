@@ -63,6 +63,7 @@ def main() -> None:
     parser.add_argument('--runtime', type=Path, required=True)
     parser.add_argument('--comtypes-wheel', type=Path, required=True)
     parser.add_argument('--tzdata-wheel', type=Path, required=True)
+    parser.add_argument('--websocket-wheel', type=Path, required=True)
     parser.add_argument('--makensis', type=Path, required=True)
     parser.add_argument('--nsisdir', type=Path)
     parser.add_argument('--sevenzip', type=Path)
@@ -88,6 +89,7 @@ def main() -> None:
     site.mkdir(exist_ok=True)
     unpack_wheel(args.comtypes_wheel, site)
     unpack_wheel(args.tzdata_wheel, site)
+    unpack_wheel(args.websocket_wheel, site)
     app = payload / 'app'
     app.mkdir()
     for path in sorted(project.iterdir()):
@@ -97,9 +99,9 @@ def main() -> None:
             if path.suffix == '.py':
                 compile(path.read_text(encoding='utf-8'), path.name, 'exec')
             shutil.copy2(path, app / path.name)
-    for name in ('templates', 'helpers', 'licenses'):
+    for name in ('templates', 'helpers', 'licenses', 'multimarket'):
         if (project / name).exists():
-            shutil.copytree(project / name, app / name)
+            shutil.copytree(project / name, app / name, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
     for name in ('windows_launcher.py', 'JevWIN.cmd', 'Diagnosticar_JevWIN.cmd'):
         data = (packaging / name).read_bytes()
         if name.endswith('.cmd'):

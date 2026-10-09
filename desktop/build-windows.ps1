@@ -42,6 +42,7 @@ try {
         $pyinstallerArgs += @('--add-data', "$(Join-Path $workspace "app\$resource");.")
     }
     $pyinstallerArgs += @('--add-data', "$(Join-Path $workspace 'app\ocr_runtime');ocr_runtime")
+    $pyinstallerArgs += @('--add-data', "$(Join-Path $workspace 'app\multimarket');multimarket", '--hidden-import', 'websocket')
     $pyinstallerArgs += (Join-Path $workspace 'app\desktop_service.py')
     & $python @pyinstallerArgs
     if ($LASTEXITCODE) { throw 'Python sidecar build failed' }

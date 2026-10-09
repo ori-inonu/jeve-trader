@@ -17,7 +17,7 @@ New-Item -ItemType Directory -Force '.build-wheels' | Out-Null
 & $BuildPython -m pip download --disable-pip-version-check --only-binary=:all: --no-deps --dest .build-wheels -r requirements-runtime.txt
 if ($LASTEXITCODE -ne 0) { throw 'Runtime wheel download failed.' }
 $Runtime = (& $BuildPython -c 'import sys; print(sys.base_prefix)').Trim()
-& $BuildPython packaging\build_installer.py --runtime $Runtime --comtypes-wheel .build-wheels\comtypes-1.4.17-py3-none-any.whl --tzdata-wheel .build-wheels\tzdata-2025.2-py2.py3-none-any.whl --makensis $MakeNSIS --output-dir dist
+& $BuildPython packaging\build_installer.py --runtime $Runtime --comtypes-wheel .build-wheels\comtypes-1.4.17-py3-none-any.whl --tzdata-wheel .build-wheels\tzdata-2025.2-py2.py3-none-any.whl --websocket-wheel .build-wheels\websocket_client-1.9.2-py3-none-any.whl --makensis $MakeNSIS --output-dir dist
 if ($LASTEXITCODE -ne 0) { throw 'Installer build failed.' }
 $Report = Join-Path $PSScriptRoot 'dist\source-self-test.json'
 & (Join-Path $PSScriptRoot 'dist\JevWIN-portable\runtime\python.exe') -E -s (Join-Path $PSScriptRoot 'dist\JevWIN-portable\app\desktop_app.py') --self-test --report $Report
