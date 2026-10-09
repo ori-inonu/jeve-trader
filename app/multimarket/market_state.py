@@ -10,6 +10,7 @@ from .contracts import EventEnvelope, InstrumentSpec, SourceCapabilities, System
 
 _SUPPORTED_DOMAINS = ("quote", "trades", "book")
 _MAX_RECENT_TRADES = 200
+_MAX_DEDUP_CAPACITY = 100_000
 _FRESHNESS_LIMITS_MS = {"quote": 5_000, "trades": 30_000, "book": 2_000}
 
 
@@ -33,6 +34,7 @@ class MarketState:
         clock: Any = None,
         workspace_id: str = "",
         epoch: int = 1,
+        dedup_capacity: int = _MAX_DEDUP_CAPACITY,
     ) -> None:
         if not isinstance(spec, InstrumentSpec):
             raise TypeError("instrument_spec_required")
@@ -40,6 +42,10 @@ class MarketState:
             raise TypeError("source_capabilities_required")
         if isinstance(epoch, bool) or not isinstance(epoch, int) or epoch < 1:
             raise ValueError("epoch_must_be_positive")
+        if type(dedup_capacity) is not int:
+            raise TypeError("dedup_capacity_must_be_integer")
+        if not 1 <= dedup_capacity <= _MAX_DEDUP_CAPACITY:
+            raise ValueError("dedup_capacity_out_of_range")
         if not isinstance(workspace_id, str):
             raise TypeError("workspace_id_must_be_text")
         self.spec = spec
@@ -47,6 +53,7 @@ class MarketState:
         self.clock = clock or SystemClock()
         self.workspace_id = workspace_id.strip()
         self.epoch = epoch
+        self.dedup_capacity = dedup_capacity
         self._quote: EventEnvelope | None = None
         self._trades: deque[EventEnvelope] = deque(maxlen=_MAX_RECENT_TRADES)
         self._book: EventEnvelope | None = None
@@ -97,6 +104,8 @@ class MarketState:
         event_key = (event.epoch, domain, event.event_id)
         if event_key in self._seen:
             return self._result(duplicate=True, reasons=("duplicate_event",))
+        if len(self._seen) >= self.dedup_capacity:
+            return self.invalidate("dedup_capacity_exceeded")
         self._seen.add(event_key)
 
         now_ns = self.clock.monotonic_ns()
@@ -186,6 +195,7 @@ class MarketState:
                 if retained is not None:
                     self._health[domain] = {"status": "stale", "reason": "epoch_changed"}
         self._last_sequence.clear()
+        self._seen.clear()
         return self._result(resync=True, reasons=(reason.strip(),))
 
     def _event_age_ms(self, event: EventEnvelope | None) -> int | None:
@@ -260,6 +270,7 @@ class MarketState:
             warnings.append({"domain": "trades", "reason": "full_tape_unverified"})
         return {
             "epoch": self.epoch,
+            "deduplication": {"retained": len(self._seen), "capacity": self.dedup_capacity},
             "quote": quote,
             "recent_trades": recent_trades,
             "book": book,

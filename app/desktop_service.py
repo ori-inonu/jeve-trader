@@ -142,6 +142,9 @@ class DecisionService:
         # Permission to spend is deliberately not restored from disk.
         self.jev_enabled = False
         self.control_revision = 0
+        # Serialize ON/OFF revision changes with the last authorization check
+        # and the external JEV attempt so OFF cannot acknowledge in between.
+        self.jev_dispatch_lock = threading.Lock()
         self.pending_call_id = None
         self.context_settings = dict(DEFAULT_LIVE_SETTINGS)
         saved_context = self.store.db.execute("SELECT body FROM state WHERE key='live_context'").fetchone()
@@ -450,16 +453,17 @@ class DecisionService:
         elif method == 'jev.set_enabled':
             if set(params) != {'enabled'} or type(params['enabled']) is not bool:
                 raise ValueError('Informe enabled como booleano')
-            if params['enabled'] != self.jev_enabled:
-                self.jev_enabled = params['enabled']
-                self.control_revision += 1
-                self.latest_jev = None
-                self.last_alert = None
-                self.alert.reset()
-                self.cadence.last_projection = None
-                self.cadence.retry_at_ms = 0
-                self.cadence.retry_delay_ms = 3000
-                self.jev_error = None
+            with self.jev_dispatch_lock:
+                if params['enabled'] != self.jev_enabled:
+                    self.jev_enabled = params['enabled']
+                    self.control_revision += 1
+                    self.latest_jev = None
+                    self.last_alert = None
+                    self.alert.reset()
+                    self.cadence.last_projection = None
+                    self.cadence.retry_at_ms = 0
+                    self.cadence.retry_delay_ms = 3000
+                    self.jev_error = None
         elif method == 'jev.configure':
             key, limit = params.get('api_key', ''), params.get('limit', 10000)
             if not isinstance(key, str) or len(key)>4096 or type(limit) is not int or not 1 <= limit <= 10000:
@@ -552,12 +556,14 @@ class DecisionService:
         def evaluate():
             try:
                 client = self.client_factory(api_key=key, timeout_seconds=3)
-                # No retries in the HTTP adapter. A request already dispatched
-                # may finish after OFF; its control revision cannot become live.
-                if not self.jev_enabled or envelope['control_revision'] != self.control_revision:
-                    self.results.put({'cancelled': envelope})
-                    return
-                response = client.evaluate(state, questions)
+                # No retries in the HTTP adapter. This is the final local gate:
+                # OFF either wins before the request starts, or waits for this
+                # already-started attempt to return before it acknowledges.
+                with self.jev_dispatch_lock:
+                    if not self.jev_enabled or envelope['control_revision'] != self.control_revision:
+                        self.results.put({'cancelled': envelope})
+                        return
+                    response = client.evaluate(state, questions)
                 self.results.put({'result': {**envelope, 'response': response, 'received_at_ms': int(time.time()*1000), 'latency_ms': (time.monotonic()-submitted_monotonic)*1000}})
             except Exception:
                 self.results.put({'error': 'Falha na API JEV; confira a chave e a conexão', 'attempt': {**envelope, 'received_at_ms': int(time.time()*1000), 'latency_ms': (time.monotonic()-submitted_monotonic)*1000, 'status': 'FAILED_NO_VALID_RESPONSE'}})

@@ -7,6 +7,7 @@ import sys
 from dataclasses import replace
 from pathlib import Path
 
+from multimarket.market_state import MarketState
 from multimarket.service import MultimarketService
 from test_multimarket_domain import instrument, source, market_event
 from test_multimarket_runtime import _valid_context_response
@@ -65,6 +66,47 @@ class Clock:
 
 
 class MultimarketIntegrationTests(unittest.TestCase):
+    def test_dedup_overflow_requests_resync_and_clears_context_without_claiming_full_tape(self):
+        with tempfile.TemporaryDirectory() as directory:
+            adapter, clock = Adapter(allowed=True), Clock()
+            service = MultimarketService(directory, clock=clock, adapters={'binance_public_spot':adapter})
+            try:
+                workspace_id = connected(service, adapter)
+                # Use a deliberately small per-workspace limit to exercise the
+                # production overflow path without retaining 100,000 events.
+                service.states[workspace_id] = MarketState(adapter.spec, adapter.caps, clock=clock,
+                    workspace_id=workspace_id, epoch=1, dedup_capacity=2)
+                service._ingest(workspace_id, market_event(kind='quote', event_id='q-1', epoch=1,
+                    workspace_id=workspace_id, market_ts_ms=None,
+                    received_monotonic_ns=clock.monotonic_ns()))
+                service._ingest(workspace_id, market_event(kind='trade', event_id='t-1', epoch=1,
+                    workspace_id=workspace_id, market_ts_ms=None,
+                    received_monotonic_ns=clock.monotonic_ns(),
+                    payload={'price':'100', 'quantity':'1', 'aggressor':'buy'}))
+                service.configure_jev(lambda *_:_valid_context_response(), lambda *_:None, lambda *_:None, lambda:(True, 1))
+                service.command('multimarket.jev.set_enabled', {'enabled':True})
+                for _ in range(40):
+                    service.tick()
+                    if service.snapshot()['selected']['context']:
+                        break
+                    threading.Event().wait(.005)
+                self.assertIsNotNone(service.snapshot()['selected']['context'])
+
+                service._ingest(workspace_id, market_event(kind='quote', event_id='q-2', epoch=1,
+                    workspace_id=workspace_id, market_ts_ms=None,
+                    received_monotonic_ns=clock.monotonic_ns()))
+
+                selected = service.snapshot()['selected']
+                self.assertEqual(adapter.resyncs, 1)
+                self.assertIsNone(selected['context'])
+                self.assertEqual(selected['market']['epoch'], 2)
+                self.assertIsNone(selected['market']['quote'])
+                self.assertEqual(selected['market']['recent_trades'], [])
+                self.assertFalse(selected['market']['full_tape'])
+                self.assertEqual(selected['market']['deduplication'], {'retained':0, 'capacity':2})
+            finally:
+                service.close()
+
     def test_owner_stays_live_after_initial_controls_and_rejects_old_epoch_after_disconnect(self):
         with tempfile.TemporaryDirectory() as directory:
             adapter = Adapter()

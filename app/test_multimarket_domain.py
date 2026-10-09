@@ -169,6 +169,62 @@ class MarketStateTests(unittest.TestCase):
         self.clock = FakeClock()
         self.state = MarketState(instrument(), source(sequence_scope="per_domain"), clock=self.clock, workspace_id="w1", epoch=3)
 
+    def test_dedup_capacity_is_positive_bounded_integer_and_default_is_visible(self):
+        self.assertEqual(self.state.snapshot()["deduplication"], {"retained": 0, "capacity": 100000})
+        for invalid in (0, -1, True, False, 1.0, "2", 100001):
+            with self.subTest(invalid=invalid), self.assertRaises((TypeError, ValueError)):
+                MarketState(instrument(), source(), clock=self.clock, workspace_id="w1", epoch=3,
+                    dedup_capacity=invalid)
+
+    def test_dedup_saturation_invalidates_workspace_then_recovers_across_epochs(self):
+        caps = SourceCapabilities(**{
+            **source(sequence_scope="unknown").to_wire(),
+            "book": True,
+            "book_mode": "l2",
+        })
+        state = MarketState(instrument(), caps, clock=self.clock, workspace_id="w1", epoch=3,
+            dedup_capacity=3)
+        events = (
+            market_event(kind="quote", event_id="q-1", epoch=3),
+            market_event(kind="trade", event_id="t-1", epoch=3,
+                payload={"price": "100.5", "quantity": "0.2", "aggressor": "buy"}),
+            market_event(kind="book", event_id="b-1", epoch=3,
+                payload={"bids": [["99", "1"]], "asks": [["101", "1"]]}),
+        )
+        for event in events:
+            self.assertTrue(state.ingest(event).applied)
+        duplicate_at_limit = state.ingest(market_event(kind="quote", event_id="q-1", epoch=3,
+            payload={"bid": "90", "ask": "91", "bid_quantity": "3", "ask_quantity": "4"}))
+        self.assertTrue(duplicate_at_limit.duplicate)
+        self.assertFalse(duplicate_at_limit.resync_required)
+        self.assertEqual(state.snapshot()["deduplication"], {"retained": 3, "capacity": 3})
+        self.assertEqual(state.snapshot()["quote"]["bid"], "100")
+
+        overflow = state.ingest(market_event(kind="quote", event_id="q-2", epoch=3))
+        self.assertTrue(overflow.resync_required)
+        self.assertEqual(overflow.reasons, ("dedup_capacity_exceeded",))
+        self.assertEqual(overflow.epoch, 4)
+        snapshot = state.snapshot()
+        self.assertIsNone(snapshot["quote"])
+        self.assertEqual(snapshot["recent_trades"], [])
+        self.assertIsNone(snapshot["book"])
+        self.assertEqual(snapshot["deduplication"], {"retained": 0, "capacity": 3})
+
+        old_epoch_id = state.ingest(market_event(kind="quote", event_id="q-1", epoch=3))
+        self.assertFalse(old_epoch_id.applied)
+        self.assertEqual(old_epoch_id.reasons, ("epoch_mismatch",))
+        self.assertEqual(state.snapshot()["deduplication"]["retained"], 0)
+        self.assertTrue(state.ingest(market_event(kind="quote", event_id="q-1", epoch=4)).applied,
+            "cleared event IDs can be reused in the new epoch")
+        self.assertTrue(state.ingest(market_event(kind="trade", event_id="t-1", epoch=4,
+            payload={"price": "100.5", "quantity": "0.2", "aggressor": "buy"})).applied)
+        self.assertTrue(state.ingest(market_event(kind="book", event_id="b-1", epoch=4,
+            payload={"bids": [["99", "1"]], "asks": [["101", "1"]]})).applied)
+        next_epoch = state.ingest(market_event(kind="quote", event_id="q-2", epoch=4))
+        self.assertTrue(next_epoch.resync_required)
+        self.assertEqual(next_epoch.epoch, 5)
+        self.assertEqual(state.snapshot()["deduplication"], {"retained": 0, "capacity": 3})
+
     def test_duplicate_event_is_idempotent(self):
         first = market_event(sequence=10)
         self.assertTrue(self.state.ingest(first).applied)

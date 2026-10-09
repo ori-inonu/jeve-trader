@@ -94,7 +94,20 @@ class MesaControlTests(unittest.TestCase):
                         service.command('jev.set_enabled', {'enabled':True})
                         service.command('jev.evaluate', {})
                         self.assertTrue(entered.wait(2))
-                        off = service.command('jev.set_enabled', {'enabled':False})
+                        off_started, off_returned = threading.Event(), threading.Event()
+                        def turn_off():
+                            off_started.set()
+                            with patch.object(service, 'snapshot', return_value={}):
+                                service.command('jev.set_enabled', {'enabled':False})
+                            off_returned.set()
+                        off_thread = threading.Thread(target=turn_off)
+                        off_thread.start()
+                        self.assertTrue(off_started.wait(2))
+                        self.assertFalse(off_returned.wait(.05), 'OFF acknowledgement waits for the active API attempt')
+                        release.set()
+                        self.assertTrue(off_returned.wait(2), 'OFF completes after the active attempt returns')
+                        off_thread.join(2)
+                        off = service.snapshot()
                         self.assertEqual(off['jev']['status'], 'draining')
                         trade_count = off['market']['computed_features']['trade_count']
                         self.assertGreater(trade_count, 0)
@@ -102,7 +115,6 @@ class MesaControlTests(unittest.TestCase):
                         # ON must wait for the previous call and cannot accept its revision.
                         service.command('jev.set_enabled', {'enabled':True})
                         service.command('context.configure', {'automatic':False})
-                        release.set()
                         for _ in range(200):
                             service.tick()
                             if not service.pending_jev: break
@@ -118,6 +130,85 @@ class MesaControlTests(unittest.TestCase):
                     finally:
                         release.set()
                         service.close()
+
+    def test_off_cannot_complete_between_final_gate_and_external_invocation(self):
+        entered, release = threading.Event(), threading.Event()
+        off_started, off_returned = threading.Event(), threading.Event()
+        off_threads, off_results, off_returned_before_dispatch, calls = [], [], [], []
+        service = None
+
+        class Client:
+            def __init__(self, **kwargs):
+                pass
+
+            @property
+            def evaluate(self):
+                def turn_off():
+                    off_started.set()
+                    # Commands normally run on the desktop/UI thread. Snapshot
+                    # is the only part of this command that touches SQLite, so
+                    # keep this concurrency test focused on the control gate.
+                    with patch.object(service, 'snapshot', return_value={}):
+                        off_results.append(service.command('jev.set_enabled', {'enabled': False}))
+                    off_returned.set()
+
+                off_thread = threading.Thread(target=turn_off)
+                off_threads.append(off_thread)
+                off_thread.start()
+                # This is the boundary immediately before invoking the fake
+                # external API. On the old path, OFF could finish after the
+                # worker's check but before this callable was entered.
+                off_returned_before_dispatch.append(off_returned.wait(.5))
+
+                def send(state, questions):
+                    calls.append((state, questions))
+                    entered.set()
+                    release.wait(2)
+                    answers = {key: dict(type='noul', noul=.1 if key.endswith(('contradiction', 'insufficient')) else .9)
+                               for key, question in questions.items() if question['type'] == 'noul'}
+                    answers['principal_choice'] = dict(type='choice', choice='buy_continuation', confidence=.9,
+                        probabilities=dict(buy_continuation=.95, sell_continuation=.02, wait=.03))
+                    return dict(model='jev-1.13.0', answers=answers, usage=dict(input_tokens=1000, output_tokens=100))
+
+                return send
+
+        now = 1791293400000
+        with tempfile.TemporaryDirectory() as directory, patch('desktop_service.time.time', return_value=now / 1000):
+            service = DecisionService(directory, client_factory=Client)
+            try:
+                fixture = generate_candidate_scenario('WINV26', end_ms=now)
+                service.session.reset('WINV26')
+                service.session.mode = 'excel_observation'
+                service.session.engine.set_source_quality(fixture['source_quality'])
+                for event in fixture['events']:
+                    (service.session.engine.add_trade if event['type'] == 'trade' else service.session.engine.set_book)(event)
+                service.api_key = 'offline-fixture'
+                service.command('jev.set_enabled', {'enabled': True})
+                service.command('jev.evaluate', {})
+
+                self.assertTrue(entered.wait(2), 'the fake external API should be invoked')
+                self.assertTrue(off_started.is_set(), 'the concurrent OFF command should reach the dispatch boundary')
+                self.assertEqual(off_returned_before_dispatch, [False],
+                    'OFF must not acknowledge while the dispatch gate is held before API invocation')
+                self.assertFalse(off_returned.wait(.05), 'OFF acknowledgment waits for the in-flight dispatch gate')
+
+                release.set()
+                self.assertTrue(off_returned.wait(2), 'OFF should complete after the fake API attempt returns')
+                for _ in range(200):
+                    service.tick()
+                    if not service.pending_jev:
+                        break
+                    time.sleep(.005)
+                state = service.snapshot()
+                self.assertFalse(state['jev']['enabled'])
+                self.assertFalse(state['jev']['current'])
+                self.assertEqual(len(calls), 1)
+                self.assertEqual(state['budget']['unknown_attempts'], 0)
+            finally:
+                release.set()
+                for off_thread in off_threads:
+                    off_thread.join(2)
+                service.close()
 
     def test_off_blocks_manual_and_automatic_calls_and_restart_starts_off(self):
         calls = []
