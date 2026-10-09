@@ -10,11 +10,14 @@ from .contracts import (
     WorkspaceSpec,
     decimal_text,
 )
+from .market_state import IngestResult, MarketState
 
 __all__ = [
     "EvaluationIdentity",
     "EventEnvelope",
     "InstrumentSpec",
+    "IngestResult",
+    "MarketState",
     "Registry",
     "SourceCapabilities",
     "SystemClock",

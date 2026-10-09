@@ -210,7 +210,7 @@ class EventEnvelope:
     metadata_version: str
     event_id: str
     kind: str
-    market_ts_ms: int
+    market_ts_ms: int | None
     received_at_ms: int
     received_monotonic_ns: int
     sequence_first: int | None
@@ -223,7 +223,8 @@ class EventEnvelope:
         if self.kind not in {"quote", "trade", "book"}:
             raise ValueError("invalid_event_kind")
         object.__setattr__(self, "epoch", _integer(self.epoch, "epoch", positive=True))
-        for name in ("market_ts_ms", "received_at_ms", "received_monotonic_ns"):
+        object.__setattr__(self, "market_ts_ms", _integer(self.market_ts_ms, "market_ts_ms", optional=True))
+        for name in ("received_at_ms", "received_monotonic_ns"):
             object.__setattr__(self, name, _integer(getattr(self, name), name))
         first = _integer(self.sequence_first, "sequence_first", optional=True)
         last = _integer(self.sequence_last, "sequence_last", optional=True)

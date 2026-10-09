@@ -11,6 +11,7 @@ from multimarket.contracts import (
     SourceCapabilities,
     decimal_text,
 )
+from multimarket.market_state import MarketState
 
 
 def instrument(*, instrument_id="spot:BTCUSDT", venue="binance", symbol="BTCUSDT", tick="0.01", step="0.00001", family="spot", verified=True):
@@ -54,6 +55,38 @@ def source(source_id="binance_public_spot", *, sequence_scope="unknown"):
     )
 
 
+class FakeClock:
+    def __init__(self, wall_ms=1_000, monotonic_ns=1_000_000_000):
+        self.wall = wall_ms
+        self.monotonic = monotonic_ns
+
+    def wall_ms(self):
+        return self.wall
+
+    def monotonic_ns(self):
+        return self.monotonic
+
+
+def market_event(*, kind="quote", event_id="q-1", epoch=3, metadata_version="exchangeInfo:1", sequence=None, market_ts_ms=1_000, received_monotonic_ns=1_000_000_000, payload=None, workspace_id="w1"):
+    if payload is None:
+        payload = {"bid": "100", "ask": "101", "bid_quantity": "1", "ask_quantity": "2"}
+    return EventEnvelope(
+        workspace_id=workspace_id,
+        instrument_id="spot:BTCUSDT",
+        source_id="binance_public_spot",
+        epoch=epoch,
+        metadata_version=metadata_version,
+        event_id=event_id,
+        kind=kind,
+        market_ts_ms=market_ts_ms,
+        received_at_ms=1_000,
+        received_monotonic_ns=received_monotonic_ns,
+        sequence_first=sequence,
+        sequence_last=sequence,
+        payload=payload,
+    )
+
+
 class ContractTests(unittest.TestCase):
     def test_decimal_wire_contract_is_finite_and_rejects_float(self):
         self.assertEqual(decimal_text(Decimal("0.0100")), "0.01")
@@ -87,6 +120,8 @@ class ContractTests(unittest.TestCase):
             payload={"bid": "100", "ask": "101", "bid_quantity": "1", "ask_quantity": "2"},
         )
         self.assertEqual(EventEnvelope.from_wire(event.to_wire()), event)
+        no_exchange_time = market_event(market_ts_ms=None)
+        self.assertIsNone(EventEnvelope.from_wire(no_exchange_time.to_wire()).market_ts_ms)
         identity = EvaluationIdentity(
             workspace_id="w1",
             instrument_id="spot:BTCUSDT",
@@ -121,6 +156,104 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(registry.get_workspace(first.workspace_id).account_id, "paper-a")
         self.assertEqual(registry.get_instrument("other:BTCUSDT").venue, "other")
         self.assertEqual(registry.snapshot()["selected_workspace_id"], second.workspace_id)
+
+
+class MarketStateTests(unittest.TestCase):
+    def setUp(self):
+        self.clock = FakeClock()
+        self.state = MarketState(instrument(), source(sequence_scope="per_domain"), clock=self.clock, workspace_id="w1", epoch=3)
+
+    def test_duplicate_event_is_idempotent(self):
+        first = market_event(sequence=10)
+        self.assertTrue(self.state.ingest(first).applied)
+        duplicate = market_event(event_id="q-1", sequence=10, payload={"bid": "90", "ask": "91", "bid_quantity": "3", "ask_quantity": "4"})
+        result = self.state.ingest(duplicate)
+        self.assertTrue(result.duplicate)
+        self.assertFalse(result.applied)
+        self.assertEqual(self.state.snapshot()["quote"]["bid"], "100")
+
+    def test_sequence_gap_invalidates_and_requires_new_epoch_evidence(self):
+        self.state.ingest(market_event(event_id="q-10", sequence=10))
+        result = self.state.ingest(market_event(event_id="q-12", sequence=12))
+        self.assertTrue(result.resync_required)
+        self.assertIn("sequence_gap", result.reasons)
+        self.assertEqual(result.epoch, 4)
+        self.assertIsNone(self.state.snapshot()["quote"])
+        self.assertFalse(self.state.ingest(market_event(event_id="old", epoch=3, sequence=11)).applied)
+        self.assertTrue(self.state.ingest(market_event(event_id="new", epoch=4, sequence=100)).applied)
+
+    def test_sequence_regression_invalidates(self):
+        self.state.ingest(market_event(event_id="q-10", sequence=10))
+        result = self.state.ingest(market_event(event_id="q-9", sequence=9))
+        self.assertTrue(result.resync_required)
+        self.assertIn("sequence_regression", result.reasons)
+        self.assertEqual(result.epoch, 4)
+
+    def test_unknown_sequence_scope_does_not_claim_gap_detection(self):
+        state = MarketState(instrument(), source(sequence_scope="unknown"), clock=self.clock, workspace_id="w1", epoch=3)
+        state.ingest(market_event(event_id="q-1", sequence=1))
+        result = state.ingest(market_event(event_id="q-999", sequence=999))
+        self.assertTrue(result.applied)
+        self.assertFalse(result.resync_required)
+
+    def test_features_are_bounded_observations_and_never_assert_full_tape(self):
+        self.state.ingest(market_event(sequence=10))
+        trade = market_event(
+            kind="trade",
+            event_id="t-1",
+            sequence=1,
+            payload={"price": "100.5", "quantity": "0.2", "aggressor": "buy"},
+        )
+        self.state.ingest(trade)
+        snapshot = self.state.snapshot()
+        self.assertEqual(snapshot["quote"]["received_monotonic_ns"], 1_000_000_000)
+        self.assertEqual(snapshot["features"]["version"], "mm-features-v1")
+        self.assertEqual(snapshot["features"]["trade_count"], 1)
+        self.assertEqual(snapshot["features"]["buy_quantity"], "0.2")
+        self.assertEqual(snapshot["features"]["sell_quantity"], "0")
+        self.assertEqual(snapshot["features"]["spread"], "1")
+        self.assertEqual(snapshot["features"]["event_range"], ["t-1", "t-1"])
+        self.assertFalse(snapshot["full_tape"])
+
+    def test_l1_capability_never_becomes_l2_book(self):
+        caps = SourceCapabilities(**{**source().to_wire(), "book": True, "book_mode": "l1"})
+        state = MarketState(instrument(), caps, clock=self.clock, workspace_id="w1", epoch=3)
+        event = market_event(kind="book", event_id="b-1", payload={"bids": [], "asks": []})
+        result = state.ingest(event)
+        self.assertFalse(result.applied)
+        self.assertIn("book_unavailable", result.reasons)
+        self.assertEqual(state.snapshot()["health"]["book"]["status"], "unavailable")
+
+    def test_delayed_book_invalidates_only_book_domain(self):
+        caps = source(sequence_scope="per_domain")
+        caps = SourceCapabilities(**{**caps.to_wire(), "book": True, "book_mode": "l2"})
+        state = MarketState(instrument(), caps, clock=self.clock, workspace_id="w1", epoch=3)
+        state.ingest(market_event(kind="book", event_id="b-1", sequence=10, payload={"bids": [["99", "1"]], "asks": [["101", "1"]]}))
+        delayed = market_event(kind="book", event_id="b-2", sequence=11, market_ts_ms=999, payload={"bids": [["98", "1"]], "asks": [["102", "1"]]})
+        result = state.ingest(delayed)
+        self.assertTrue(result.resync_required)
+        self.assertIn("delayed_event", result.reasons)
+        self.assertIsNone(state.snapshot()["book"])
+        self.assertEqual(state.snapshot()["health"]["book"]["status"], "stale")
+
+    def test_metadata_change_invalidates_market_state(self):
+        self.state.ingest(market_event(sequence=10))
+        changed = market_event(event_id="new-metadata", epoch=3, metadata_version="exchangeInfo:2", sequence=11)
+        result = self.state.ingest(changed)
+        self.assertTrue(result.resync_required)
+        self.assertIn("metadata_version_changed", result.reasons)
+        self.assertEqual(result.epoch, 4)
+        self.assertIsNone(self.state.snapshot()["quote"])
+
+    def test_quote_freshness_uses_monotonic_clock_not_wall_clock(self):
+        self.state.ingest(market_event(sequence=10))
+        self.clock.monotonic += 6_000_000_000
+        self.clock.wall -= 86_400_000
+        snapshot = self.state.snapshot()
+        self.assertIsNone(snapshot["quote"])
+        self.assertEqual(snapshot["health"]["quote"]["status"], "stale")
+        self.assertEqual(snapshot["health"]["quote"]["reason"], "quote_stale")
+        self.assertEqual(snapshot["health"]["quote"]["age_ms"], 6_000)
 
 
 if __name__ == "__main__":
