@@ -1,5 +1,6 @@
 import {invoke} from '@tauri-apps/api/core';
 import {listen} from '@tauri-apps/api/event';
+import type {MultimarketState} from './multimarketView';
 export type Wire = {schema_version:number; id?:string; event?:string; error?:string; result?:Snapshot};
 export type Plan = {id:string; action:string; quantity:number; entry_points:string|null; stop_points:string|null; target_points:string|null; expires_at_ms:number|null; costs_brl:string; loss_brl:string; target_net_brl:string; margin_brl:string; expected_log_growth:number|null; profit_probability:number|null; probability_interval?:number[]|null; distribution?:{net_brl:string;probability:number}[]; reason:string; premise?:string; order_sent:boolean};
 export type UpdateState = {current_version:string;status:'idle'|'checking'|'available'|'current'|'no_release'|'no_installer'|'auth_required'|'unavailable';latest_version:string|null;release_url:string|null;notes:string;checked_at_ms:number|null};
@@ -8,6 +9,7 @@ export type Snapshot = LiveSnapshot & {updates:UpdateState;schema_version:number
 export type LiveSettings = {revision:number;automatic:boolean;cadence_ms:number;validity_ms:number;horizon_seconds:number;alert_threshold:number;alert_rearm:number;alert_cooldown_ms:number;alerts_enabled:boolean;sound_enabled:boolean;daily_limit_usd:string;total_limit_usd:string};
 export type Dimensions = {support:number|null;contradiction:number|null;insufficient:number|null};
 export type LiveSnapshot = {
+  multimarket?:MultimarketState;
   pilot:CapturePilotState;
   directional:{temperature:number|null;wait:number|null;selected:string;candidate_key:string|null;geometry:Record<string,unknown>|null;expires_at_ms:number|null;evaluated_at_ms:number|null;latency_ms:number|null};
   context_settings:LiveSettings; context_by_candidate:Record<string,Dimensions>; hypothesis_context:{candidate_key:string;family:string;side:string;aggressor_side:string;scenario_side:string|null;literal_premise:string;dimensions:Dimensions}[];

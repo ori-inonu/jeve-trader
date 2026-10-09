@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "candidate": "907beb3365c8760b7214fd3af22f2f41d5269e9a",
+  "command": "python -E -s -B scripts/observe_multimarket.py --live --duration-seconds 20",
+  "platform": "win32",
+  "python": "3.14.7",
+  "exit_code": 1,
+  "observation": {
+    "status": "degraded",
+    "origin": "live",
+    "error": null,
+    "health": [
+      {
+        "channel": "trade",
+        "connected": false,
+        "state": "stale",
+        "valid": false,
+        "stale": true,
+        "coverage": "partial",
+        "last_exchange_time_ms": 1791524928615,
+        "last_receive_time_ms": 1791524871590,
+        "last_receive_monotonic_ns": 50352897353700,
+        "sequence_ok": false,
+        "gaps": 0,
+        "resyncs": 0,
+        "dropped_events": 0,
+        "dropped_bytes": 0,
+        "reason": "websocket_close_timeout",
+        "metrics": {
+          "queue_events": 0,
+          "queue_bytes": 0,
+          "managed_bytes": 1188,
+          "peak_managed_bytes": 19886,
+          "rest_weight_window": 170
+        }
+      },
+      {
+        "channel": "depth",
+        "connected": false,
+        "state": "invalid",
+        "valid": false,
+        "stale": true,
+        "coverage": "partial",
+        "last_exchange_time_ms": 1791524929514,
+        "last_receive_time_ms": 1791524871593,
+        "last_receive_monotonic_ns": 50352900252800,
+        "sequence_ok": false,
+        "gaps": 0,
+        "resyncs": 0,
+        "dropped_events": 0,
+        "dropped_bytes": 0,
+        "reason": "websocket_close_timeout",
+        "metrics": {
+          "queue_events": 0,
+          "queue_bytes": 0,
+          "managed_bytes": 1188,
+          "peak_managed_bytes": 19886,
+          "rest_weight_window": 170
+        }
+      }
+    ],
+    "transport": {
+      "state": "error",
+      "reason": "websocket_close_timeout",
+      "worker_alive": false,
+      "reader_alive": false,
+      "rest_request_alive": false
+    },
+    "received_trades": 7,
+    "remaining_seconds": 0,
+    "evaluation": {
+      "status": "pending",
+      "sample_size": 0,
+      "chronology": null,
+      "costs": null,
+      "calibration": null,
+      "intervals": null,
+      "drawdown": null,
+      "target_probability": null,
+      "ruin_probability": null,
+      "missing": [
+        "minimum_sample_evidence",
+        "chronological_split",
+        "overlap_assessment",
+        "multiple_comparisons",
+        "cost_execution_evidence",
+        "calibration_brier_logloss",
+        "temporal_uncertainty_intervals",
+        "bankroll_drawdown_evidence",
+        "independent_acceptance_criteria",
+        "AC-07_pending"
+      ],
+      "result_type": "protocol_only",
+      "ac07_status": "pending",
+      "protocol": [
+        "causal_chronological_split",
+        "purge_and_embargo_overlapping_samples",
+        "account_for_multiple_comparisons",
+        "brier_and_logloss_calibration",
+        "include_fees_slippage_funding_and_execution",
+        "measure_bankroll_drawdown_target_and_ruin",
+        "temporal_uncertainty_intervals",
+        "independent_acceptance_criteria"
+      ]
+    },
+    "missing": [
+      "no_trades_in_interval"
+    ],
+    "orders_enabled": false,
+    "retention_enabled": false,
+    "profit_probability": null,
+    "target_probability": null,
+    "ruin_probability": null,
+    "objective": {
+      "initial_capital_brl": "400",
+      "target_capital_brl": "4000",
+      "horizon": "less_than_one_week",
+      "status": "not_estimated"
+    },
+    "shutdown": {
+      "status": "off",
+      "transport": {
+        "state": "error",
+        "reason": "websocket_close_timeout",
+        "worker_alive": false,
+        "reader_alive": false,
+        "rest_request_alive": false
+      }
+    }
+  },
+  "scope": "short_public_transport_smoke_only",
+  "sustained_pilot_validated": false,
+  "financial_probability_validated": false
+}

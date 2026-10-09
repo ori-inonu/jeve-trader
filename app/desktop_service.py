@@ -28,6 +28,7 @@ from jev_client import JevClient
 from profit_bridge import CombinedExcelBridge, SourceBatch, MarketEvent, QuoteSnapshot, SourceHealth, RtdThrottleGuard, read_csv_events
 from profit_ocr import capture_profit, profit_windows, validate_selection, OcrUnavailableError, runtime_status
 from release_updates import check_for_updates, current_version, update_state, trusted_release_url
+from multimarket_observer import MultimarketObserver
 
 EXPERIMENT_RESOURCES = ('desktop_service.py', 'app_core.py', 'app_store.py', 'capital_example.py',
                         'decision_engine.py', 'decision_store.py', 'context_requests.py', 'candidate_engine.py',
@@ -35,6 +36,8 @@ EXPERIMENT_RESOURCES = ('desktop_service.py', 'app_core.py', 'app_store.py', 'ca
                         'jev_client.py', 'copilot.py', 'capital_planner.py', 'risk.py', 'risk_research.py',
                         'config.json', 'flow_rules.json', 'observer_questions.json')
 EXPERIMENT_RESOURCES += ('live_context.py', 'credential_vault.py', 'context_cycle.py', 'context_identity.py', 'profit_ocr.py', 'profit_capture.cs', 'capture_pilot.py')
+EXPERIMENT_RESOURCES += ('market_data_contract.py', 'public_crypto_feed.py', 'market_replay.py',
+                        'multimarket_context.py', 'multimarket_economics.py', 'multimarket_observer.py')
 
 
 def batch_from_wire(data):
@@ -118,10 +121,11 @@ class ExcelCollector:
 
 
 class DecisionService:
-    def __init__(self, directory=None, *, update_checker=check_for_updates, credential_vault=None, client_factory=JevClient):
+    def __init__(self, directory=None, *, update_checker=check_for_updates, credential_vault=None, client_factory=JevClient, multimarket_factory=MultimarketObserver):
         self.store = DecisionStore(directory)
         self.settings = UserStore(directory)
         self.pilot = CapturePilot(self.settings.directory)
+        self.multimarket = multimarket_factory()
         self.session = ObservationSession()
         self.costs = CostSchedule()
         self.latest_jev = None
@@ -263,6 +267,7 @@ class DecisionService:
                 'chart_points': list(self.session.chart),
                 'equity_history': equity_history, 'history': [event for event in history if event['kind'].startswith('actual_manual') or event['kind'] == 'account_reconciliation'][:40],
                 'updates': dict(self.updates), 'pilot': self.pilot.snapshot(),
+                'multimarket': self.multimarket.snapshot(),
                 'research': {'status': 'EMPIRICAL_VALIDATION_PENDING', 'logistic_baseline': 'offline CLI: scripts/run_decision_lab.py',
                              'profitdll': 'SDK_AUTHORIZED_REQUIRED', 'risk_catalog': ['fixed_lot', 'fixed_cash', 'initial_fraction', 'current_fraction', 'kelly', 'fractional_kelly', 'drawdown_kelly', 'volatility', 'optimal_f', 'fixed_ratio', 'paroli', 'partial_reinvest', 'pyramiding', 'martingale', 'dalembert', 'fibonacci', 'labouchere'],
                              'profit_target': None, 'drawdown_pause': None}, 'orders_enabled': False}
@@ -306,6 +311,19 @@ class DecisionService:
             raise ValueError('Parâmetros inválidos')
         if method == 'snapshot':
             pass
+        elif method == 'multimarket.start':
+            if set(params) != {'duration_seconds'}:
+                raise ValueError('Informe somente a duração explícita da coleta pública')
+            duration = params['duration_seconds']
+            if type(duration) is not int or not 1 <= duration <= 1800:
+                raise ValueError('Duração deve ser inteira entre 1 e 1800 segundos')
+            self.multimarket.start(duration_seconds=duration)
+        elif method == 'multimarket.stop':
+            if params: raise ValueError('Encerramento não aceita parâmetros')
+            self.multimarket.stop()
+        elif method == 'multimarket.synthetic':
+            if params: raise ValueError('Fixture não aceita parâmetros de mercado')
+            self.multimarket.synthetic()
         elif method == 'pilot.start':
             if params: raise ValueError('O piloto não aceita parâmetros de mercado')
             self.pilot.start(connected=self.collector is not None, mode=self.session.mode,
@@ -572,7 +590,7 @@ class DecisionService:
                     and self.capabilities(self.session.snapshot())['quote_fresh'])
 
     def tick(self):
-        changed = False
+        changed = self.multimarket.poll()
         try:
             revision,value = self.ocr_results.get_nowait()
             self.ocr_pending = False
@@ -725,6 +743,7 @@ class DecisionService:
             self.source_error = None
 
     def close(self):
+        self.multimarket.stop()
         self.pilot.close()
         self.ocr['enabled']=False
         self.ocr_revision+=1
