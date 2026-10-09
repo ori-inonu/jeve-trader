@@ -22,7 +22,7 @@ A autorização atual inicia a implementação de software e sua verificação. 
 |---|---|---|
 | EM-00/01 | Pesquisa e SPEC ready concluídas | Fontes primárias e contrato congelado; SHA da SPEC `7e8d2034…00612` |
 | EM-02 | Contratos integrados | Catálogo, envelopes e testes de Decimal/unidades/relógios; WIN preservado |
-| EM-03 | Software integrado; transporte real em investigação | Testes fake passaram; smoke de 20 s recebeu 7 execuções e terminou com `websocket_close_timeout`, livro inválido. Não certifica coleta saudável |
+| EM-03 | Software integrado; transporte real em investigação | Três smokes de 20 s receberam 7, 772 e 147 execuções e reprovaram livro/saúde. No terceiro, o shutdown terminou `off`, com todos os helpers encerrados. Coleta saudável sustentada continua pendente |
 | EM-04 | Replay/VAP integrados | Hash/índice, dedup, intervalos e soma exata; retenção real desligada |
 | EM-05 | Serviço/CLI/UI integrados | Padrão desligado; fixture conferida no navegador Windows com sidecar real; janela Tauri não validada |
 | EM-06 | Dependência externa | SDK/feed B3 autorizado, licença, cobertura e custos atuais |
@@ -34,7 +34,7 @@ A autorização atual inicia a implementação de software e sua verificação. 
 | EM-12 | Dependência externa | Admissibilidade, settlement verificável e payout líquido |
 | Revisão | Em andamento em candidato fixo | Dois revisores independentes, Standards e Spec; não equivale a autoaprovação |
 
-O candidato integrado `907beb3365c8760b7214fd3af22f2f41d5269e9a` passou 337 testes Python e self-test offline do serviço com socket/rede bloqueados. Tipos, 15 testes Node e build passaram. [Evidência de integração](../evidence/multimercado-integracao-2026-10-09.md) e [uso local](Multimercado_Uso_2026-10-09.md) registram alcance e pendências. Uma entrega de software não conclui o objetivo financeiro nem os aceites globais empíricos.
+O código `09e7b3090106cd1cabccef4327f541fca55f0354` passou 343 testes Python e self-test offline do serviço com socket/rede bloqueados no Windows. Tipos, 15 testes Node e build passaram. Os revisores Standards e Spec avaliam o candidato documental `52464af031919cf695182737b9651aa069011df1`. O implementador corrige separadamente um defeito reproduzido offline: fechamento local durante recuperação mascara o motivo original do livro na saúde pública. Esse diagnóstico não determina o motivo da falha real do terceiro smoke. [Evidência de integração](../evidence/multimercado-integracao-2026-10-09.md) e [uso local](Multimercado_Uso_2026-10-09.md) registram alcance e pendências. Uma entrega de software não conclui o objetivo financeiro nem os aceites globais empíricos.
 
 A fronteira inicial é contrato → coleta / replay-contexto / economia → integração → revisão. Nenhuma frente modifica o checkout principal, que contém trabalho de outra conversa.
 
