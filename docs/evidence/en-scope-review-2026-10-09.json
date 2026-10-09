@@ -1,0 +1,136 @@
+{
+  "review_type": "independent_pre_implementation_scope_and_test_seam_review",
+  "review_status": "scope_supported_with_conditions",
+  "candidate_implementation_reviewed": false,
+  "frozen_acceptance_changed": false,
+  "approval_basis": "The proposed local EN-T1–T3 increment and public seams cover the frozen EN-01–04 contract when the conditions below are retained. This assessment does not replace any JEV decision receipt or approve future implementation behavior.",
+  "baseline": {
+    "checkout": "C:\\Users\\gabri\\.codex\\worktrees\\en-scope-review\\jeve-trader",
+    "head": "385e79119b75bb8ea0277e3b0cfcb1656f443fba",
+    "tree": "c9c06f1c99e7be9ccdee910affb5f0c795c2dae3",
+    "working_tree_clean_before_and_after": true,
+    "conversation_bound_harness_context": {
+      "sdd_revision": 0,
+      "phase": "research",
+      "status": "idle",
+      "other_conversation_state_imported": false
+    }
+  },
+  "spec": {
+    "path": "docs/specs/Instrumentacao_Protocolo_Multimercado_2026-10-09.md",
+    "sha256": "9e6d06ed4ea275981bdcf8c0d4d26e568b3ff79d9f9be20482feb06e77565e26",
+    "readiness_path": "docs/evidence/rt12-next-spec-readiness-final.json",
+    "readiness_sha256": "3f2a8dba8357eea31c23e956eafa602dab38854cc7e6935b7fffd43672769217",
+    "ready_local_scope": ["EN-T1", "EN-T2", "EN-T3"]
+  },
+  "frozen_acceptance": {
+    "additional_fixed_criteria_preserved": ["I-01–I-12", "FW-01–FW-12", "N-01–N-05", "R-01–R-04"],
+    "not_part_of_this_increment": ["T4", "T5", "native J1–J6 observation/J6 bridge", "B3 entitlement", "private-account access", "gain claims", "screenshot evidence in v1"],
+    "gain_value_in_T1_T3": null
+  },
+  "coverage": [
+    {
+      "requirement": "EN-01 / T1",
+      "seam": "Public package-manifest generation/verification CLI against temporary rooted package files, plus a post-build origin receipt validator.",
+      "must_preserve": [
+        "Capture commit, tree and dirty state once in the build orchestrator before generated outputs and pass the immutable origin into Vite/package creation.",
+        "Manifest is closed and excludes its own hash; outer receipt binds the embedded manifest and packaged app/sidecar hashes.",
+        "Verify required app and sidecar, missing/tampered files, duplicates, absolute/traversal paths, and root escapes.",
+        "When an installer is produced, the outer receipt actually computes and verifies its hash; portable output may use installer_sha256 null.",
+        "Dirty or source-less output remains ineligible."
+      ]
+    },
+    {
+      "requirement": "EN-02 / T2 telemetry",
+      "seam": "Pure collector/export validator for allowlisting, closed schema, sanitization, null rules, ring capacity/drop counts, and sample order.",
+      "must_preserve": [
+        "Bind the exact receipt identity/epoch/sequence to the React commit using one injected renderer monotonic clock.",
+        "Exercise rapid/reordered publishes, duplicates, and command-result snapshots.",
+        "Do not describe collector-only tests as proof that the real React commit lifecycle was observed."
+      ]
+    },
+    {
+      "requirement": "EN-03 / T2 interpretation",
+      "seam": "Offline exporter and frontend/sidecar mapping checks.",
+      "must_preserve": [
+        "process_p95_ms remains backend processing-clock duration.",
+        "market_lag_ms remains apparent wall-clock age with unknown clock offset/uncertainty; do not subtract Python and renderer clocks.",
+        "GPU remains null; TTLs remain quote/trade/book/account = 5/30/2/60 seconds; preserve stale-context rejection and controls."
+      ]
+    },
+    {
+      "requirement": "EN-04 / T3 protocol",
+      "seam": "Local validator over hash-bound fixtures for closed run/task/event/comparison schemas and independent stage states.",
+      "must_preserve": [
+        "Reject browser/synthetic evidence promoted to native, incomplete or post-freeze pairs, unqualified origins, and gain lacking frozen B treatment plus prospective complete pairs.",
+        "Preserve failure evidence and set gain null throughout T1–T3.",
+        "Do not claim comparable gain until host/runtime equivalence limits are resolved in T5."
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "SCOPE-01",
+      "severity": "nonblocking_boundary",
+      "finding": "app/packaging/build_installer.py is a separate CPython/Tk package path with a different manifest and no Tauri multimarket UI plus separate engine sidecar.",
+      "condition": "Explicitly exclude this legacy route from the EN-eligible artifact set, leave it unchanged, and do not claim every supported packaging path is EN eligible."
+    },
+    {
+      "id": "TEST-01",
+      "severity": "verification_limit",
+      "finding": "The declared Node test command and dependencies do not currently provide a React DOM/test renderer mount seam. Existing tests do not mount the component.",
+      "condition": "Add a dependency-free real mount seam or report React lifecycle verification as untested. Collector tests alone do not establish post-commit useLayoutEffect behavior. Keep receipt and committed snapshot aligned; current passive prop mirroring and direct command-result state updates can lag or double-attribute."
+    },
+    {
+      "id": "COMPAT-01",
+      "severity": "nonblocking_compatibility",
+      "finding": "Existing metricsExportPayload emits schema_version 1 with gpu_bytes, legacy gate names and measurement_scope, unlike the proposed strict v1 envelope.",
+      "condition": "Give the new export a distinct schema identity or explicitly preserve/handle compatibility. No in-repository consumer of the existing downloaded export was found."
+    },
+    {
+      "id": "PROTO-01",
+      "severity": "deferred_to_T5",
+      "finding": "The readiness record says the current pair validator does not enforce full host/runtime equality.",
+      "condition": "Keep this outside T1–T3 and do not claim comparable gain until a future protocol freezes or qualifies environment differences."
+    }
+  ],
+  "integration_assessment": {
+    "safe_shape": "Keep the EN delta stacked on the PR2/spec line at reviewed base 385e79119b75bb8ea0277e3b0cfcb1656f443fba.",
+    "target_branch_context": "Parent supplied that PR2 remains open at this head and that origin/main is e64226c with the separate PR1 merge. A separate EN-only change targeting codex/multimarket-spec is consistent with that context.",
+    "limitations": "This isolated review did not inspect remote refs or make branch, merge, publication or integration changes. Do not replace main or silently combine the two architectures."
+  },
+  "verification": {
+    "tests_run": false,
+    "builds_run": false,
+    "reason": "Read-only pre-implementation review; no candidate implementation was supplied.",
+    "repository_changes": false,
+    "network_or_external_calls": false,
+    "private_state_copied_to_repository": false
+  },
+  "source_sha256": {
+    "docs/specs/Instrumentacao_Protocolo_Multimercado_2026-10-09.md": "9e6d06ed4ea275981bdcf8c0d4d26e568b3ff79d9f9be20482feb06e77565e26",
+    "docs/evidence/rt12-next-spec-readiness-final.json": "3f2a8dba8357eea31c23e956eafa602dab38854cc7e6935b7fffd43672769217",
+    "docs/evidence/rt12-next-spec-readiness-final.md": "5e8faf96dc180094657e3abe0dd7e03577462e484b4ce7f79763ecc6dea6074c",
+    "docs/research/RT12_Proximo_Ciclo_2026-10-09.md": "816619846ff7740e0c543af6d1d5e4f84fe7f884225e56acfe5af72ac6107684",
+    "docs/specs/Multimercado_Implementacao_2026-10-09.md": "af174497bf764b1a7c67818cee6e3b925a40933d98c40c8e14f5b1b0f6bc01f4",
+    "docs/specs/Multimercado_Proximo_Ciclo_2026-10-09.md": "fff2b8adb6ef815fcc70eadd80f1ff46e91d4bd60ba5a7e7bb3239b078c46c632",
+    "docs/specs/PR2_Revisao_Main_2026-10-09.md": "89f127a4fd48e30790ffb2d8fdb8e1f662e586eb89e2b29078d31862119a1c5c",
+    ".scratch/wayfinder-live-windows/spec.md": "0183310d90dcfffd921ac551df12e7d2590db55fdfb7c1e1604a7c2b22f1ced6",
+    "docs/evidence/rt12-planning-jev.json": "9c8a2b673eb406105888228a7fbace36013933ff8e07f24f6c3f0fb70a117bf3",
+    "docs/evidence/pr2-documentation-manifest.json": "4eaee9904babcdeb749b38fb6137eb3af5752b2fc06767833fc4ad5dfbc798a7",
+    "desktop/build-windows.ps1": "50b506bd110ad789801dd28bd178b1ef123f77e32cb3eaede4f64e7384359938",
+    "app/packaging/build_installer.py": "e5ec488664fa54151a1cc97a0337051fe2103c987ab6371cf1c4567b180bb05a",
+    "desktop/src/MultimarketRoot.tsx": "89ab772b5a455a734fda75c8f5d3d924b35989a59a0967567d740a3b002a0a0f",
+    "desktop/src/MultimarketCockpit.tsx": "bd773a327c6a0ae29b111d17b8a0c29aa55e50a7ce45450987022f0264d5ae3e",
+    "desktop/src/multimarketModel.ts": "c270f4cb8cfa90218661e19364643de689f7e18419b3a40c1d15df5a3a1f0ef3",
+    "desktop/src/multimarketTransport.ts": "889a3afab4dd9d03077e9fcda2a9dda01be169ecf58182748fdf055ab5090880",
+    "app/multimarket/service.py": "b87386d071b9e1b1d10c4fdca23b1a8d3f3f5af513bc269f81926cce42af2d00",
+    "desktop/package.json": "f63cd7a2276646c36a718d92e5f4d4c1132854698216a4f6c79b1422a42d3e46",
+    "desktop/tests/multimarket.test.mjs": "0c494f660a3e9be0d60608a42009a8d3725fa75601c150c106e047d7bfb61674",
+    "desktop/tests/multimarketTransport.test.mjs": "72d4f906eb266467b1b53e3e6dc72643e6ae5f1dd499ef023e9005d0379ac5c9",
+    "desktop/tests/multimarket-wire.test.mjs": "b5e704f19145530a542e1bee720198fc9b00deb92f9558da2732e7f5fb82c244",
+    "app/test_multimarket_service.py": "945411481bce79fa84f32c0f10029182212f79bcc0581c96868db20633e897e9",
+    "app/test_multimarket_domain.py": "016e56b1afc176753d3e58a03d597981dda80078535d398927e0fbf3a26ad1ee"
+  },
+  "report_path": "C:\\Users\\gabri\\.codex\\implementation-research\\en-scope-review-2026-10-09.md"
+}

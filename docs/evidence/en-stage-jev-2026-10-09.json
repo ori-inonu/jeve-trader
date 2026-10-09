@@ -1,0 +1,63 @@
+{
+  "status": "assessed",
+  "receipt_id": "3c9cca2d-7c3c-4e44-b5c2-1138f341b8f0",
+  "input_digest": "0eb857a627a4f62f37bb2442086364004e1ff459889e38a3298cb2ddf01e294d",
+  "rubric_version": "batch-2026-09-26.2",
+  "model": "jev-1.13.0",
+  "answers": {
+    "next_stage": {
+      "type": "choice",
+      "domain": "task",
+      "providerChoice": "en_local",
+      "bestCandidate": "en_local",
+      "probabilities": {
+        "en_local": 0.5,
+        "architecture_frontier": 0.04,
+        "native_preparation": 0.4,
+        "insufficient_evidence": 0.06
+      },
+      "confidence": 0.33,
+      "disposition": "abstained",
+      "reasonCode": "low_confidence",
+      "policy": {
+        "version": "decision-policy-2026-09-26.1",
+        "mode": "conservative",
+        "minConfidence": 0.6,
+        "minProbability": 0.6,
+        "calibration": "not_locally_calibrated"
+      }
+    },
+    "git_recovery": {
+      "type": "choice",
+      "domain": "strategy",
+      "providerChoice": "isolated_clone",
+      "bestCandidate": "isolated_clone",
+      "probabilities": {
+        "isolated_clone": 0.91,
+        "repair_metadata": 0.08,
+        "insufficient_evidence": 0.01
+      },
+      "confidence": 0.86,
+      "disposition": "recommendation",
+      "recommendation": "isolated_clone",
+      "policy": {
+        "version": "decision-policy-2026-09-26.1",
+        "mode": "conservative",
+        "minConfidence": 0.6,
+        "minProbability": 0.6,
+        "calibration": "not_locally_calibrated"
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 736,
+    "output_tokens": 109
+  },
+  "billed_cost_usd": null,
+  "authority": "advisory_only",
+  "initial_skipped": {
+    "status": "skipped",
+    "reason": "unsafe_candidate_id",
+    "api_request": false
+  }
+}
