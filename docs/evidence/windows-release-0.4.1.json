@@ -1,0 +1,105 @@
+{
+  "recorded_utc": "2026-10-07T17:05:38.635880+00:00",
+  "platform": "Windows 11 x64",
+  "version": "0.4.1",
+  "source_code_commit": "2e55df3bffd7239bbfe63fac4ef99d8cbb6ab651",
+  "branch": "codex/windows-updates-and-live-roadmap",
+  "verification": {
+    "command": ".\\.venv\\Scripts\\python.exe scripts\\verify.py",
+    "python_tests": 203,
+    "tests": "PASS",
+    "desktop": "PASS",
+    "frontend_build": "PASS",
+    "pyinstaller_build": "PASS",
+    "cargo_build": "PASS",
+    "nsis_build": "PASS"
+  },
+  "isolated_package": {
+    "status": "PASS",
+    "silent_install": true,
+    "native_window_observed": true,
+    "owned_sidecar_observed": true,
+    "forced_root_exit_cleans_sidecar": true,
+    "reinstall_preserves_data": true,
+    "uninstall_preserves_data": true,
+    "primary_installation_unchanged": true
+  },
+  "primary_installation": {
+    "installer_exit": 0,
+    "existing_data_preserved": true,
+    "desktop_shortcut_verified": true,
+    "downloads_copy_verified": true,
+    "installed_binaries_match_verified_payload": true
+  },
+  "native_ui": {
+    "tool": "computer-use / @oai/sky",
+    "update_icon_clicked": true,
+    "update_popover_observed": true,
+    "check_button_clicked": true,
+    "observed_labels": [
+      "Versão instalada atual",
+      "Instalada: 0.4.1 · Publicada: 0.4.1",
+      "Fonte desconectada",
+      "Aguardar",
+      "Carregar demonstração sintética"
+    ],
+    "available_badge_on_older_native_installation_verified": false
+  },
+  "live_github_probe": {
+    "repository_private": true,
+    "latest_release": "v0.4.1",
+    "checking_0_4_0": "available",
+    "checking_0_4_1": "current"
+  },
+  "release": {
+    "id": 405977478,
+    "tag": "v0.4.1",
+    "url": "https://github.com/ori-inonu/jeve-trader/releases/tag/v0.4.1",
+    "draft": false,
+    "private_repository": true,
+    "assets": [
+      {
+        "name": "JevWIN_0.4.1_setup.exe",
+        "bytes": 13889274,
+        "sha256": "b326d8d5cc2e92aae137f2ec9d0b7395d3dc60488035702ea9133612d2f4041d",
+        "id": 619262905
+      },
+      {
+        "name": "JevWIN_0.4.1_portable.zip",
+        "bytes": 15675646,
+        "sha256": "cc1c4d21f888e0b3b47123517cd9e38bfe5139b0bcc65a298f46c3358cfe217f",
+        "id": 619262973
+      },
+      {
+        "name": "SHA256SUMS-0.4.1.txt",
+        "bytes": 183,
+        "sha256": "f6aa17d88263c49bee006573440c0e44cdd9e2f322f625fa5a26bde678e9fd1b",
+        "id": 619263054
+      }
+    ]
+  },
+  "independent_review": {
+    "baseline": "66d9aeef9566d7f65a5aea8b2649873410c2e447",
+    "standards": {
+      "p2_findings": 1,
+      "resolved": 1
+    },
+    "specification": {
+      "p2_findings": 1,
+      "resolved": 1
+    },
+    "same_finding": "Revoked Git credential returned generic unavailable instead of auth_required",
+    "fix_commit": "2e55df3",
+    "regression_test": "test_revoked_git_credential_requests_authentication"
+  },
+  "scope_limits": {
+    "live_profit_excel_feed_verified": false,
+    "paid_jev_calls_made": false,
+    "new_jev_cadence_implemented": false,
+    "directional_thermometer_implemented": false,
+    "opportunity_alerts_implemented": false,
+    "financial_probability_validated": false,
+    "automatic_order_execution_enabled": false,
+    "in_app_update_installation": false
+  }
+}

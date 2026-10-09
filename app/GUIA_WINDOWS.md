@@ -1,5 +1,7 @@
 # JEV WIN v0.3.0 — guia de uso no Windows
 
+O novo painel **Jeve Trader 0.4.0** usa Tauri/React e tem guia próprio em [docs/DECISION_PANEL.md](../docs/DECISION_PANEL.md). Este documento continua descrevendo a interface Tkinter compatível. Os dois diários têm importação inicial de valores compatíveis, sem sincronização contínua; evite editar a mesma conta simultaneamente.
+
 O aplicativo reúne observação de fluxo, comparação técnica e capital manual. **Não envia ordens nem conecta automaticamente sua conta Toro.** A tela inicial é a **Central de decisão**, com conclusão, motivos e impedimentos. Demonstração e replay continuam identificados; nenhum gráfico comprova conexão ao pregão.
 
 ## 1. Instalar ou abrir o portátil
@@ -10,11 +12,11 @@ A alternativa é `JevWIN_Portatil.zip`: use **Extrair tudo**, preserve a estrutu
 
 Instalador/executáveis não possuem assinatura digital comercial. Confira a procedência e as regras do computador se o Windows exibir aviso. O ambiente de desenvolvimento não permitiu validar sua instalação Windows/Excel/Profit. Consulte `VALIDATION.md` e os relatórios para saber quais verificações foram realizadas; testes da lógica não substituem abrir e conferir localmente.
 
-## 2. Usar a Central de decisão
+## 2. Usar o Copiloto
 
-As oito abas são **Central de decisão**, **Monitor**, **Cenários técnicos**, **Capital e risco**, **Conexões**, **JEV**, **Diário** e **Guia**.
+As sete abas são **Copiloto**, **Fluxo**, **Cenários**, **Conta**, **Configuração**, **Diário** e **Guia**.
 
-Na Central, **Atualizar avaliação** reúne a situação atual. **Consultar JEV** solicita interpretação quando houver evidência utilizável. **Demonstrar cenários** carrega um exemplo sintético. As páginas internas são:
+O Copiloto é a tela principal centrada no JEV: estado da fonte e medidas capturadas no topo, faixa JEV com a classificação do contexto observado e validade da resposta, e o campo **Sua leitura**, onde você declara em texto livre o que está vendo ou pretendendo — a próxima consulta avalia apoio, contradição e suficiência da evidência sobre a sua frase (dimensões separadas, nunca recomendação). **Atualizar avaliação** reúne a situação atual. **Consultar JEV** solicita interpretação quando houver evidência utilizável. **Demonstrar cenários** carrega um exemplo sintético. Abaixo ficam a conclusão e as páginas internas:
 
 - **Evidências e impedimentos**: por que o programa chegou à conclusão e o que falta confirmar.
 - **Cenários calculados**: entrada, stop, alvo, contratos, perda planejada, apoio e contradição, quando disponíveis.
@@ -26,15 +28,15 @@ Os estados incluem **SEM DADOS SUFICIENTES**, **AGUARDAR CONFIRMAÇÃO**, **BLOQ
 
 ## 3. Explorar e informar o capital
 
-Em **Monitor**, selecione `progression`, `absorption`, `exhaustion` ou `choppy`, lado `buy`/`sell`, e **Carregar demonstração**. São dados gerados localmente. O painel mostra preços, delta/contratos capturados, hipóteses, idade e cobertura. Absorção/exaustão descrevem a amostra, sem provar intenção, liquidez oculta ou reversão.
+Em **Fluxo**, selecione `progression`, `absorption`, `exhaustion` ou `choppy`, lado `buy`/`sell`, e **Carregar demonstração**. São dados gerados localmente. O painel mostra preços, delta/contratos capturados, hipóteses, idade e cobertura. Absorção/exaustão descrevem a amostra, sem provar intenção, liquidez oculta ou reversão.
 
-Em **Capital e risco**, confira patrimônio inicial/atual/pico, percentuais, stop/alvo estudados, perdas consecutivas, taxas, slippage, margem e teto técnico. Use **Recalcular e comparar políticas**. Os valores iniciais são parâmetros de laboratório. Maior lote permitido não significa maior retorno esperado; margem/stop não garantem perda máxima. A conta é um cenário manual, sem reconciliação de posição aberta.
+Em **Conta**, confira patrimônio inicial/atual/pico, percentuais, stop/alvo estudados, perdas consecutivas, taxas, slippage, margem e teto técnico. Use **Recalcular e comparar políticas**. Os valores iniciais são parâmetros de laboratório. Maior lote permitido não significa maior retorno esperado; margem/stop não garantem perda máxima. A conta é um cenário manual, sem reconciliação de posição aberta.
 
 Em **Diário**, preencha **Resultado líquido manual (R$)** e use **Registrar e atualizar capital**. Após perda registrada, o estudo aplica pausa de **60 segundos**; não bloqueia operações no Profit. Configurações e histórico ficam em `%LOCALAPPDATA%\JevWIN`, arquivo `journal.sqlite3`. O diagnóstico grava `diagnostico.json`, `self-test.json`, `startup.log`, `python-errors.log` e `diagnostic-console.log` na subpasta `%LOCALAPPDATA%\JevWIN\logs`. **Exportar diário JSON** gera cópia; não substitui extrato da corretora.
 
 ## 4. Preparar cotações no Excel
 
-1. Em **Conexões**, use **Salvar modelos de exportação**.
+1. Em **Configuração**, use **Salvar modelos de exportação**.
 2. No Profit, configure **Arquivo → Exportar em Tempo Real (RTD/DDE)** e habilite a transferência para Excel dentro das permissões da instalação.
 3. Abra `Profit_RTD_Modelo.xlsx`. Digite o contrato exato em **Dados!A2**, sem `_F_0`; o programa não escolhe vencimento.
 4. Confirme visualmente atualização das células e deixe Profit/Excel abertos na mesma sessão.
@@ -68,7 +70,7 @@ Falha/tabela vazia/registro inválido em qualquer fonte invalida o ciclo combina
 
 ## 6. JEV e cenários
 
-Em **JEV**, informe **Chave da API** e **Limite de consultas nesta execução**: padrão **120**, ajustável de 1 a **10.000**. A chave fica em memória, sem persistência no diário/configuração. **Analisar agora** usa sua conta TypeSafe; medidas e limites de cobertura são enviados, sem patrimônio/pressão por recuperação nas perguntas de mercado.
+Em **Configuração**, informe **Chave da API** e **Limite de consultas nesta execução**: padrão **120**, ajustável de 1 a **10.000**. A chave fica em memória, sem persistência no diário/configuração. **Consultar JEV** (no Copiloto ou no Fluxo) usa sua conta TypeSafe; medidas e limites de cobertura são enviados, sem patrimônio/pressão por recuperação nas perguntas de mercado. Se preenchida, **Sua leitura** no Copiloto vai junto como texto declarado e recebe apoio/contradição/suficiência próprios.
 
 Consulta automática começa desligada e requer fonte Excel ativa/evidência suficiente, com mínimo de **10 segundos**. Resposta atrasada, fonte alterada ou dados antigos vencem a avaliação. Notícias, conta e gestão de posições não estão conectadas.
 

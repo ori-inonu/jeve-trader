@@ -1,0 +1,15 @@
+{
+  "receipt_id": "f3ff40a9-0d68-4122-9002-0e26198a691d",
+  "mode": "evaluate",
+  "authority": "advisory_only",
+  "decision": "maintained_optional_dependency",
+  "candidates": ["maintained_optional_dependency", "stdlib_rfc6455"],
+  "input_digest": "cd6e44d8ca80a869a9e29ec0fb551ab57b7479ac0381a58d9a6b8ac23129d575",
+  "confidence": 0.94,
+  "usage": {"input_tokens": 531, "output_tokens": 56},
+  "billed_cost_usd": null,
+  "package": "websocket-client==1.9.2",
+  "package_source": "https://pypi.org/project/websocket-client/1.9.2/",
+  "protocol_source": "https://websocket-client.readthedocs.io/en/latest/core.html",
+  "deployment": "Lazy optional import; disabled by default; missing dependency is visible. Legacy installer unchanged."
+}

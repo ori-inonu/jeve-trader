@@ -1,0 +1,2 @@
+# Optional public observation transport. Core verification requires no network.
+websocket-client==1.9.2

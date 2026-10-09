@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-08",
+  "platform": "Windows 11 x64 10.0.26200; Python 3.14.7; PowerShell 7",
+  "scope": "Preparatory local capture-pilot instrument; installed Windows update and private release. Real feed acceptance remains open.",
+  "version": "0.5.1",
+  "implementation_commit": "ee54938aaacf1f02ae2c4679e803e0a0aebe7ce7",
+  "baseline_commit": "548801e0a9de14903180bd3e54ba97e1d728276a",
+  "tests": {
+    "python": {
+      "passed": 238,
+      "desktop_check": "PASS"
+    },
+    "frontend": {
+      "passed": 9
+    },
+    "frontend_build": "PASS",
+    "windows_build": "PASS",
+    "packaged_diagnostic": "PASS"
+  },
+  "independent_review": {
+    "specification": {
+      "blocking_findings_remaining": 0,
+      "frontend_tests_run": 9
+    },
+    "standards": {
+      "blocking_findings_remaining": 0,
+      "followup_tests_run": false
+    },
+    "workspace": "isolated read-only review copies",
+    "effective_model": null,
+    "effective_tier": null,
+    "evidence": "review-evidence.md"
+  },
+  "installation": {
+    "status": "PASS",
+    "previous_version": "0.5.0",
+    "installed_version": "0.5.1",
+    "user_files_unchanged": 2,
+    "payload_verified": [
+      {
+        "name": "JevWIN.exe",
+        "sha256": "CCE9C0C7EF4A419A89B94C59EE0935EC85CDAC28BCBED75BCB4710727910C476"
+      },
+      {
+        "name": "jeve-engine.exe",
+        "sha256": "D76AA76DA567BA53594CA58F56D3AEE0C6CD92D774189E1450282C00C8479C79"
+      },
+      {
+        "name": "package-manifest.json",
+        "sha256": "6E0FC1629AA712B1978BFD8922438ACF4977CFB5E019AF8FB9F6C417D6043DAA"
+      }
+    ],
+    "desktop_shortcut_verified": true,
+    "installer_exit_code": 0,
+    "backup_local_only": true,
+    "orders_enabled": false
+  },
+  "isolated_installed_engine_smoke": {
+    "pilot_status": "idle",
+    "status": "PASS",
+    "packaged_engine": true,
+    "jev_enabled": false,
+    "api_calls": 0,
+    "orders_enabled": false,
+    "source_mode": "idle",
+    "temperature": null,
+    "isolated_data": true
+  },
+  "publication": {
+    "id": 406445944,
+    "tag": "v0.5.1",
+    "url": "https://github.com/ori-inonu/jeve-trader/releases/tag/v0.5.1",
+    "draft": false,
+    "private_repository": true,
+    "assets": [
+      {
+        "name": "JevWIN_0.5.1_setup.exe",
+        "bytes": 14002633,
+        "sha256": "8c925c4a51055063e011d64486b1f3178b0740fe5c2cabcfcbc05a12c148c476",
+        "id": 620822273
+      },
+      {
+        "name": "JevWIN_0.5.1_portable.zip",
+        "bytes": 15788352,
+        "sha256": "26e8a62492be98aeae411c84e8b4ea465adf8897a8c9842bef721fef6dd810e6",
+        "id": 620822322
+      },
+      {
+        "name": "SHA256SUMS-0.5.1.txt",
+        "bytes": 183,
+        "sha256": "48d4a03b276c442c7f18338bc0dd7ebb8e788d70681209d40cf30caa4de90972",
+        "id": 620822392
+      }
+    ]
+  },
+  "actual_update_checks": [
+    {
+      "current_version": "0.5.0",
+      "status": "available",
+      "latest_version": "0.5.1",
+      "release_url": "https://github.com/ori-inonu/jeve-trader/releases/tag/v0.5.1",
+      "checked_at_ms": 1791437060942
+    },
+    {
+      "current_version": "0.5.1",
+      "status": "current",
+      "latest_version": "0.5.1",
+      "release_url": "https://github.com/ori-inonu/jeve-trader/releases/tag/v0.5.1",
+      "checked_at_ms": 1791437061995
+    }
+  ],
+  "downloads_installer": "Downloads/Jeve-Trader-0.5.1-setup.exe",
+  "source_acceptance": "PENDING_REAL_REVIEW",
+  "remaining_acceptance": {
+    "FW-06": "Structured local OCR and calibrated legibility/loss evidence.",
+    "FW-11": "At least 30 minutes of real Profit/Excel capture; identity/continuity; source latency and frontend p95 <=250 ms.",
+    "FW-12": "Independent annotated comparison of actual JEV contextual inference."
+  },
+  "limitations": [
+    "Profit and Excel were absent from the observed process inventory; no real-feed pilot was executed.",
+    "Synthetic and controlled tests do not establish complete tape, model quality, profitability or financial probability.",
+    "Interrupted pilot preserves the last received checkpoint; unsent renderer receipts are unknown.",
+    "Orders remain disabled; no paid JEV calls were made for build, tests or smoke.",
+    "The real update check used the existing Git credential; another machine requires repository access.",
+    "Update installation remains manual; repository visibility remains private.",
+    "Installation evidence confirms preserved files and shortcut; it does not certify real-time UI performance."
+  ]
+}

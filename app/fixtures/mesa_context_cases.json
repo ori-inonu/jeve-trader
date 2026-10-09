@@ -1,0 +1,13 @@
+{
+  "scope": "Synthetic offline semantic annotations; no measured JEV quality or profitability",
+  "cases": [
+    {"id":"absorbed-selling","mode":"absorption","aggressor":"sell","coverage":"full_fixture","status":"potential","scenario":"buy","annotation":"Absorbed selling supports only a buying hypothesis; does not identify hidden liquidity."},
+    {"id":"absorbed-buying","mode":"absorption","aggressor":"buy","coverage":"full_fixture","status":"potential","scenario":"sell","annotation":"Absorbed buying supports only a selling hypothesis."},
+    {"id":"exhausted-buying","mode":"exhaustion","aggressor":"buy","coverage":"full_fixture","status":"potential","scenario":null,"annotation":"Weakened buying does not confirm selling."},
+    {"id":"exhausted-selling","mode":"exhaustion","aggressor":"sell","coverage":"full_fixture","status":"potential","scenario":null,"annotation":"Weakened selling does not confirm buying."},
+    {"id":"progress-buying","mode":"progression","aggressor":"buy","coverage":"full_fixture","status":"observed","scenario":"buy","annotation":"Higher prices accompany dominant buying; no future return inferred."},
+    {"id":"progress-selling","mode":"progression","aggressor":"sell","coverage":"full_fixture","status":"observed","scenario":"sell","annotation":"Lower prices accompany dominant selling; no future return inferred."},
+    {"id":"partial-absorbed-selling","mode":"absorption","aggressor":"sell","coverage":"partial","status":"inconclusive","scenario":"buy","annotation":"Sampled tape cannot confirm the phenomenon despite locally compatible price/quantity."},
+    {"id":"unknown-aggressor","mode":"progression","aggressor":"buy","coverage":"unknown_aggressor","status":"inconclusive","scenario":"buy","annotation":"Unknown aggression requires insufficiency; it must not be silently allocated."}
+  ]
+}

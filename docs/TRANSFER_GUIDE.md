@@ -49,7 +49,7 @@ Esse clone histórico tem o bundle local como origem. Continue a implementação
 
 ## Usar o ambiente Codex publicado
 
-No Codex, abra um novo chat, use o seletor de ambientes e procure **Jeve Trader**. O ambiente foi publicado com `ori-inonu/jeve-trader` e `bash scripts/setup-codex.sh`. A preparação confirmou checkout `main`, Python 3.12.14 e `.venv/bin/python scripts/verify.py` aprovado. Nenhuma chave foi adicionada. A interface não exibiu campo de branch nem URL exclusiva do ambiente; o [chat de configuração](https://chatgpt.com/local/01a113f1-e024-75b3-9113-723a82fd30f9?hostId=local) permite consultar a preparação e seu painel. Veja [CODEX.md](CODEX.md).
+No Codex, abra um novo chat, use o seletor de ambientes e procure **Jeve Trader**. O ambiente foi publicado com `ori-inonu/jeve-trader` e `bash scripts/setup-codex.sh`. A preparação confirmou checkout `main`, Python 3.12.14 e `.venv/bin/python scripts/verify.py` aprovado. Nenhuma chave foi adicionada. A interface não exibiu campo de branch nem URL exclusiva do ambiente; o registro privado da preparação (identidade omitida) permite consultar a preparação e seu painel. Veja [CODEX.md](CODEX.md).
 
 O produto iniciou uma tarefa de configuração do ambiente, concluída apenas nesse escopo. Nenhuma tarefa de implementação do backlog foi iniciada. A interface não apresentou um valor de consumo de cota para registrar.
 

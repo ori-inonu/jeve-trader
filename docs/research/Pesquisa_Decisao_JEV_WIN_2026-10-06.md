@@ -5,6 +5,8 @@
 **Escopo realizado:** documentação oficial, artigos primários, auditoria do código, demonstrações matemáticas e desenho de experimentos.  
 **Estado empírico:** nenhuma chamada autenticada ao JEV, nenhuma amostra nova de mercado, nenhuma ordem e nenhuma estimativa de rentabilidade do WIN nesta pesquisa.
 
+**Complemento documental de 07/10/2026:** o [Wayfinder de inteligência e interface](Complemento_Wayfinder_JEV_WIN_2026-10-07.md) reavalia os achados no checkout após a entrega experimental 0.4 e registra seis decisões resolvidas documentalmente, com [sequência de implementação](../../.scratch/wayfinder-evolucao-decisao/implementation-plan.md) e [auditoria de aceite](../../.scratch/wayfinder-evolucao-decisao/acceptance-audit.md). A auditoria de 06/10 abaixo preserva sua baseline; a atualização de implementação continua na seção 13. Os contratos não constituem validação financeira e sua implementação ainda não foi executada.
+
 ## 1. Conclusão e critério de melhoria
 
 A oportunidade prioritária é construir uma avaliação capaz de mostrar quando o JEV acrescenta informação útil e quando não acrescenta. O código já calcula fluxo e limites financeiros; falta relacionar os julgamentos do modelo a resultados observados posteriormente, com custo, execução e atraso tratados de forma coerente.
@@ -335,6 +337,70 @@ Foram verificados: expressão real de projeção do candidato, primeiro critéri
 | S19 | [Bailey e López de Prado — DSR][S19] | Inflação de Sharpe por seleção e não normalidade. |
 | S20 | [Gibbs e Candès — ACI][S20] | Incerteza sob mudança de distribuição. |
 | S21 | [Busseti, Ryu e Boyd][S21] | Kelly com restrição de risco e pressupostos. |
+
+## 13. Implementação experimental em 07/10/2026
+
+Esta seção registra código e execução local posteriores à pesquisa acima. Não substitui os pressupostos das fontes por resultados sintéticos. Implementação: `app/decision_lab.py`; CLI: `scripts/run_decision_lab.py`; estado verificável: [evidência](../evidence/decision-panel-2026-10-07.json). Não houve aprovação ou exportação de modelo para o painel, nem validação com dados reais do WIN.
+
+### Variantes implementadas
+
+`E` é a banca atual, `E0` a banca inicial e `L` a perda líquida de referência por contrato. Quantidades são arredondadas para baixo, limitadas a 10.000 e à capacidade financeira com margem e reserva da perda. Os valores abaixo são parâmetros experimentais do código, sem recomendação operacional. Progressões após perdas são exclusivas do laboratório.
+
+| Método | Variante do laboratório |
+|---|---|
+| Lote fixo | Um contrato, quando admissível. |
+| Valor fixo | `floor(40 / L)`. |
+| Percentual inicial | `floor(0,10 × E0 / L)`. |
+| Percentual atual | `floor(0,10 × E / L)`. |
+| Kelly | Fração `f` ajustada somente no treino, em grade de 101 pontos entre zero e um, maximizando soma de logaritmos dos retornos normalizados; `floor(f × E / L)`. |
+| Kelly fracionado | Multiplica `f` por parâmetro selecionado na calibração entre 0,10; 0,25; 0,50; 1. |
+| Kelly adaptado | Multiplica também por `1 / (1 + drawdown / referência)`, com referência selecionada na calibração entre 0,20; 0,30; 0,40. Não há pausa fixa em 30%. |
+| Volatilidade | `floor(0,10 × E / max(L, volatilidade))`; a trajetória atual usa escala padrão de R$20, sem cálculo de ATR por operação. |
+| Optimal f | Usa a mesma grade e objetivo logarítmico da variante Kelly nesta implementação; ainda não é uma segunda formulação independente. |
+| Fixed Ratio | `floor((1 + sqrt(1 + 8 × max(E − E0, 0) / 100)) / 2)`. |
+| Paroli/Soros | Lotes 1, 2, 4, 8 após vitórias consecutivas; reinício após a quarta vitória ou uma perda. |
+| Reinvestimento parcial | `floor((40 + 0,50 × max(E − E0, 0)) / L)`. |
+| Piramidagem | Contrato `1 + níveis favoráveis confirmados`; relatório exige caminho intratrade. A trajetória atual não simula esses níveis e não demonstra vantagem da piramidagem. |
+| Martingale | `2 ^ perdas consecutivas`, com expoente limitado a 20 e posterior limite financeiro. |
+| D’Alembert | Unidade inicial um; aumenta uma após perda, reduz uma após vitória, piso um. |
+| Fibonacci | Sequência 1, 1, 2, 3… avança após perda, reinicia após vitória. |
+| Labouchère | Sequência inicial 1, 2, 3; lote soma das extremidades; perda acrescenta o lote, vitória remove extremidades; sequência vazia reinicia, comprimento limitado a 100. |
+
+Os nomes não representam fórmulas universais. Na comparação, todas as políticas usam a mesma sequência de desfechos por contrato. Reserva de margem não vira custo; custos por lado e slippage entram uma única vez. A trajetória não para por atingir o alvo investigado. Os parâmetros de Kelly são escolhidos antes do teste final. Stop de volatilidade/estrutural alternativo, trailing stop, saídas parciais como política e piramidagem intratrade permanecem experimentos pendentes. O diário manual admite saídas parciais, o que não valida uma política de saída.
+
+### Replay e cobertura
+
+O CSV usa o schema de negócios da ponte. O replay organiza contrato/sessão, calcula atributos apenas com eventos disponíveis até o instante da entrada e usa geometrias experimentais de stop de 100 pontos, alvo de 200 e horizonte de 60 segundos. Há uma decisão a cada 60 segundos, sem posições simultâneas. A escolha de lado ocorre antes da leitura do desfecho. Negócio é aproximação do preço de execução; fila, profundidade executável, fills parciais e latência de ordem não foram modelados. Gaps adversos usam o preço pior observado.
+
+O manifesto liga prova ao conteúdo. Estrutura por sessão e contrato:
+
+```json
+{
+  "2026-10-01": {
+    "WINV26": {
+      "symbol": "WINV26",
+      "events_sha256": "SHA256_DOS_EVENTOS_NORMALIZADOS",
+      "start_ms": 1790860000000,
+      "end_ms": 1790880000000,
+      "full_tape": true,
+      "continuity_verified": true,
+      "reference": "referencia-da-auditoria-autorizada"
+    }
+  }
+}
+```
+
+O hash é SHA256 do JSON da lista de `MarketEvent.to_dict()`, ordenada como no replay, com chaves ordenadas, separadores compactos e valores finitos; `tape_digest` define a operação exata. O contrato e intervalo devem cobrir o horizonte inteiro. Precisa existir evento no encerramento do horizonte ou após ele; sem prova ou janela suficiente, o rótulo fica censurado, mesmo se um preço de stop tiver sido visto antes. Esse manifesto é entrada auditável, não auditoria automática; declarar seus campos manualmente não comprova continuidade. Excel amostrado continua parcial.
+
+Contextos JEV opcionais são associados ao ID do plano/receita e só participam das features se a resposta já estava disponível na entrada. Hora de resposta não altera a hora da evidência. Ausência desses registros deixa a comparação pareada indisponível; não inventa Nouls.
+
+### Estimativas e limitações demonstradas
+
+Treino, calibração e teste ocupam 60%, 20% e 20% das sessões cronológicas, com pelo menos cinco sessões e remoção dos horizontes que cruzariam a fronteira. Regressão logística multiclasse prevê alvo, stop e saída temporal; calibração sigmoid usa o estimador já treinado. A comparação com/sem JEV usa as mesmas observações disponíveis. Relatório inclui log loss, Brier multiclasse, ECE, bins de confiabilidade e bootstrap por sessão para intervalos. Intervalos de métricas agregadas não são automaticamente intervalos da probabilidade de uma nova operação.
+
+O replay econômico calcula distribuição líquida por quantidade a partir das probabilidades e distribuições condicionais de treino, compara `q=0`, crescimento logarítmico, margem, custos e Kelly fracionado adaptado ao drawdown. Retornos do teste só entram depois da escolha. VaR e Expected Shortfall são empíricos; bootstrap de sessões estima frequências condicionais de ruína, perda de capacidade e alcance do alvo sob a amostra/suposições. Não são previsão de ruína da conta real. Custo JEV efetivo permanece desconhecido.
+
+O smoke executado tem 300 observações sintéticas em dez sessões: 180 treino, 60 calibração, 60 teste, com e sem JEV sintético. Os dois relatórios mantêm `RESEARCH_ONLY`, `synthetic=true` e `deployment_approved=false`. O ensaio demonstra funcionamento do pipeline, sem vantagem econômica, calibração prospectiva ou probabilidade válida para operação real. Não exporta nem instala modelo no aplicativo. Próximos passos são dados WIN autorizados, auditoria de cobertura, custos/execução plausíveis, avaliação prospectiva e ligação versionada do modelo aprovado ao serviço de decisão.
 
 [S01]: https://raw.githubusercontent.com/typesafe-ai/skills/main/skills/typesafe-ai/SKILL.md
 [S02]: https://docs.typesafe.ai/model-jaggedness/jev-1.13

@@ -1,4 +1,5 @@
 """Controller tests with a fake view, not a native Windows GUI test."""
+import contextlib
 from pathlib import Path
 import tempfile
 import unittest
@@ -35,8 +36,11 @@ class DesktopControllerTests(unittest.TestCase):
         return app
 
     def test_risk_transition_is_persisted_even_without_time_between_changes(self):
-        with tempfile.TemporaryDirectory() as directory, patch('desktop_app.time.monotonic', return_value=100):
+        # ExitStack closes the SQLite store before Windows tempdir removal.
+        with contextlib.ExitStack() as stack, patch('desktop_app.time.monotonic', return_value=100):
+            directory = stack.enter_context(tempfile.TemporaryDirectory())
             app = self.create(directory)
+            stack.callback(app.store.close)
             app.refresh_decision(force=True)
             app.risk_inputs['margin'].value = '1000'
             app.refresh_decision(force=True)
@@ -47,8 +51,10 @@ class DesktopControllerTests(unittest.TestCase):
             self.assertEqual(app.decision_panel.render.call_count, 2)
 
     def test_new_source_generation_is_visible_even_with_same_conclusion(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with contextlib.ExitStack() as stack:
+            directory = stack.enter_context(tempfile.TemporaryDirectory())
             app = self.create(directory)
+            stack.callback(app.store.close)
             app.refresh_decision(force=True)
             first = app.decision_bundle['recommendation']['status']
             app.session.source_generation += 1

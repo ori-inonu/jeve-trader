@@ -12,5 +12,5 @@
   "absorption_min_aggressed_contracts": 20,
   "exhaustion_intensity_ratio_max": "0.50",
   "depth_reduction_fraction_min": "0.50",
-  "maximum_depth_levels": 50
+  "maximum_depth_levels": 256
 }

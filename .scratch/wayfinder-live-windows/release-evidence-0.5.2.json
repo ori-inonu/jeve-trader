@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-08",
+  "version": "0.5.2",
+  "platform": "Windows 11 x64 10.0.26200; Python 3.14.7; PowerShell 7",
+  "scope": "Native local OCR runtime and installed Windows update; real feed acceptance remains open.",
+  "baseline_commit": "3ee94e2af7dc71ffebf26479110dfe319b422d91",
+  "implementation_commit": "52a0914b7e0fa630336aeda0d4f499e73509b1b9",
+  "frozen_acceptance": {
+    "path": ".scratch/wayfinder-live-windows/spec.md",
+    "sha256": "0183310d90dcfffd921ac551df12e7d2590db55fdfb7c1e1604a7c2b22f1ced6"
+  },
+  "increment_contract": {
+    "path": ".scratch/wayfinder-live-windows/ocr-native-contract.md",
+    "sha256": "5fb05e99e324bbfaaba1d13560710999768927cbd8bf7a23e53d827881fbac6b"
+  },
+  "reviewed_files": {
+    ".gitignore": "c5126bbb66ecd5bb7f19174e018577eb48542b23747fd772001efc080e37ca42",
+    "app/desktop_service.py": "7ebcd5ddd961e158f7a1d5646c9343d3c9eac38e333e26d832f2b256af4f39c6",
+    "app/profit_ocr.py": "7ce7213fb2becc7b7d9551ee80e8f766cd355c9ba3afe05762d072f651a22a5a",
+    "app/profit_capture.cs": "8db090773f462c3b43d7940c46031c25e0e67cdc81ec4a9903413999be6ba912",
+    "app/test_profit_ocr.py": "efe164aeda6527b8afcb9fd1c0c1996715dbd116a82340920a8a704582c4a1d6",
+    "app/test_mesa_control.py": "b00e0049ec9e77ab3ed74ff111c0178b14869ee3437baf6f8081b94e54df075a",
+    "app/test_ocr_preparation.py": "72440ef7eacf5d663437aa790612f70dfb366575326ae384d18dc1b02886bbf6",
+    "app/WINDOWS_BUILD.md": "f56a585f7594cb9759770d40403c325951067a2ac2c30e94e75370c6f04b1dd3",
+    "desktop/build-windows.ps1": "e23b231b152fbcbf8520ad6632700139cdd9e8d8b204bca28d87a72e30a3053c",
+    "desktop/LICENSES.txt": "41e7b2800fcbdb2c073c22ac712f6c337b0b900fdbc7342195ee87ee8792682b",
+    "desktop/src/transport.ts": "e92e04f4dd5067ded1cfef6916b39ac972d4c1f59969fa0c1e45d467b6bf592a",
+    "desktop/src/LiveConfiguration.tsx": "5c0f2521be3abdbcd4dd039a2913aa7052efb5841d88691ddc073dc4a371969a",
+    "scripts/prepare_ocr_runtime.py": "5349ce2a1f8defd1b2f157dc8eb7f41e6a06b1c1c1db447ce2d6788d93d4097e",
+    ".scratch/wayfinder-live-windows/ocr-native-contract.md": "5fb05e99e324bbfaaba1d13560710999768927cbd8bf7a23e53d827881fbac6b",
+    "docs/research/Profit_OCR_Local_2026-10-08.md": "faf411ccce7b87962db48e0ddd3392678cb3e016fc66cc653171feaea52d7a03",
+    "app/version.json": "fd5649f27ea849d40773ab4ac615bf0ee99acb32e9c3033ecb159943f616ae4b",
+    "desktop/package.json": "cae475411afc6517b5b6ce1982f7db826a1b940cd812d6783bebc9a0d04d74fe",
+    "desktop/package-lock.json": "7bea0cab87361cbf5c87ffc6b7a796003b177a9f5569dd78ddab7c149ebf97d5",
+    "desktop/src-tauri/Cargo.toml": "0d87740008bbc7bcfa720b7378b3cc2e760a8091062fbbfd818535fd31dbba2d",
+    "desktop/src-tauri/Cargo.lock": "9c72506339cdd559e311603fd74a8d4bf52ab16916da095396da01b4aaaa27d0",
+    "desktop/src-tauri/tauri.conf.json": "09fb87e59b5e94d993295173b33e851ba2d895b79c53393aee2a92c9ef2ebbc6"
+  },
+  "deleted": [
+    "app/profit_ocr.ps1"
+  ],
+  "runtime_manifest_sha256": "36964c0032a728999bcafb7b92c4084580b888a5a87a6f044317a800c7707bc3",
+  "tests": {
+    "python": 244,
+    "desktop_check": "PASS",
+    "frontend": 9,
+    "frontend_build": "PASS",
+    "windows_build": "PASS"
+  },
+  "independent_review": {
+    "specification": {
+      "blocking_findings_remaining": 0,
+      "offline_tests": 12
+    },
+    "standards": {
+      "blocking_findings_remaining": 0,
+      "offline_tests": 12
+    },
+    "workspace": "isolated read-only copies",
+    "effective_model": null,
+    "effective_tier": null,
+    "evidence": "ocr-review-evidence-2026-10-08.md"
+  },
+  "packaged_diagnostic": {
+    "status": "PASS",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.7",
+    "schema_version": 2,
+    "experimental": true,
+    "alternatives": 16,
+    "orders_enabled": false,
+    "financial_probability": null,
+    "code_sha256": "c3366e4131a245d16bccfce6489508ec47b71f1a8e86c3d7c2ebe51292048d89",
+    "ocr_runtime": {
+      "available": true,
+      "engine": "tesseract",
+      "version": "5.5.3",
+      "error": null
+    },
+    "ocr_diagnostic": {
+      "status": "PASS",
+      "engine": "tesseract",
+      "version": "5.5.3",
+      "input": "generated_known_text",
+      "real_profit_tested": false,
+      "continuity_verified": false
+    }
+  },
+  "installation": {
+    "status": "PASS",
+    "previous_version": "0.5.1",
+    "installed_version": "0.5.2",
+    "user_files_unchanged": 2,
+    "payload_verified": [
+      {
+        "name": "JevWIN.exe",
+        "sha256": "1587C3D44AEC1A5D683A681C0FD9606973B14724674A306A21B266ADAC249A7C"
+      },
+      {
+        "name": "jeve-engine.exe",
+        "sha256": "DC959F454E024AE2559316C9B8A0EA61751108B498A3D2453548E65174EB7C1A"
+      },
+      {
+        "name": "package-manifest.json",
+        "sha256": "687D40B3F96011D71A484BB3BD4AA862CC890409DDE7056EABF99058188F898C"
+      }
+    ],
+    "desktop_shortcut_verified": true,
+    "installer_exit_code": 0,
+    "backup_local_only": true,
+    "graceful_shutdown": true,
+    "orders_enabled": false,
+    "downloads_installer": "%USERPROFILE%/Downloads/Jeve-Trader-0.5.2-setup.exe",
+    "native_ui_interactions_verified": false,
+    "real_profit_excel_tested": false
+  },
+  "isolated_installed_engine_smoke": {
+    "status": "PASS",
+    "packaged_engine": true,
+    "diagnostic": {
+      "status": "PASS",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "python": "3.14.7",
+      "schema_version": 2,
+      "experimental": true,
+      "alternatives": 16,
+      "orders_enabled": false,
+      "financial_probability": null,
+      "code_sha256": "c3366e4131a245d16bccfce6489508ec47b71f1a8e86c3d7c2ebe51292048d89",
+      "ocr_runtime": {
+        "available": true,
+        "engine": "tesseract",
+        "version": "5.5.3",
+        "error": null
+      },
+      "ocr_diagnostic": {
+        "status": "PASS",
+        "engine": "tesseract",
+        "version": "5.5.3",
+        "input": "generated_known_text",
+        "real_profit_tested": false,
+        "continuity_verified": false
+      }
+    },
+    "jev_enabled": false,
+    "api_calls": 0,
+    "ocr_enabled": false,
+    "ocr_runtime_available": true,
+    "orders_enabled": false,
+    "source_mode": "idle",
+    "temperature": null,
+    "isolated_data": true
+  },
+  "package_manifest_sha256": "687d40b3f96011d71a484bb3bd4aa862cc890409dde7056eabf99058188f898c",
+  "build_log_sha256": "7a0fec35a36d1fc2ae7f85a1ee139a5906cc4c39cebf57fbef578c87f07a867d",
+  "vcpkg_initial_build_log_sha256": "c9dec8437007ec535f788e3278f03448a4da8d83c80b3404410348699f267c72",
+  "package_files_verified": 522,
+  "provenance": {
+    "initial_build_restored_packages": 0,
+    "initial_build_compiled_packages": 20,
+    "initial_build_cache_submissions": true,
+    "initial_build_current_hardened_wrapper_verified": false,
+    "final_package_reused_installed_dependencies": true,
+    "static_triplet": "x64-windows-static",
+    "baseline": "2750401336fb7c95f6619657a46a7e798661341c"
+  },
+  "source_acceptance": "PENDING_REAL_REVIEW",
+  "remaining_acceptance": {
+    "FW-06": "Real Profit OCR, structured extraction and calibrated legibility/losses.",
+    "FW-11": "Real 30-minute Profit/Excel capture, continuity and frontend p95 <=250 ms.",
+    "FW-12": "Independent annotated comparison of actual JEV contextual inference."
+  },
+  "upgrade_0_4_1_case": "Not exercised: 0.5.1 was installed; no downgrade performed.",
+  "real_profit_excel_tested": false,
+  "paid_jev_calls": 0,
+  "orders_enabled": false,
+  "publication": {
+    "id": 406889136,
+    "tag": "v0.5.2",
+    "url": "https://github.com/ori-inonu/jeve-trader/releases/tag/v0.5.2",
+    "draft": false,
+    "private_repository": true,
+    "assets": [
+      {
+        "name": "JevWIN_0.5.2_setup.exe",
+        "bytes": 19269681,
+        "sha256": "847d1046cea8d4ff4d79575a505e89e7d0f2dee693ae67e2e28f9ea6cbd8b77f",
+        "id": 621985656
+      },
+      {
+        "name": "JevWIN_0.5.2_portable.zip",
+        "bytes": 21069888,
+        "sha256": "f998a13151827bd5a8f776c032ebc908bc9eae65273877c56cfe4666bf21dd18",
+        "id": 621985737
+      },
+      {
+        "name": "SHA256SUMS-0.5.2.txt",
+        "bytes": 183,
+        "sha256": "4a2b57135fcaa61ce6e23936fd3c4a29bdfef8a61302e9055358e426f4154bc2",
+        "id": 621985818
+      }
+    ]
+  },
+  "actual_update_checks": [
+    {
+      "current_version": "0.5.1",
+      "status": "available",
+      "latest_version": "0.5.2",
+      "release_url": "https://github.com/ori-inonu/jeve-trader/releases/tag/v0.5.2",
+      "checked_at_ms": 1791467807015
+    },
+    {
+      "current_version": "0.5.2",
+      "status": "current",
+      "latest_version": "0.5.2",
+      "release_url": "https://github.com/ori-inonu/jeve-trader/releases/tag/v0.5.2",
+      "checked_at_ms": 1791467808410
+    }
+  ],
+  "native_app_startup": {
+    "status": "PASS",
+    "installed_version": "0.5.2",
+    "native_window_observed": true,
+    "owned_sidecar_observed": true,
+    "interactive_app_left_open": true,
+    "user_data_opened_after_preservation_check": true,
+    "native_ui_interactions_verified": false,
+    "real_profit_excel_tested": false,
+    "visual_latency_measured": false,
+    "scope": "Startup observed when run; not a persistent process guarantee."
+  },
+  "continuation_process_observation": {
+    "profit_running": false,
+    "excel_running": false,
+    "jeve_running": false,
+    "cause_of_app_exit": null,
+    "scope": "Process inventory on 2026-10-08 after startup evidence; no exit cause inferred."
+  }
+}

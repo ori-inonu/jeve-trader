@@ -1,4 +1,40 @@
-# Jeve Trader — arquitetura da baseline
+# Jeve Trader — arquitetura
+
+## Painel 0.4.0 — implementação em 07/10/2026
+
+O [ADR 0010](decisions/0010-painel-e-capital-progressivo.md) registra a arquitetura aceita. `desktop/` contém React/TypeScript/Vite, Tailwind 4, ECharts e Tauri 2. O host supervisiona `app/desktop_service.py` por JSON-lines versionado; UUIDs identificam pedidos e sequências descartam respostas antigas. Dinheiro cruza o transporte como texto decimal. No Windows, um Job Object encerra o sidecar e seus descendentes se o host terminar.
+
+```mermaid
+flowchart LR
+    Excel[Excel / Profit parcial] --> COM[Processo COM isolado]
+    COM --> Python[Serviço Python / estado observável]
+    Python --> JEV[JEV contextual opcional]
+    JEV --> Registro[Registro experimental]
+    Python --> Planos[Geometria + capital + custos Decimal]
+    Planos --> IPC[JSON versionado]
+    IPC --> UI[React / quatro áreas]
+    UI --> Ledger[Registro manual de execuções]
+    Ledger --> Python
+    Python --> SQLite[SQLite separado / dados JevWIN preservados]
+```
+
+| Módulo | Responsabilidade |
+|---|---|
+| `context_requests.py` | Projeção literal das premissas, versões, evidências e perguntas independentes. |
+| `decision_engine.py` | `MarketSnapshot`, `AccountState`, `OutcomeEstimate`, `DecisionPlan`, custos, comparação de quantidades e Choice econômico tipado. |
+| `decision_store.py` | Banca, pico, posições manuais, saídas parciais, idempotência e revisões; SQLite novo, sem migração destrutiva do diário legado. |
+| `desktop_service.py` | Coordenação sem Tkinter, comandos limitados, COM em processo próprio, API opcional com orçamento, descarte de contexto vencido e registro reproduzível. |
+| `decision_lab.py` | Replay causal de preço, rótulos/censura, treino/calibração/teste por sessão, comparação com/sem JEV e políticas de laboratório. |
+| `profitdll_contract.py` | Contrato de Market Data, callbacks e sinalização de falhas; implementação do SDK licenciado ainda ausente. |
+| `desktop/src-tauri/` | Host Windows, transporte, limites de mensagens e ciclo de vida dos processos. |
+
+O fluxo online entrega hipóteses e capacidade financeira calculada. **O serviço ainda não carrega um modelo financeiro aprovado nem chama o Choice econômico sobre suas estimativas**: o painel mostra aguardar e probabilidade não estimada. Comparação por crescimento líquido, Kelly fracionado e seleção de IDs estão implementados no motor e verificados offline. O laboratório não exporta um modelo pronto para produção. A conexão futura precisa vincular schema de features, geometria, custos, calibração e aprovação temporal à geração corrente; respostas antigas continuam inválidas.
+
+A coleta COM tem timeout de 5 segundos e reconexão explícita. A API tem timeout de 3 segundos, mínimo de 10 segundos entre pedidos, um pedido pendente e orçamento configurável por sessão. A chave fica apenas em memória; erros são sanitizados. O registro preserva estado, perguntas, código/receita/modelo, clocks, conta/custos, resposta e falhas. As capturas reais e sua retenção exigem autorização e capacidade de disco apropriadas.
+
+O [guia operacional](DECISION_PANEL.md) descreve limites de cobertura, dados, versões, comandos e empacotamento. As seções abaixo preservam a descrição histórica da baseline 0.3.0; políticas antigas de pausa pertencem ao laboratório legado e não são aplicadas pelo novo serviço.
+
+## Arquitetura histórica da baseline 0.3.0
 
 Referência: `app/` herdado do **JevWIN v0.3.0**, em 06/10/2026. Esta documentação usa Jeve Trader como nome de projeto; os identificadores JevWIN continuam preservados. Não foi feita migração de dados, empacotamento ou nomes internos nesta organização.
 

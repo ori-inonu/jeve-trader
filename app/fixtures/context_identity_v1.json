@@ -1,0 +1,32 @@
+{
+  "entry_rule_version": "manual-v1",
+  "entry_ticks": "20000",
+  "evidence_refs": [
+    {
+      "evidence_id": "e1",
+      "payload_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "revision": "1"
+    },
+    {
+      "evidence_id": "e2",
+      "payload_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "revision": "1"
+    }
+  ],
+  "exit_rule_version": "stop-target-horizon-v1",
+  "family": "continuation",
+  "generator_version": "geometry-v1",
+  "horizon_ms": "60000",
+  "hypothesis_id": "buy-continuation",
+  "hypothesis_version": "continuation-v2",
+  "instrument_contract": "WIN-fixture",
+  "literal_premise": "Recent aggressive buying is accepted at higher prices.",
+  "market_session_id": "fixture-session-1",
+  "observation_end": "30000",
+  "observation_start": "0",
+  "schema_version": "causal-identity-v1",
+  "side": "buy",
+  "stop_ticks": "19980",
+  "target_ticks": "20040",
+  "tick_points": "5"
+}

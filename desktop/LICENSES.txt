@@ -1,0 +1,13 @@
+Jeve Trader desktop dependencies (see locked versions in Cargo.lock/package-lock.json):
+Tauri: MIT OR Apache-2.0 — https://github.com/tauri-apps/tauri
+React, TypeScript, Vite, Tailwind CSS, Lucide: MIT (upstream licenses distributed in their source packages).
+Apache ECharts: Apache-2.0 — https://github.com/apache/echarts/blob/master/LICENSE
+Python: PSF license — https://docs.python.org/3/license.html
+PyInstaller bootloader exception permits redistribution of bundled applications — https://pyinstaller.org/en/stable/license.html
+comtypes: MIT — https://github.com/enthought/comtypes
+tzdata: Apache-2.0; timezone data public domain — https://github.com/python/tzdata
+This inventory is a development distribution notice, not a commercial licensing audit.
+Profit Pro, ProfitDLL and market data are not bundled and require their respective authorized access.
+Local OCR: Tesseract 5.5.3 and eng tessdata_fast, with statically built dependencies.
+The engine embeds ocr_runtime/licenses, its pinned build sources, package inventory and hashes.
+Tesseract/tessdata: Apache-2.0; other dependency terms appear in their included copyright notices.

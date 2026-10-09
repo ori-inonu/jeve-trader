@@ -1,0 +1,162 @@
+{
+  "version": "0.5.3",
+  "recorded_at_utc": "2026-10-08T20:11:55.720137+00:00",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.14.7",
+  "source_commit": "c571d825233196625e658d5df6059a6efbf49856",
+  "source_branch": "codex/windows-updates-and-live-roadmap",
+  "baseline_commit": "7ab8e6ccfca4fce6e9ffdbf68bfc691bd602110f",
+  "candidate_manifest_sha256": "32606c8c3cc8f1074d04df298d50c3b1177f461363d6c59252571a3bd3982529",
+  "independent_reviews": [
+    {
+      "file": "spec-review.md",
+      "sha256": "9a3ae57cc28be0c70c14638ed8b8c6ef9431120d3961b8d6bd46edf5b3a26fb4",
+      "isolated": true,
+      "candidate_hashes_matched": 22
+    },
+    {
+      "file": "standards-review.md",
+      "sha256": "a635f1e525083715184877131041619cd5b918d159687d0959ce28c7b0b2386a",
+      "isolated": true,
+      "candidate_hashes_matched": 22
+    }
+  ],
+  "verification": {
+    "python_tests": 248,
+    "frontend_tests": 13,
+    "desktop_check": "PASS",
+    "windows_build": "PASS",
+    "paid_jev_calls": 0,
+    "orders_enabled": false
+  },
+  "distribution": [
+    {
+      "name": "JevWIN_0.5.3_setup.exe",
+      "bytes": 19274087,
+      "sha256": "5f5e31c3449855f9a095c2e229d0567d7a4232221b1d055e156b3befe4b280e5"
+    },
+    {
+      "name": "JevWIN_0.5.3_portable.zip",
+      "bytes": 21075618,
+      "sha256": "3ffc9540123e3afaa80a78ce9f66c15a04451cf35bc519e0bddd708f4888f727"
+    },
+    {
+      "name": "SHA256SUMS-0.5.3.txt",
+      "bytes": 183,
+      "sha256": "c9038064594151e74612ac377b839ea90c9f09c6e6d638068686b7926a26560d"
+    }
+  ],
+  "portable_payload": {
+    "status": "PASS",
+    "version": "0.5.3",
+    "files_verified": 522,
+    "manifest_sha256": "f2cd8475f1e46c7eb9e2c1fbb7c247f5bac032ba1a38b648c36f886ea4b7c612"
+  },
+  "installed_payload": {
+    "status": "PASS",
+    "version": "0.5.3",
+    "files_verified": 522,
+    "manifest_sha256": "f2cd8475f1e46c7eb9e2c1fbb7c247f5bac032ba1a38b648c36f886ea4b7c612"
+  },
+  "installed_smoke": {
+    "status": "PASS",
+    "packaged_engine": true,
+    "diagnostic": {
+      "status": "PASS",
+      "platform": "Windows-11-10.0.26300-SP0",
+      "python": "3.14.7",
+      "schema_version": 2,
+      "experimental": true,
+      "alternatives": 16,
+      "orders_enabled": false,
+      "financial_probability": null,
+      "code_sha256": "8dbba61732fff0e400d8d9c111b55135946a2f24c27d3c3612fa42eeeed664af",
+      "ocr_runtime": {
+        "available": true,
+        "engine": "tesseract",
+        "version": "5.5.3",
+        "error": null
+      },
+      "ocr_diagnostic": {
+        "status": "PASS",
+        "engine": "tesseract",
+        "version": "5.5.3",
+        "input": "generated_known_text",
+        "real_profit_tested": false,
+        "continuity_verified": false
+      }
+    },
+    "jev_enabled": false,
+    "api_calls": 0,
+    "ocr_enabled": false,
+    "ocr_runtime_available": true,
+    "orders_enabled": false,
+    "source_mode": "idle",
+    "temperature": null,
+    "isolated_data": true
+  },
+  "upgrade": {
+    "status": "PASS",
+    "previous_version": "0.5.2",
+    "installed_version": "0.5.3",
+    "user_files_unchanged": 2,
+    "payload_verified": [
+      {
+        "name": "JevWIN.exe",
+        "sha256": "044C8C479AFE1FB99076D2A70D4B22FA84102AA7BBAC4D29363709B7CA4AE787"
+      },
+      {
+        "name": "jeve-engine.exe",
+        "sha256": "3539ADB3DAC09FAE518887C2B704AAE306E14928429943D1882FDA8FD51BEE3E"
+      },
+      {
+        "name": "package-manifest.json",
+        "sha256": "F2CD8475F1E46C7EB9E2C1FBB7C247F5BAC032BA1A38B648C36F886EA4B7C612"
+      }
+    ],
+    "desktop_shortcut_verified": true,
+    "installer_exit_code": 0,
+    "backup_local_only": true,
+    "orders_enabled": false
+  },
+  "native_startup": {
+    "status": "PASS",
+    "version": "0.5.3",
+    "native_window_observed": true,
+    "owned_sidecar_observed": true,
+    "isolated_database_observed": true,
+    "root_exit_cleans_sidecar": true,
+    "native_ui_interactions_verified": false,
+    "real_profit_tested": false,
+    "paid_api_calls": 0
+  },
+  "installer_copied_to_downloads": true,
+  "publication": {
+    "status": "PENDING_HUMAN_PUBLIC_DESTINATION_CONFIRMATION",
+    "repository": "ori-inonu/jeve-trader",
+    "repository_private": false,
+    "push_permission": true,
+    "observed_at_utc": "2026-10-08T19:23:47.176879+00:00",
+    "publisher_error": "ValueError: Expected authorized private repository",
+    "release_created_or_uploaded_by_attempt": false,
+    "updater_0_5_3_release_verified": false
+  },
+  "visual_proof": {
+    "file": ".artifacts/flow-visual-research-20261008/mesa-demo-reviewed.png",
+    "sha256": "bdc24d4e86af35e355f2eaacf289ff0c6952f415e47cb02f8e927f4ab86491ff",
+    "source": "explicit_synthetic_demo",
+    "real_profit_tested": false,
+    "development_renderer_p95_ms": 234.1,
+    "development_renderer_samples": 3,
+    "real_pilot_or_performance_gain_certified": false
+  },
+  "source_acceptance": "PENDING_REAL_REVIEW",
+  "frozen_acceptance_unchanged": true,
+  "open_criteria": [
+    "FW-06",
+    "FW-11",
+    "FW-12"
+  ],
+  "audit": "Bounded flow-path/depth increment installed. Real Profit OCR, 30-minute Windows capture/continuity/p95 and annotated JEV inference comparison remain open; no learning, profitability or full-tape claim.",
+  "next_eligible_step": "Observe actual authorized WIN workbook/ranges/fields and selected Profit window, then execute the installed real capture pilot under the unchanged frozen criteria."
+}
