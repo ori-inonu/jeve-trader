@@ -49,6 +49,8 @@ export interface MultimarketProjection {
 
 type AgeAnchor = { identity: string; baseAgeMs: number; atMs: number };
 const CONTEXT_VALIDITY_MS = 2_000;
+const MARKET_FRESHNESS_LIMITS_MS = { quote: 5_000, trades: 30_000, book: 2_000 } as const;
+const ACCOUNT_FRESHNESS_LIMIT_MS = 60_000;
 const DECIMAL = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/;
 const EVALUATION_IDENTITY_FIELDS = [
   'workspace_id', 'instrument_id', 'source_id', 'epoch', 'metadata_version',
@@ -382,20 +384,6 @@ export class MultimarketProjector {
 
     let projectedQuote: (UnknownRecord & { age_ms: number }) | null = null;
     let quoteWarning: string | null = null;
-    if (isRecord(market.quote)) {
-      const quote = market.quote;
-      if (![quote.bid, quote.ask, quote.bid_quantity, quote.ask_quantity].every(isDecimal) || (quote.market_ts_ms !== null && !isFiniteNumber(quote.market_ts_ms)) || !isFiniteNumber(quote.received_at_ms) || !isAge(quote.age_ms)) {
-        quoteWarning = 'Cotação removida: campos ou clocks incompatíveis.';
-        this.quoteAnchor = null;
-      } else {
-        const age = ageFromAnchor(this.quoteAnchor, quoteIdentity(raw, quote), quote.age_ms, nowMonotonicMs);
-        this.quoteAnchor = age.anchor;
-        projectedQuote = { ...quote, age_ms: age.age ?? quote.age_ms };
-      }
-    } else {
-      this.quoteAnchor = null;
-    }
-
     const projectedHealth: UnknownRecord = {};
     const domainHealth = market.health as UnknownRecord;
     for (const domain of ['quote', 'trades', 'book'] as const) {
@@ -403,18 +391,49 @@ export class MultimarketProjector {
       const age = ageFromAnchor(this.healthAnchors.get(domain) ?? null, healthIdentity(domain, selectionKey, raw, rawHealth, market), rawHealth.age_ms, nowMonotonicMs);
       if (age.anchor) this.healthAnchors.set(domain, age.anchor);
       else this.healthAnchors.delete(domain);
-      projectedHealth[domain] = { ...rawHealth, age_ms: age.age };
+      let status = rawHealth.status;
+      let reason = rawHealth.reason;
+      if (rawHealth.status !== 'stale' && age.age !== null && age.age > MARKET_FRESHNESS_LIMITS_MS[domain]) {
+        status = 'stale';
+        reason = `${domain}_stale`;
+      } else if (rawHealth.status === 'live' && age.age === null) {
+        status = 'stale';
+        reason = `${domain}_freshness_unknown`;
+      }
+      projectedHealth[domain] = { ...rawHealth, status, reason, age_ms: age.age };
+    }
+
+    if (isRecord(market.quote)) {
+      const quote = market.quote;
+      const health = projectedHealth.quote as UnknownRecord;
+      if (![quote.bid, quote.ask, quote.bid_quantity, quote.ask_quantity].every(isDecimal) || (quote.market_ts_ms !== null && !isFiniteNumber(quote.market_ts_ms)) || !isFiniteNumber(quote.received_at_ms) || !isAge(quote.age_ms)) {
+        quoteWarning = 'Cotação removida: campos ou clocks incompatíveis.';
+        this.quoteAnchor = null;
+      } else {
+        const age = ageFromAnchor(this.quoteAnchor, quoteIdentity(raw, quote), quote.age_ms, nowMonotonicMs);
+        this.quoteAnchor = age.anchor;
+        const projectedAge = age.age === null ? null : Math.max(age.age, isAge(health.age_ms) ? health.age_ms : 0);
+        if (health.status === 'live' && projectedAge !== null && projectedAge <= MARKET_FRESHNESS_LIMITS_MS.quote) {
+          projectedQuote = { ...quote, age_ms: projectedAge };
+        }
+      }
+    } else {
+      this.quoteAnchor = null;
+      if (projectedHealth.quote && (projectedHealth.quote as UnknownRecord).status === 'live') {
+        const health = projectedHealth.quote as UnknownRecord;
+        projectedHealth.quote = { ...health, status: 'stale', reason: 'quote_missing' };
+      }
     }
 
     const currentTradeIdentities = new Set<string>();
     const recentTrades = market.recent_trades as unknown[];
-    const projectedTrades = recentTrades.map((item: unknown) => {
+    const projectedTrades = recentTrades.flatMap((item: unknown) => {
       if (!isRecord(item) || !isAge(item.age_ms)) return item;
       const identity = tradeIdentity(selectionKey, item);
       currentTradeIdentities.add(identity);
       const age = ageFromAnchor(this.tradeAnchors.get(identity) ?? null, identity, item.age_ms, nowMonotonicMs);
       if (age.anchor) this.tradeAnchors.set(identity, age.anchor);
-      return { ...item, age_ms: age.age ?? item.age_ms };
+      return age.age !== null && age.age <= MARKET_FRESHNESS_LIMITS_MS.trades ? [{ ...item, age_ms: age.age }] : [];
     });
     for (const identity of this.tradeAnchors.keys()) {
       if (!currentTradeIdentities.has(identity)) this.tradeAnchors.delete(identity);
@@ -429,6 +448,21 @@ export class MultimarketProjector {
     } else {
       this.accountAnchor = null;
       if (rawAccount) projectedAccount = { ...rawAccount, age_ms: null };
+    }
+    if (projectedAccount) {
+      const age = projectedAccount.age_ms;
+      const unknownReconciledAge = projectedAccount.status === 'reconciled' && !isAge(age);
+      const expired = isAge(age) && age > ACCOUNT_FRESHNESS_LIMIT_MS;
+      if (projectedAccount.status !== 'stale' && (unknownReconciledAge || expired)) {
+        projectedAccount = {
+          ...projectedAccount,
+          status: 'stale',
+          reason: unknownReconciledAge ? 'account_freshness_unknown' : 'account_snapshot_expired',
+        };
+      }
+      if (projectedAccount.status === 'stale') {
+        projectedAccount = { ...projectedAccount, balances: {}, positions: {} };
+      }
     }
 
     const rawContext = isRecord(raw.context) ? raw.context : null;
@@ -460,9 +494,38 @@ export class MultimarketProjector {
 
     const decision = raw.decision as UnknownRecord;
     const warnings = warningMessages(market.warnings);
+    for (const domain of ['quote', 'trades', 'book'] as const) {
+      const health = projectedHealth[domain] as UnknownRecord;
+      if (health.status === 'stale' && isString(health.reason) && !warnings.includes(health.reason)) warnings.push(health.reason);
+    }
     if (quoteWarning) warnings.unshift(quoteWarning);
-    const projectedMarket = { ...market, quote: projectedQuote, recent_trades: projectedTrades, health: projectedHealth, warnings };
-    const reason = decision.action === 'wait' ? safeText(decision.reason) : 'A interface mantém AGUARDAR; ordens não fazem parte deste piloto.';
+    const tradeHealth = projectedHealth.trades as UnknownRecord;
+    const bookHealth = projectedHealth.book as UnknownRecord;
+    const features = isRecord(market.features) ? { ...market.features } : market.features;
+    const tradesAvailable = tradeHealth.status === 'live';
+    const projectedFeatures = isRecord(features) ? {
+      ...features,
+      ...(tradesAvailable ? {} : { trade_count: 0, buy_quantity: '0', sell_quantity: '0', delta_quantity: '0', event_range: null }),
+      ...(!projectedQuote ? { spread: null } : {}),
+    } : features;
+    const rawBook = isRecord(market.book) ? market.book : isRecord(market.book_state) ? market.book_state : null;
+    const projectedBook = rawBook && bookHealth.status === 'live' && isAge(bookHealth.age_ms)
+      ? { ...rawBook, age_ms: bookHealth.age_ms }
+      : null;
+    const projectedMarket = {
+      ...market,
+      quote: projectedQuote,
+      recent_trades: tradesAvailable ? projectedTrades : [],
+      book: projectedBook,
+      ...(Object.prototype.hasOwnProperty.call(market, 'book_state') ? { book_state: projectedBook } : {}),
+      health: projectedHealth,
+      features: projectedFeatures,
+      warnings,
+    };
+    const quoteHealth = projectedHealth.quote as UnknownRecord;
+    const reason = decision.action === 'wait'
+      ? quoteHealth.status === 'stale' && isString(quoteHealth.reason) ? quoteHealth.reason : safeText(decision.reason)
+      : 'A interface mantém AGUARDAR; ordens não fazem parte deste piloto.';
     const projectedDecision = { ...decision, action: 'wait' as const, reason, profit_probability: null, quantity: '0' as const, net_profit: null };
     const selected: ProjectedSelected = {
       ...raw,

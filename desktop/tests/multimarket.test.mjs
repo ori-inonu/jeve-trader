@@ -284,3 +284,141 @@ test('same symbol at different venues has a distinct workspace identity', () => 
 
   assert.notEqual(first, second);
 });
+
+test('quote expiry clears the actionable quote and marks domain health stale after the 5 second TTL', () => {
+  const projector = createMultimarketProjector();
+  const makeFreshQuote = () => {
+    const input = snapshot();
+    input.selected.market.quote.event_id = 'quote-1';
+    return input;
+  };
+
+  projector.project(makeFreshQuote(), 1_000);
+  const boundary = projector.project(makeFreshQuote(), 6_000);
+  const expired = projector.project(makeFreshQuote(), 6_001);
+
+  assert.equal(boundary.selected.market.quote.age_ms, 5_000);
+  assert.equal(boundary.selected.market.health.quote.status, 'live');
+  assert.equal(expired.selected.market.quote, null);
+  assert.equal(expired.selected.market.health.quote.status, 'stale');
+  assert.equal(expired.selected.market.health.quote.reason, 'quote_stale');
+  assert.equal(expired.selected.market.health.quote.age_ms, 5_001);
+  assert.equal(expired.selected.market.features.spread, null);
+  assert.ok(expired.selected.market.warnings.includes('quote_stale'));
+  assert.equal(expired.selected.decision.reason, 'quote_stale');
+});
+
+test('trade expiry removes stale rows and aggregates while quote freshness remains independent', () => {
+  const projector = createMultimarketProjector();
+  const makeSnapshot = (quoteId) => {
+    const input = snapshot();
+    input.selected.market.quote.event_id = quoteId;
+    input.selected.market.quote.received_at_ms += Number(quoteId.slice(-1));
+    input.selected.market.recent_trades = [{ event_id: 'trade-1', price: '60000.05', quantity: '0.2', aggressor: 'buy', market_ts_ms: 10000, received_at_ms: 10010, age_ms: 0 }];
+    input.selected.market.health.trades.age_ms = 0;
+    input.selected.market.features = { ...input.selected.market.features, trade_count: 1, buy_quantity: '0.2', delta_quantity: '0.2', event_range: ['trade-1', 'trade-1'] };
+    return input;
+  };
+
+  projector.project(makeSnapshot('quote-1'), 1_000);
+  const boundary = projector.project(makeSnapshot('quote-2'), 31_000);
+  const expired = projector.project(makeSnapshot('quote-2'), 31_001);
+
+  assert.equal(boundary.selected.market.quote.age_ms, 0);
+  assert.equal(boundary.selected.market.health.trades.age_ms, 30_000);
+  assert.equal(boundary.selected.market.health.trades.status, 'live');
+  assert.equal(expired.selected.market.quote.age_ms, 1);
+  assert.equal(expired.selected.market.health.trades.status, 'stale');
+  assert.equal(expired.selected.market.health.trades.reason, 'trades_stale');
+  assert.equal(expired.selected.market.health.trades.age_ms, 30_001);
+  assert.deepEqual(expired.selected.market.recent_trades, []);
+  assert.equal(expired.selected.market.features.trade_count, 0);
+  assert.equal(expired.selected.market.features.buy_quantity, '0');
+  assert.equal(expired.selected.market.features.sell_quantity, '0');
+  assert.equal(expired.selected.market.features.delta_quantity, '0');
+  assert.equal(expired.selected.market.features.event_range, null);
+  assert.ok(expired.selected.market.warnings.includes('trades_stale'));
+});
+
+test('book expiry removes a stale book and reports age without renewing its source clock', () => {
+  const projector = createMultimarketProjector();
+  const makeSnapshot = () => {
+    const input = snapshot();
+    input.selected.source = { ...input.selected.source, book: true, book_mode: 'l2' };
+    input.selected.market.book = { event_id: 'book-1', received_at_ms: 10010, age_ms: 0, bids: [], asks: [] };
+    input.selected.market.health.book = { status: 'live', reason: null, age_ms: 0 };
+    return input;
+  };
+
+  projector.project(makeSnapshot(), 1_000);
+  const boundary = projector.project(makeSnapshot(), 3_000);
+  const expired = projector.project(makeSnapshot(), 3_001);
+
+  assert.equal(boundary.selected.market.book.age_ms, 2_000);
+  assert.equal(boundary.selected.market.health.book.status, 'live');
+  assert.equal(expired.selected.market.book, null);
+  assert.equal(expired.selected.market.health.book.status, 'stale');
+  assert.equal(expired.selected.market.health.book.reason, 'book_stale');
+  assert.equal(expired.selected.market.health.book.age_ms, 2_001);
+  assert.ok(expired.selected.market.warnings.includes('book_stale'));
+});
+
+test('manual account freshness expires independently and unknown age never remains reconciled', () => {
+  const projector = createMultimarketProjector();
+  const first = snapshot();
+  first.selected.account = { account_id: 'manual-ledger', revision: 2, asof_ms: 9000, age_ms: 0, status: 'reconciled', reason: null, balances: { USDT: '5.00' }, positions: {} };
+  projector.project(first, 1_000);
+
+  const later = snapshot();
+  later.selected.market.quote.event_id = 'quote-fresh-after-account-age';
+  later.selected.market.quote.received_at_ms = 71_010;
+  later.selected.account = { ...first.selected.account, age_ms: 0 };
+  const boundary = projector.project(later, 61_000);
+  const expired = projector.project(later, 61_001);
+
+  assert.equal(boundary.selected.account.status, 'reconciled');
+  assert.equal(boundary.selected.account.age_ms, 60_000);
+  assert.equal(expired.selected.market.quote.age_ms, 1);
+  assert.equal(expired.selected.account.status, 'stale');
+  assert.equal(expired.selected.account.reason, 'account_snapshot_expired');
+  assert.equal(expired.selected.account.age_ms, 60_001);
+  assert.deepEqual(expired.selected.account.balances, {});
+  assert.deepEqual(expired.selected.account.positions, {});
+
+  const unknown = snapshot();
+  unknown.selected.account = { ...first.selected.account, age_ms: null };
+  const unknownProjection = createMultimarketProjector().project(unknown, 1_000);
+  assert.equal(unknownProjection.selected.account.status, 'stale');
+  assert.equal(unknownProjection.selected.account.reason, 'account_freshness_unknown');
+  assert.equal(unknownProjection.selected.account.age_ms, null);
+  assert.deepEqual(unknownProjection.selected.account.balances, {});
+  assert.deepEqual(unknownProjection.selected.account.positions, {});
+});
+
+test('an unchanged backend snapshot expires quote, trades, book, and account on the local monotonic clock', () => {
+  const projector = createMultimarketProjector();
+  const unchanged = snapshot();
+  unchanged.selected.market.quote.event_id = 'last-quote';
+  unchanged.selected.market.recent_trades = [{ event_id: 'last-trade', price: '60000.05', quantity: '0.2', aggressor: 'buy', market_ts_ms: 10000, received_at_ms: 10010, age_ms: 0 }];
+  unchanged.selected.market.health.trades.age_ms = 0;
+  unchanged.selected.market.features = { ...unchanged.selected.market.features, trade_count: 1, buy_quantity: '0.2', delta_quantity: '0.2', event_range: ['last-trade', 'last-trade'] };
+  unchanged.selected.source = { ...unchanged.selected.source, book: true, book_mode: 'l2' };
+  unchanged.selected.market.book = { event_id: 'last-book', received_at_ms: 10010, age_ms: 0, bids: [], asks: [] };
+  unchanged.selected.market.health.book = { status: 'live', reason: null, age_ms: 0 };
+  unchanged.selected.account = { account_id: 'manual-ledger', revision: 2, asof_ms: 9000, age_ms: 0, status: 'reconciled', reason: null, balances: { USDT: '5.00' }, positions: { WIN: '1' } };
+
+  projector.project(unchanged, 1_000);
+  const afterBackendStops = projector.project(unchanged, 62_001);
+
+  assert.equal(afterBackendStops.selected.market.health.quote.status, 'stale');
+  assert.equal(afterBackendStops.selected.market.health.quote.age_ms, 61_001);
+  assert.equal(afterBackendStops.selected.market.quote, null);
+  assert.equal(afterBackendStops.selected.market.health.trades.status, 'stale');
+  assert.deepEqual(afterBackendStops.selected.market.recent_trades, []);
+  assert.equal(afterBackendStops.selected.market.features.trade_count, 0);
+  assert.equal(afterBackendStops.selected.market.health.book.status, 'stale');
+  assert.equal(afterBackendStops.selected.market.book, null);
+  assert.equal(afterBackendStops.selected.account.status, 'stale');
+  assert.deepEqual(afterBackendStops.selected.account.balances, {});
+  assert.deepEqual(afterBackendStops.selected.account.positions, {});
+});
