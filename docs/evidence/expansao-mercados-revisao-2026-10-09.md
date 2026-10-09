@@ -38,4 +38,3 @@ A distinção epistemológica fica consistente: há documentação publicada; ho
 ## Limites residuais
 
 O PASS é exclusivamente documental. Custos faturados, contratos/licenças aplicáveis, permissões de conta, residência do egress, disponibilidade geográfica e condições atuais de produtos derivativos não foram certificados. Nenhum feed de mercado foi testado; não há prova de completude, latência, liquidez, vantagem estatística, risco de ruína ou chance de atingir R$4.000 antes de sete dias. A baseline Git e ausência de diff são declarações da verificação no worktree original, não reproduzidas nesta cópia sem histórico Git. Nenhuma aprovação de integração, gasto, conta, ordem, publicação ou operação decorre deste parecer.
-
