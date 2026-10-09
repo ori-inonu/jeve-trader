@@ -85,7 +85,7 @@ def _account_blocker(account: Any, currency: str, *, require_currency_balance: b
     if isinstance(revision, bool) or not isinstance(revision, int) or revision < 0:
         return "account_revision_unavailable"
     age = account.get("age_ms")
-    if age is not None and (isinstance(age, bool) or not isinstance(age, int) or age < 0 or age > 60_000):
+    if isinstance(age, bool) or not isinstance(age, int) or age < 0 or age > 60_000:
         return "account_not_reconciled"
     balances = account.get("balances")
     positions = account.get("positions")

@@ -37,6 +37,8 @@ from .accounts import AccountLedger
 from .scheduler import ContextScheduler, build_questions
 from .journal import Journal
 
+_MAX_CONTEXT_WORKERS = 2
+
 
 def wire(value):
     if hasattr(value, 'to_wire'):
@@ -67,7 +69,8 @@ class MultimarketService:
         self.discovery_generation = {}
         self.discovery_connect = {}
         self.discovery_results = queue.Queue(maxsize=8)
-        self.jev_results = queue.Queue(maxsize=8)
+        self.jev_results = queue.Queue(maxsize=_MAX_CONTEXT_WORKERS)
+        self._context_workers = {}
         self.recording = False
         self.recording_workspace = None
         self.recording_reason = 'Gravação desligada; licença de retenção da fonte não confirmada'
@@ -346,6 +349,13 @@ class MultimarketService:
                 self._clear_context()
                 if self._inflight:
                     self.scheduler.set_enabled(False)
+        scheduler_state = self.scheduler.snapshot()
+        if self._inflight and not scheduler_state['in_flight']:
+            # The scheduler owns the timeout. Clear only the matching local
+            # identity so a worker that eventually returns cannot strand the
+            # coordinator or overwrite a newer request.
+            self._inflight = None
+            self._clear_context()
         while not self.jev_results.empty():
             value = self.jev_results.get_nowait()
             identity = self._identity(selected) if selected else None
@@ -362,14 +372,18 @@ class MultimarketService:
                     status=result['status'], accepted_current=result.get('accepted', False),
                     reason=result.get('reason'), answers=result.get('answers'), usage=result.get('usage'),
                     latency_ms=value.get('latency_ms'), financial_probability=None))
-            self._inflight = None
-            self.metrics['jev_latency_ms'] = value.get('latency_ms')
-            if result.get('accepted'):
-                self.context = dict(status='current', model='jev-1.13.0', questions_version='mm-context-v1',
-                    origin_monotonic_ns=result['origin_monotonic_ns'], answers=result['answers'],
-                    identity=wire(result['identity']), financial_probability=None)
-            else:
-                self.context = None
+            if self._inflight == value['call_id']:
+                self._inflight = None
+                self.metrics['jev_latency_ms'] = value.get('latency_ms')
+                if result.get('accepted'):
+                    self.context = dict(status='current', model='jev-1.13.0', questions_version='mm-context-v1',
+                        origin_monotonic_ns=result['origin_monotonic_ns'], answers=result['answers'],
+                        identity=wire(result['identity']), financial_probability=None)
+                else:
+                    self.context = None
+        for call_id, worker in tuple(self._context_workers.items()):
+            if not worker.is_alive():
+                self._context_workers.pop(call_id, None)
         if not selected or not self.scheduler.snapshot()['enabled']:
             return
         state = self.states[selected].snapshot()
@@ -377,6 +391,11 @@ class MultimarketService:
             self._clear_context()
             return
         if self._inflight:
+            return
+        # A timed-out daemon may still be blocked in the provider. Permit one
+        # replacement, then stop dispatching until a slot exits; retries can
+        # therefore never create an unbounded number of hung workers.
+        if sum(worker.is_alive() for worker in self._context_workers.values()) >= _MAX_CONTEXT_WORKERS:
             return
         identity = self._identity(selected)
         feature_key = hashlib.sha256(json.dumps(state['features'], sort_keys=True, allow_nan=False).encode()).hexdigest()
@@ -416,7 +435,9 @@ class MultimarketService:
                     self.jev_results.put_nowait(value)
                 except queue.Full:
                     pass
-        threading.Thread(target=evaluate, daemon=True, name='multimarket-context').start()
+        worker = threading.Thread(target=evaluate, daemon=True, name='multimarket-context')
+        self._context_workers[request['call_id']] = worker
+        worker.start()
         self.metrics['jev_latency_ms'] = None
 
     def tick(self):

@@ -344,6 +344,8 @@
 .mm-health-state small { color: #78869c; font-size: 8px; }
 .mm-source-notes { display: flex; flex-wrap: wrap; gap: 7px 15px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #202c3e; }
 .mm-source-notes span { display: flex; gap: 5px; color: #a5b1c5; font-size: 9px; }
+.mm-source-notes > span { min-width: 0; max-width: 100%; }
+.mm-source-notes code { min-width: 0; overflow-wrap: anywhere; color: inherit; font: inherit; }
 .mm-source-notes b { color: #75849b; font-weight: 450; }
 
 .mm-unknown { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid #2b3749; border-radius: 7px; background: #0e1621; }

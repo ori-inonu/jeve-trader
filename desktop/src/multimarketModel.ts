@@ -68,6 +68,25 @@ const safeText = (value: unknown, fallback = 'Motivo não informado'): string =>
   typeof value === 'string' && value.trim() ? value.slice(0, 240) : fallback;
 const CONTEXT_CHOICES = ['wait', 'observe_buy', 'observe_sell'] as const;
 
+export function multimarketCommandMethod(method: string): string {
+  return method.startsWith('multimarket.') ? method : `multimarket.${method}`;
+}
+
+export function gatePresentation(value: unknown): { status: unknown; reason: string | null } {
+  if (!isRecord(value)) return { status: value, reason: null };
+  return {
+    status: value.status,
+    reason: isString(value.reason) ? value.reason.slice(0, 240) : null,
+  };
+}
+
+export function warningMessages(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(item => isRecord(item)
+    ? safeText(item.reason, 'Aviso de mercado')
+    : safeText(item, 'Aviso de mercado'));
+}
+
 function validEvaluationIdentity(value: unknown): value is UnknownRecord {
   if (!isRecord(value) || !EVALUATION_IDENTITY_FIELDS.every(field => Object.prototype.hasOwnProperty.call(value, field))) return false;
   if (!['workspace_id', 'instrument_id', 'source_id', 'metadata_version', 'feature_version', 'question_version'].every(field => isString(value[field]))) return false;
@@ -440,7 +459,7 @@ export class MultimarketProjector {
     }
 
     const decision = raw.decision as UnknownRecord;
-    const warnings = Array.isArray(market.warnings) ? market.warnings.map(value => safeText(value, 'Aviso de mercado')) : [];
+    const warnings = warningMessages(market.warnings);
     if (quoteWarning) warnings.unshift(quoteWarning);
     const projectedMarket = { ...market, quote: projectedQuote, recent_trades: projectedTrades, health: projectedHealth, warnings };
     const reason = decision.action === 'wait' ? safeText(decision.reason) : 'A interface mantém AGUARDAR; ordens não fazem parte deste piloto.';

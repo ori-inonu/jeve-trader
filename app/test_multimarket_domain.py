@@ -221,6 +221,21 @@ class MarketStateTests(unittest.TestCase):
         self.assertEqual(snapshot["features"]["event_range"], ["t-1", "t-1"])
         self.assertFalse(snapshot["full_tape"])
 
+    def test_recent_trade_buffer_matches_the_frozen_200_trade_bound(self):
+        for index in range(201):
+            event = market_event(
+                kind="trade",
+                event_id=f"t-{index}",
+                sequence=index + 1,
+                payload={"price": "100.5", "quantity": "0.2", "aggressor": "buy"},
+            )
+            self.assertTrue(self.state.ingest(event).applied)
+
+        snapshot = self.state.snapshot()
+        self.assertEqual(len(snapshot["recent_trades"]), 200)
+        self.assertEqual(snapshot["features"]["trade_count"], 200)
+        self.assertEqual(snapshot["features"]["event_range"], ["t-1", "t-200"])
+
     def test_l1_capability_never_becomes_l2_book(self):
         caps = SourceCapabilities(**{**source().to_wire(), "book": True, "book_mode": "l1"})
         state = MarketState(instrument(), caps, clock=self.clock, workspace_id="w1", epoch=3)
@@ -449,6 +464,26 @@ class RiskTests(unittest.TestCase):
         self.assertEqual(len(stale_rows), 1)
         self.assertEqual(stale_rows[0]["reason"], "account_not_reconciled")
         self.assertIsNone(stale_rows[0]["net_profit"])
+
+    def test_unknown_or_invalid_account_age_fails_closed_even_with_approved_model(self):
+        account = self.ledger.view("paper-a")
+        invalid_ages = (None, True, -1, 60_001, "0")
+        for age in invalid_ages:
+            with self.subTest(age=age):
+                rows = self.evaluate(
+                    account={**account, "age_ms": age},
+                    quantities=[Decimal("0.1")],
+                    model_gate=self.model_gate(),
+                )
+                self.assertEqual(len(rows), 1)
+                self.assertEqual(rows[0]["reason"], "account_not_reconciled")
+                self.assertFalse(rows[0]["quantity_recommended"])
+
+        account_without_age = dict(account)
+        account_without_age.pop("age_ms", None)
+        rows = self.evaluate(account=account_without_age, quantities=[Decimal("0.1")], model_gate=self.model_gate())
+        self.assertEqual(rows[0]["reason"], "account_not_reconciled")
+        self.assertFalse(rows[0]["quantity_recommended"])
 
     def test_tick_step_currency_and_metadata_gates_fail_closed(self):
         changed = instrument(tick="0.1", step="0.01")

@@ -185,6 +185,104 @@ class MultimarketIntegrationTests(unittest.TestCase):
             finally:
                 service.close()
 
+    def test_context_timeouts_recover_with_bounded_workers_and_ignore_late_results(self):
+        with tempfile.TemporaryDirectory() as directory:
+            adapter, clock = Adapter(allowed=True), Clock()
+            service = MultimarketService(directory, clock=clock, adapters={'binance_public_spot':adapter})
+            started = [threading.Event() for _ in range(3)]
+            released = [threading.Event() for _ in range(3)]
+            call_lock = threading.Lock()
+            next_call = [0]
+            reservations, settlements = [], []
+
+            def executor(_state, _questions):
+                with call_lock:
+                    index = next_call[0]
+                    next_call[0] += 1
+                started[index].set()
+                released[index].wait(5)
+                return _valid_context_response()
+
+            def refresh_market(workspace_id, label):
+                for kind, payload in (
+                    ('quote', None),
+                    ('trade', {'price': '100', 'quantity': '1', 'aggressor': 'buy'}),
+                ):
+                    service._ingest(workspace_id, market_event(
+                        kind=kind,
+                        event_id=f'{kind}-{label}',
+                        epoch=1,
+                        workspace_id=workspace_id,
+                        market_ts_ms=None,
+                        received_monotonic_ns=clock.monotonic_ns(),
+                        payload=payload,
+                    ))
+
+            try:
+                workspace_id = connected(service, adapter)
+                service.configure_jev(
+                    executor,
+                    lambda call_id: reservations.append(call_id),
+                    lambda call_id, usage: settlements.append((call_id, usage)),
+                    lambda: (True, 1),
+                )
+                service.command('multimarket.jev.set_enabled', {'enabled':True})
+                service.tick()
+                self.assertTrue(started[0].wait(1))
+                first_call = service._inflight
+
+                clock.mono += 10_001_000_000
+                refresh_market(workspace_id, 'after-timeout-1')
+                service.tick()
+                self.assertTrue(started[1].wait(1), 'a timeout should release the scheduler for one fresh request')
+                second_call = service._inflight
+                self.assertNotEqual(first_call, second_call)
+
+                clock.mono += 10_001_000_000
+                refresh_market(workspace_id, 'after-timeout-2')
+                service.tick()
+                self.assertFalse(started[2].is_set(), 'two unresolved workers must apply bounded backpressure')
+                self.assertEqual(next_call[0], 2)
+                self.assertFalse(service.snapshot()['scheduler']['in_flight'])
+
+                released[0].set()
+                for _ in range(100):
+                    service.tick()
+                    if started[2].is_set():
+                        break
+                    threading.Event().wait(.005)
+                self.assertTrue(started[2].is_set(), 'a completed old worker should free one bounded slot')
+                third_call = service._inflight
+                self.assertNotIn(third_call, {first_call, second_call})
+                self.assertTrue(service.snapshot()['scheduler']['in_flight'])
+
+                released[1].set()
+                for _ in range(100):
+                    service.tick()
+                    if len(settlements) >= 2:
+                        break
+                    threading.Event().wait(.005)
+                self.assertIn((first_call, _valid_context_response()['usage']), settlements)
+                self.assertIn((second_call, _valid_context_response()['usage']), settlements)
+                self.assertEqual(service._inflight, third_call, 'late responses must not clear the current call identity')
+                self.assertTrue(service.snapshot()['scheduler']['in_flight'])
+
+                released[2].set()
+                for _ in range(100):
+                    service.tick()
+                    if service.snapshot()['selected']['context']:
+                        break
+                    threading.Event().wait(.005)
+                current = service.snapshot()['selected']
+                self.assertIsNotNone(current['context'])
+                self.assertEqual(current['context']['identity'], current['evaluation_identity'])
+                self.assertEqual(len(reservations), 3)
+                self.assertEqual(len(settlements), 3)
+            finally:
+                for event in released:
+                    event.set()
+                service.close()
+
     def test_sidecar_outer_versions_preserve_legacy_and_separate_inner_multimarket(self):
         with tempfile.TemporaryDirectory() as directory:
             requests = [dict(schema_version=version, id='mm-'+str(version), method='multimarket.snapshot', params={}) for version in (1,2)]

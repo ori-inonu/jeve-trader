@@ -9,7 +9,7 @@ from .contracts import EventEnvelope, InstrumentSpec, SourceCapabilities, System
 
 
 _SUPPORTED_DOMAINS = ("quote", "trades", "book")
-_MAX_RECENT_TRADES = 500
+_MAX_RECENT_TRADES = 200
 _FRESHNESS_LIMITS_MS = {"quote": 5_000, "trades": 30_000, "book": 2_000}
 
 

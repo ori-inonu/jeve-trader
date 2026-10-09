@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { contextAnswerRows, createMultimarketProjector, metricsExportPayload, schedulerErrorMessage, workspaceIdentity } from '../src/multimarketModel.ts';
+import { contextAnswerRows, createMultimarketProjector, gatePresentation, metricsExportPayload, multimarketCommandMethod, schedulerErrorMessage, warningMessages, workspaceIdentity } from '../src/multimarketModel.ts';
 
 const evaluationIdentity = () => ({
   workspace_id: 'spot-btc',
@@ -211,6 +211,39 @@ test('scheduler errors keep license, timeout, and unavailable blockers visible a
   assert.equal(schedulerErrorMessage({ code: null, reason: 'timeout' }), 'O JEV excedeu o tempo limite; não há resposta contextual válida.');
   assert.equal(schedulerErrorMessage({ code: '', message: 'license required' }), 'A licença/configuração do JEV bloqueia novas respostas.');
   assert.equal(schedulerErrorMessage(null), null);
+});
+
+test('gate objects preserve backend status and reason for cockpit presentation', () => {
+  assert.deepEqual(gatePresentation({ status: 'blocked', reason: 'entitlement_required' }), {
+    status: 'blocked', reason: 'entitlement_required',
+  });
+  assert.deepEqual(gatePresentation({ status: 'not_measured', reason: null }), {
+    status: 'not_measured', reason: null,
+  });
+  assert.deepEqual(gatePresentation('allowed'), { status: 'allowed', reason: null });
+});
+
+test('projected market warnings preserve reason strings from backend warning objects', () => {
+  assert.deepEqual(warningMessages([
+    { domain: 'quote', reason: 'quote_stale' },
+    { domain: 'trades', reason: 'trade_sequence_gap' },
+    'source_partial',
+    { domain: 'book', reason: '' },
+  ]), ['quote_stale', 'trade_sequence_gap', 'source_partial', 'Aviso de mercado']);
+});
+
+test('cockpit commands use the transport multimarket namespace', () => {
+  for (const action of ['jev.set_enabled', 'account.reconcile', 'costs.update', 'recording.set', 'replay', 'metrics']) {
+    assert.equal(multimarketCommandMethod(action), `multimarket.${action}`);
+  }
+  assert.equal(multimarketCommandMethod('multimarket.discover'), 'multimarket.discover');
+});
+
+test('invalid backend snapshots retain precise warning reasons after projection', () => {
+  const input = snapshot();
+  input.selected.market.warnings = [{ domain: 'quote', reason: 'quote_stale' }];
+  const projected = createMultimarketProjector().project(input, 1000);
+  assert.deepEqual(projected.selected.market.warnings, ['quote_stale']);
 });
 
 test('metrics export includes only approved counters and coarse gate states', () => {

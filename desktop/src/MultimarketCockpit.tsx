@@ -6,8 +6,11 @@ import {
 import {
   contextAnswerRows,
   createMultimarketProjector,
+  gatePresentation,
   metricsExportPayload,
+  multimarketCommandMethod,
   schedulerErrorMessage,
+  warningMessages,
   type MultimarketRun,
   type MultimarketSnapshot,
   type MultimarketWorkspace,
@@ -38,6 +41,7 @@ function statusLabel(value: unknown): string {
     connecting: 'conectando', live: 'ao vivo', retrying: 'reconectando', error: 'erro',
     stale: 'desatualizado', unavailable: 'indisponível', disabled: 'desabilitado',
     blocked: 'bloqueado', healthy: 'saudável', gap: 'lacuna', invalid: 'inválido',
+    not_measured: 'não medida', unmeasured: 'não medida',
     disconnected: 'desconectado', replay: 'replay', pending: 'pendente', unknown: 'desconhecido',
   };
   return labels[String(value)] ?? text(value, 'desconhecido');
@@ -86,8 +90,9 @@ function Stat({ label, value, note }: { label: string; value: string; note?: str
 }
 
 function Gate({ label, state, detail }: { label: string; state: unknown; detail: string }) {
-  const tone = statusTone(state);
-  return <div className="mm-gate-row"><span className={`mm-gate-dot mm-tone-${tone}`} aria-hidden="true"/><div><strong>{label}</strong><small>{detail}</small></div><b className={`mm-tone-text-${tone}`}>{statusLabel(state)}</b></div>;
+  const gate = gatePresentation(state);
+  const tone = statusTone(gate.status);
+  return <div className="mm-gate-row"><span className={`mm-gate-dot mm-tone-${tone}`} aria-hidden="true"/><div><strong>{label}</strong><small>{gate.reason ?? detail}</small></div><b className={`mm-tone-text-${tone}`}>{statusLabel(gate.status)}</b></div>;
 }
 
 export interface MultimarketCockpitProps {
@@ -134,21 +139,22 @@ export function MultimarketCockpit({ snapshot, run }: MultimarketCockpitProps) {
   const connectionState = selected?.status ?? selectedWorkspace?.status ?? 'disconnected';
   const currency = text(instrument?.quote_currency, text(costs?.currency, 'moeda da cotação não informada'));
   const tradeRows = Array.isArray(market?.recent_trades) ? market.recent_trades.slice(-8).reverse().map(record) : [];
-  const warnings = Array.isArray(market?.warnings) ? market.warnings.filter((item): item is string => typeof item === 'string') : [];
+  const warnings = warningMessages(market?.warnings);
   const selectedId = typeof selected?.workspace_id === 'string' ? selected.workspace_id : undefined;
 
   async function execute(method: string, params: UnknownRecord): Promise<MultimarketSnapshot | null> {
     if (pending) return null;
-    setPending(method);
+    const command = multimarketCommandMethod(method);
+    setPending(command);
     setCommandError(null);
     setCommandNotice(null);
     try {
-      const next = await run(method, params);
+      const next = await run(command, params);
       setLocalSnapshot(next);
-      setCommandNotice(`Comando enviado: ${method}`);
+      setCommandNotice(`Comando enviado: ${command}`);
       return next;
     } catch (error) {
-      setCommandError(error instanceof Error ? error.message : `Não foi possível executar ${method}.`);
+      setCommandError(error instanceof Error ? error.message : `Não foi possível executar ${command}.`);
       return null;
     } finally {
       setPending(null);
@@ -324,7 +330,7 @@ export function MultimarketCockpit({ snapshot, run }: MultimarketCockpitProps) {
             <article className="mm-card">
               <div className="mm-card-head"><div><span className="mm-eyebrow">SAÚDE POR DOMÍNIO</span><h3>Estado das evidências</h3></div><span className="mm-health-legend">Idade pela recepção local</span></div>
               {healthComplete ? <div className="mm-health-list"><HealthCard label="Cotação L1" domain={health?.quote}/><HealthCard label="Trades" domain={health?.trades}/><HealthCard label="Book" domain={health?.book}/></div> : <div className="mm-empty-data">Saúde por domínio indisponível.</div>}
-              <div className="mm-source-notes"><span><b>Venue</b>{text(instrument?.venue)}</span><span><b>Segmento</b>{text(instrument?.segment)}</span><span><b>Metadata</b>{text(instrument?.metadata_version)}</span><span><b>Epoch</b>{String(market?.epoch ?? '—')}</span></div>
+              <div className="mm-source-notes"><span><b>Venue</b>{text(instrument?.venue)}</span><span><b>Segmento</b>{text(instrument?.segment)}</span><span><b>Metadata</b><code>{text(instrument?.metadata_version)}</code></span><span><b>Epoch</b>{String(market?.epoch ?? '—')}</span></div>
             </article>
           </section>
 
