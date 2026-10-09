@@ -30,6 +30,14 @@ As duas revisões independentes de `907beb3` reprovaram o candidato: clocks eram
 
 O segundo ensaio público de 20 s nesse candidato recebeu 772 execuções e registrou duas ressincronizações, mas terminou com livro inválido e shutdown `stopping/stop_timeout_close_alive`. O [diagnóstico sanitizado 02](multimercado-smoke-publico-02-2026-10-09.json) preserva o resultado reprovado. A fonte instalada `websocket-client 1.9.2` mostra `close(timeout=3)`; o wrapper não fornecia timeout, enquanto o stop esperava 1,8 s. Fechamento e sincronização estão sendo reproduzidos pelo mesmo implementador. Não há nova certificação live.
 
+## Correções e terceiro ensaio
+
+Em `f761644a7f19dccf40dfa6ed277ba6fb117651b3`, o implementador demonstrou dois novos testes RED: wrapper esperava timeout 3 em vez de 0; delta `[2,3]` recebido durante REST com snapshot `S=2` causava uma segunda consulta indevida. Após correção, ambos passaram, sem alterar `U <= S <= u`. O wrapper real da dependência foi exercitado com socket falso e sem rede.
+
+Integração fixa `09e7b3090106cd1cabccef4327f541fca55f0354`: `python -E -s -B scripts/verify.py` passou 343 testes em 11,211 s e self-test em 0,503 s com sockets bloqueados. Terceiro ensaio público de 20 s recebeu 147 execuções, uma ressincronização e terminou com `websocket_transport_error`, livro inválido. Shutdown chegou a `off/stopped`, com todos os helpers encerrados. O [diagnóstico 03](multimercado-smoke-publico-03-2026-10-09.json) preserva a reprovação da coleta e a confirmação limitada do fechamento.
+
+A hipótese genérica de comprovar coleta saudável com esses ensaios curtos falhou em três candidatos distintos e não será repetida sem causa nova demonstrada. O erro de transporte requer diagnóstico separado; disponibilidade, livro sincronizado e operação sustentada continuam pendentes.
+
 ## Limites de conclusão
 
 Coleta real, duração prolongada, reconexão real, direitos de retenção, produto/jurisdição, custos atuais e avaliação financeira fora da amostra permanecem pendentes. AC-07 global não será marcado concluído a partir de fixtures. Nenhum preço ou payload real entra no repositório.
