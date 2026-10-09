@@ -36,6 +36,8 @@ EXPERIMENT_RESOURCES = ('desktop_service.py', 'app_core.py', 'app_store.py', 'ca
                         'jev_client.py', 'copilot.py', 'capital_planner.py', 'risk.py', 'risk_research.py',
                         'config.json', 'flow_rules.json', 'observer_questions.json')
 EXPERIMENT_RESOURCES += ('live_context.py', 'credential_vault.py', 'context_cycle.py', 'context_identity.py', 'profit_ocr.py', 'profit_capture.cs', 'capture_pilot.py')
+EXPERIMENT_RESOURCES += ('market_data_contract.py', 'public_crypto_feed.py', 'market_replay.py',
+                        'multimarket_context.py', 'multimarket_economics.py', 'multimarket_observer.py')
 
 
 def batch_from_wire(data):
