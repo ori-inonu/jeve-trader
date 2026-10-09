@@ -422,6 +422,8 @@ class _WebsocketClientTransport:
 class _Ingress:
     payload: dict
     size: int
+    receive_time_ms: int | None = None
+    receive_monotonic_ns: int | None = None
 
 
 class PublicCryptoFeed:
@@ -577,6 +579,8 @@ class PublicCryptoFeed:
                 return
             if message is None:
                 continue
+            received_utc_ms = self._utc()
+            received_monotonic_ns = self._mono()
             raw_size = 0
             try:
                 if isinstance(message, str):
@@ -612,7 +616,9 @@ class PublicCryptoFeed:
                         self._reader_error = "event_queue_overflow"
                         self._ingress_event.set()
                         return
-                    self._ingress.append(_Ingress(message, len(raw)))
+                    self._ingress.append(_Ingress(
+                        message, len(raw), received_utc_ms, received_monotonic_ns
+                    ))
                     self._ingress_bytes += len(raw)
                     self._managed_update_locked()
                 self._ingress_event.set()
@@ -648,6 +654,10 @@ class PublicCryptoFeed:
 
     def _process_one(self, item: _Ingress) -> str:
         message = item.payload
+        receive_time_ms = (item.receive_time_ms if item.receive_time_ms is not None
+                           else self._utc())
+        receive_monotonic_ns = (item.receive_monotonic_ns if item.receive_monotonic_ns is not None
+                                else self._mono())
         body = message.get("data", message)
         if not isinstance(body, dict):
             return "message_invalid"
@@ -655,16 +665,16 @@ class PublicCryptoFeed:
             return "server_shutdown"
         try:
             if body.get("e") == "trade":
-                event = self._adapter.parse_trade(message, receive_time_ms=self._utc(),
-                                                  receive_monotonic_ns=self._mono(), origin="live")
+                event = self._adapter.parse_trade(message, receive_time_ms=receive_time_ms,
+                                                  receive_monotonic_ns=receive_monotonic_ns, origin="live")
                 size = len(json.dumps(event.to_dict(), sort_keys=True, separators=(",", ":")).encode("utf-8"))
                 with self._lock:
-                    self._trade_last_mono = event.envelope.receive_monotonic_ns
-                    self._trade_last_receive_ms = event.envelope.receive_time_ms
-                    self._trade_last_exchange = event.envelope.exchange_time_ms
                     if event.trade_id in self._trade_ids:
                         self._trade_ids.move_to_end(event.trade_id)
                         return ""
+                    self._trade_last_mono = event.envelope.receive_monotonic_ns
+                    self._trade_last_receive_ms = event.envelope.receive_time_ms
+                    self._trade_last_exchange = event.envelope.exchange_time_ms
                     self._trade_ids[event.trade_id] = None
                     if len(self._trade_ids) > 20000:
                         self._trade_ids.popitem(last=False)
@@ -682,8 +692,8 @@ class PublicCryptoFeed:
                         return "memory_budget_exceeded"
                 return ""
             if body.get("e") == "depthUpdate":
-                delta = self._adapter.parse_delta(message, receive_time_ms=self._utc(),
-                                                  receive_monotonic_ns=self._mono(), origin="live")
+                delta = self._adapter.parse_delta(message, receive_time_ms=receive_time_ms,
+                                                  receive_monotonic_ns=receive_monotonic_ns, origin="live")
                 with self._lock:
                     self._depth_last_mono = delta.envelope.receive_monotonic_ns
                     self._depth_last_receive_ms = delta.envelope.receive_time_ms
@@ -1025,8 +1035,14 @@ class PublicCryptoFeed:
                 with self._lock:
                     close_alive = bool(self._close_thread and self._close_thread.is_alive())
                 if close_alive:
-                    self._set_permanent_reason("websocket_close_timeout")
-                    break
+                    closer = self._close_thread
+                    if closer is not None and not self._stop_event.is_set():
+                        closer.join(0.75)
+                    with self._lock:
+                        close_alive = bool(self._close_thread and self._close_thread.is_alive())
+                    if close_alive:
+                        self._set_permanent_reason("websocket_close_timeout")
+                        break
                 if attempt >= attempts:
                     with self._lock:
                         if not self._reason:
