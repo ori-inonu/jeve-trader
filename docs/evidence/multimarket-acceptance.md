@@ -2,7 +2,7 @@
 
 Contrato: [SPEC I-01–I-12](../specs/Multimercado_Implementacao_2026-10-09.md), SHA256 `af174497bf764b1a7c67818cee6e3b925a40933d98c40c8e14f5b1b0f6bc01f4`. Baseline `da96c6ad4187030a98c4daa86a6b96e1e5b809a9`. O aceite local exige todos os testes, workload de qualidade e duas revisões independentes. Resultados finais são registrados após as correções da revisão; esta matriz não promove gates externos.
 
-Verificação do backend em `ecc5eb259719311f8cf9bf18eef85e7d178e5438`: [321 testes offline e autoteste legado](multimarket-verification.json). Verificação do frontend em `3edf5d27a3036f97db5c331407996124a023783b`: [36 testes e build TypeScript/Vite](multimarket-frontend-verification.json). A [jornada no navegador](multimarket-ui-validation.json) confirmou conexão por teclado, atualização sem reload, retorno do legado, layout estreito e expiração local após parada do backend. O chunk legado lazy mantém um aviso de tamanho no build.
+Verificação do backend em `cc260fbff137953ee5c6351c56e6de5dbca5e2dd`: [322 testes offline e autoteste legado](multimarket-verification.json). Verificação do frontend em `3edf5d27a3036f97db5c331407996124a023783b`: [36 testes e build TypeScript/Vite](multimarket-frontend-verification.json). A [jornada no navegador](multimarket-ui-validation.json) confirmou conexão por teclado, atualização sem reload, retorno do legado, layout estreito e expiração local após parada do backend. O chunk legado lazy mantém um aviso de tamanho no build.
 
 | Aceite | Evidência executável | Alcance e limite |
 |---|---|---|
@@ -26,7 +26,7 @@ Verificação do backend em `ecc5eb259719311f8cf9bf18eef85e7d178e5438`: [321 tes
 | Gap com conexão saudável e update atrasado | Gap/regressão/late-book em domain; invalidar domínio sem afirmar tape completo |
 | Tick/step alterados | Invalidação por metadata e gates financeiros por escopo exato |
 | Quote expirado, wall clock ajustado | Idade monotônica domain/service/frontend; snapshot não renova a origem |
-| Seleção/conta/custos mudam com chamada pendente | Identidade exata runtime/service e descarte contextual no frontend |
+| Seleção/conta/custos mudam com chamada pendente | `test_selection_change_rejects_a_late_context_for_both_workspaces` troca A por B enquanto o fake está bloqueado; confirma `identity_changed` e nenhum contexto antigo em A/B. Conta/custos também exercitados; descarte contextual no frontend |
 | Conta stale ou idade desconhecida com quote fresh | Gate de risco impede quantidade recomendada e lucro líquido |
 | Fill duplicado após reconnect | Idempotência persistida por conta/ID/revisão, sem duplicar patrimônio |
 | Burst/overflow | Queue limitada, nova epoch/diagnóstico e invalidação de dependentes |

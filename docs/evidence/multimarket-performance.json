@@ -5,9 +5,9 @@
   "events": 10000,
   "events_per_second": 1000,
   "batch_size": 25,
-  "seconds": 10.251238199998625,
-  "batch_post_receive_p95_ms": 3.3961000008275732,
-  "batch_post_receive_max_ms": 10.219399999186862,
+  "seconds": 10.227191300000413,
+  "batch_post_receive_p95_ms": 3.0230999982450157,
+  "batch_post_receive_max_ms": 8.8672999991104,
   "quality_pass": true,
   "threshold_ms": 50,
   "threshold_pass": true,
@@ -17,9 +17,9 @@
     "duplicates": 0,
     "rejected": 0,
     "overflow": 0,
-    "process_p95_ms": 0.2856999999494292,
+    "process_p95_ms": 0.24329999723704532,
     "market_lag_ms": null,
-    "rss_bytes": 38166528,
+    "rss_bytes": 38170624,
     "gpu_bytes": null,
     "jev_latency_ms": null
   },
@@ -29,5 +29,7 @@
   "financial_gain": null,
   "live_performance_certified": false,
   "comparison": "Separate modular workload; does not establish native or financial gain",
-  "measured_commit": "ecc5eb259719311f8cf9bf18eef85e7d178e5438"
+  "measured_commit": "f366741ce0d1ea92e5b4b9288e07cbcd3de3d38c",
+  "applicable_to_commit": "cc260fbff137953ee5c6351c56e6de5dbca5e2dd",
+  "applicability_reason": "Subsequent delta adds one service regression only; measured production code is unchanged."
 }
