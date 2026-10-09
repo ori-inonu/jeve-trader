@@ -32,6 +32,7 @@ Respostas humanas registradas: alertas experimentais identificados; horizonte de
 - [Instalação e releases](issues/03-instalacao-updates.md): 0.4.1 instalada com ícone, release privada publicada e consulta de versão verificada. Download/instalação de versões futuras permanecem manuais.
 - [Profundidade visual orientada pelos dados](issues/05-profundidade-visual.md): projeção fixa CSS/SVG com movimento por dados recebidos; WebGL depende de uma dimensão analítica demonstrada.
 - [Evidências adicionais para interpretar o fluxo WIN](issues/06-contexto-fluxo.md): distâncias observadas de início, extremos e último negócio enriquecem o estado comum sem inferir causalidade ou aprendizagem.
+- [Validade da evidência de liquidez quando a profundidade muda](issues/07-validade-liquidez.md): comparar somente o par atual por lado, com validade dos dois extremos; pesquisa resolvida, implementação e piloto têm aceites próprios.
 
 ## Next step
 

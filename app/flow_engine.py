@@ -387,23 +387,59 @@ class FlowEngine:
                    exhaustion_missing, {**evidence, "previous_aggressed_contracts": prev_volume, "side_intensity_ratio": _text(ratio),
                                         "previous_directional_progress_points": _text(prev_progress)},
                    "Desaceleração da agressão após avanço, sem continuação observada; hipótese de exaustão, sem previsão de reversão.")
+        books = list(self.books)
+        before_book = books[-2] if len(books) >= 2 else None
+        after_book = books[-1] if books else None
+        elapsed_ms = after_book["ts_ms"] - before_book["ts_ms"] if before_book and after_book else None
+        before_age_ms = now_ms - before_book["ts_ms"] if before_book else None
+        after_age_ms = now_ms - after_book["ts_ms"] if after_book else None
+        endpoint_ages_valid = all(
+            age is not None and 0 <= age <= self.rules["max_age_ms"]
+            for age in (before_age_ms, after_age_ms)
+        ) if before_book and after_book else False
+        short_window_start_ms = now_ms - self.rules["short_window_ms"]
+        within_window = (
+            before_book is not None
+            and after_book is not None
+            and short_window_start_ms < before_book["ts_ms"] <= now_ms
+            and short_window_start_ms < after_book["ts_ms"] <= now_ms
+            and elapsed_ms is not None
+            and 0 <= elapsed_ms <= self.rules["short_window_ms"]
+        )
         for side in ("bids", "asks"):
-            depth = [book for book in self.books if now_ms - self.rules["short_window_ms"] < book["ts_ms"] <= now_ms and len(book[side]) > 1]
+            before_levels = len(before_book[side]) if before_book else None
+            after_levels = len(after_book[side]) if after_book else None
+            comparison = {
+                "scope": "consecutive_observed_snapshots",
+                "before_ts_ms": before_book["ts_ms"] if before_book else None,
+                "after_ts_ms": after_book["ts_ms"] if after_book else None,
+                "elapsed_ms": elapsed_ms,
+                "before_age_ms": before_age_ms,
+                "after_age_ms": after_age_ms,
+                "before_depth_levels": before_levels,
+                "after_depth_levels": after_levels,
+            }
             missing = sorted(self.faults)
-            if not book_fresh or len(depth) < 2:
+            enough_depth = before_levels is not None and after_levels is not None and before_levels > 1 and after_levels > 1
+            if not within_window or not enough_depth:
                 missing.append("DEPTH_SEQUENCE_REQUIRED")
+            endpoint_ages = [age for age in (before_age_ms, after_age_ms) if age is not None]
+            if any(age < 0 or age > self.rules["max_age_ms"] for age in endpoint_ages):
+                missing.append("BOOK_COMPARISON_EXPIRED")
             if self.source_quality["feed_connected"] is not True or self.source_quality["sequence_ok"] is not True:
                 missing.append("SOURCE_INTEGRITY_NOT_VERIFIED")
             fraction = None
-            if len(depth) >= 2:
-                first, last = depth[-2], depth[-1]
+            if enough_depth and within_window and endpoint_ages_valid:
+                first, last = before_book, after_book
                 if [p for p, _ in first[side]] != [p for p, _ in last[side]]:
                     missing.append("DEPTH_PRICE_GRID_CHANGED")
                 else:
-                    before, after = sum(q for _, q in first[side]), sum(q for _, q in last[side])
-                    fraction = Decimal(before - after) / before
+                    before_quantity = sum(q for _, q in first[side])
+                    after_quantity = sum(q for _, q in last[side])
+                    fraction = Decimal(before_quantity - after_quantity) / before_quantity
             record("liquidity_withdrawal", side, fraction is not None and fraction >= _decimal(self.rules["depth_reduction_fraction_min"]), missing,
-                   {"displayed_quantity_reduction_fraction": _text(fraction), "cause": "unknown; execution, cancellation or refresh may explain reduction"},
+                   {"displayed_quantity_reduction_fraction": _text(fraction), "comparison": comparison,
+                    "cause": "unknown; execution, cancellation or refresh may explain reduction"},
                    "Redução da liquidez exibida nos mesmos níveis entre snapshots de profundidade; não comprova cancelamento ou identidade.")
         return result
 
