@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "kind": "sdd_cycle_review",
+  "proposal_id": "multimarket-rt12-2026-10-09",
+  "proposal_sha256": "88cdde235eaf9eba87153b4c58c8ebd272df99a4ed8b1a43529279ff6bfe796a",
+  "objective_sha256": "40446c5d2aed1655d51a5bddbd2f628539b965f0e115465d4bba64a563d3de9e",
+  "constraints_sha256": "7c926c9ea67b12c63e37e2f27195b70a369deb403ee8d916b293aa0d9e75d07f",
+  "implementer_id": "root-integrator",
+  "reviewer_id": "pr2-main-spec-review",
+  "decision": "approve",
+  "scope_assessment": "within_authorized_objective",
+  "scope_reason": "Dentro do objetivo autorizado: o pedido humano de 09/10/2026 solicita revisar o PR e prosseguir o plano das especificações, abrindo nova fase FDD/Wayfinder quando necessário; a autorização anterior de implement-spec cobre os aceites multimercado congelados. Este ciclo corrige apenas a corrida FW-01 reproduzida e limita a deduplicação preservando idempotência/recuperação por epoch, com regressões offline, verificação e revisão independente; depois pesquisa RT-12 e especifica a melhoria elegível seguinte. Os aceites I-01–I-12/FW-01 não são enfraquecidos. Merge, release, instalação, ordens, compra de dados, acesso privado, segredos, migração destrutiva e mudança de objetivo estão excluídos. A ligação da proposta foi reproduzida com validateReferences + digest(JSON.stringify({id, summary, references})): 88cdde235eaf9eba87153b4c58c8ebd272df99a4ed8b1a43529279ff6bfe796a."
+}

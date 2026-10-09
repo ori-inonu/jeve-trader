@@ -35,3 +35,9 @@ data/live/
 logs/
 .DS_Store
 Thumbs.db
+node_modules/
+desktop/src-tauri/target/
+desktop/src-tauri/binaries/
+desktop/src-tauri/gen/
+app/ocr_runtime/
+*.tsbuildinfo

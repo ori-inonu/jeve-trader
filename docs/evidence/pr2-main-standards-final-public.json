@@ -1,0 +1,103 @@
+{
+  "review_kind": "STANDARDS",
+  "candidate": {
+    "commit": "e52172de0c127a8f1d3768cc072964501eb8ff69",
+    "tree": "3e2e3ceb4856ea71ec1b903efda4fc6fd729098e"
+  },
+  "baseline": {
+    "commit": "0171aed6c4a25adf26d349bfe2c3140805a35e97",
+    "merge_base": "0171aed6c4a25adf26d349bfe2c3140805a35e97"
+  },
+  "full_diff": "236 files changed, 27116 insertions(+), 160 deletions(-)",
+  "reviewed_delta": {
+    "from": "5f15ab73f4f5adfd3221b9bd5f785c24c9afc496",
+    "to": "e52172de0c127a8f1d3768cc072964501eb8ff69",
+    "summary": "5 files changed, 224 insertions(+), 18 deletions(-)"
+  },
+  "reviewed_sources": [
+    {
+      "sha256": "3664EC127DABA9E50FCA57C1E4AF6B36A2D23E9544DFA19006D11208FBD1D0E8",
+      "path": "{standards_review_checkout}\\app\\desktop_service.py"
+    },
+    {
+      "sha256": "58046AEB1461913DAC1EE07CD54F985BFAFC97721D84056195273F034823A8DD",
+      "path": "{standards_review_checkout}\\app\\multimarket\\market_state.py"
+    },
+    {
+      "sha256": "059FDA436C48F0897F1E3DC9643D5AB466B4CE5674BEF772E084D316CF727303",
+      "path": "{standards_review_checkout}\\app\\test_mesa_control.py"
+    },
+    {
+      "sha256": "016E56B1AFC176753D3E58A03D597981DDA80078535D398927E0FBF3A26AD1EE",
+      "path": "{standards_review_checkout}\\app\\test_multimarket_domain.py"
+    },
+    {
+      "sha256": "945411481BCE79FA84F32C0F10029182212F79BCC0581C96868DB20633E897E9",
+      "path": "{standards_review_checkout}\\app\\test_multimarket_service.py"
+    },
+    {
+      "sha256": "89F127A4FD48E30790FFB2D8FDB8E1F662E586EB89E2B29078D31862119A1C5C",
+      "path": "{integration_checkout}\\docs\\specs\\PR2_Revisao_Main_2026-10-09.md"
+    },
+    {
+      "sha256": "47F4E52C21694DEF9C7C11CBFBF891CA35EAC7A93E395797515BE3C8A409AE50",
+      "path": "{agents_skill_root}\\code-review\\SKILL.md"
+    },
+    {
+      "sha256": "C77CD3459817B09970A7B8BCEDEEFD9F8383DB78DBA44E0B3AB42C471924E475",
+      "path": "{codex_skill_root}\\codex-desktop-harness\\SKILL.md"
+    },
+    {
+      "sha256": "65FF3937F04F44714517AA769FD64CB69B4242BEB659BA8430DDBC16F59F8A95",
+      "path": "{standards_review_checkout}\\AGENTS.md"
+    },
+    {
+      "sha256": "C8F0169B9F2EF701C5733779C0D63E5622C24C47A7529231FCCD3593DD53EC77",
+      "path": "{private_evidence_directory}\\pr2-main-standards-review-2026-10-09.md"
+    },
+    {
+      "sha256": "2407503019D2BF1EE87C7F1037D05EA9DC14FC7A83D78ED6C3AC6AFC0415002B",
+      "path": "{private_evidence_directory}\\pr2-main-standards-review-2026-10-09.json"
+    }
+  ],
+  "reviewer_id": "/root/pr2_main_standards_final",
+  "findings_count": 0,
+  "worst_severity": null,
+  "merge_ready_local": true,
+  "external_gates": [
+    "Full repository verification and frontend/build remain with the coordinator.",
+    "No native Windows Tk shutdown or total-request latency measurement in this standards review; the SPEC allows OFF to wait for an in-flight attempt."
+  ],
+  "independent_read_only_limitations": [
+    "Review performed in the assigned isolated managed worktree; candidate worktree was clean before and after inspection/tests.",
+    "Output artifacts were written outside the repository.",
+    "No paid API/JEV, private market/account data, install, push, merge, or candidate edits were used."
+  ],
+  "checks": [
+    {
+      "command": "python -m unittest test_mesa_control test_multimarket_domain test_multimarket_service",
+      "working_directory": "candidate app/",
+      "result": "48 tests passed"
+    },
+    {
+      "command": "python -m unittest test_desktop_service test_live_context",
+      "working_directory": "candidate app/",
+      "result": "16 tests passed"
+    },
+    {
+      "result": "Git HEAD, tree, fixed baseline/merge-base and clean status verified"
+    },
+    {
+      "result": "Initial full-diff review artifact reused; original P2 bounded dedup finding rechecked against final five-file delta and resolved"
+    }
+  ],
+  "publication_projection": {
+    "raw_source_sha256": "c03136f2502c196f35932f90e42afc0049256bd472d878d1aaa218e681ec8af3",
+    "redactions": [
+      "personal checkout paths",
+      "conversation UUID"
+    ],
+    "acceptance_changed": false,
+    "provenance_retained": "Non-personal task and reviewer role labels are retained as provenance."
+  }
+}

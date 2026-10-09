@@ -1,0 +1,91 @@
+{
+  "objective": "Implement only the two approved regressions: serialize the JEV final dispatch gate with OFF/revision changes, and bound MarketState deduplication with explicit invalidation/resync semantics.",
+  "checkout": "{repair_checkout}",
+  "baseline": "5f15ab73f4f5adfd3221b9bd5f785c24c9afc496",
+  "immutable_spec": "docs/specs/PR2_Revisao_Main_2026-10-09.md",
+  "immutable_spec_sha256": "89f127a4fd48e30790ffb2d8fdb8e1f662e586eb89e2b29078d31862119a1c5c",
+  "python": "{integration_checkout}\\.venv\\Scripts\\python.exe",
+  "test_working_directory": "{repair_checkout}\\app",
+  "red": [
+    {
+      "command": "python -m unittest test_mesa_control.MesaControlTests.test_off_cannot_complete_between_final_gate_and_external_invocation -v",
+      "result": "FAIL (regression reproduced)",
+      "observed": "AssertionError: Lists differ: [True] != [False]; OFF completed before the external client invocation while the test paused at the final dispatch boundary."
+    },
+    {
+      "command": "python -m unittest test_multimarket_domain.MarketStateTests.test_dedup_capacity_is_positive_bounded_integer_and_default_is_visible test_multimarket_domain.MarketStateTests.test_dedup_saturation_invalidates_workspace_then_recovers_across_epochs -v",
+      "result": "FAIL (regression reproduced)",
+      "observed": "Default snapshot raised KeyError: 'deduplication'; explicit-capacity construction raised TypeError: MarketState.__init__() got an unexpected keyword argument 'dedup_capacity'."
+    },
+    {
+      "command": "python -m unittest test_multimarket_service.MultimarketIntegrationTests.test_dedup_overflow_requests_resync_and_clears_context_without_claiming_full_tape -v",
+      "result": "FAIL (regression reproduced)",
+      "observed": "TypeError: MarketState.__init__() got an unexpected keyword argument 'dedup_capacity'."
+    }
+  ],
+  "green": [
+    {
+      "command": "python -m unittest test_mesa_control.MesaControlTests.test_off_cannot_complete_between_final_gate_and_external_invocation test_mesa_control.MesaControlTests.test_off_during_call_accounts_usage_without_reviving_context_or_backoff -v",
+      "result": "PASS",
+      "tests": 2,
+      "elapsed_seconds": 2.448
+    },
+    {
+      "command": "python -m unittest test_multimarket_domain.MarketStateTests.test_dedup_capacity_is_positive_bounded_integer_and_default_is_visible test_multimarket_domain.MarketStateTests.test_dedup_saturation_invalidates_workspace_then_recovers_across_epochs -v",
+      "result": "PASS",
+      "tests": 2,
+      "elapsed_seconds": 0.002
+    },
+    {
+      "command": "python -m unittest test_multimarket_service.MultimarketIntegrationTests.test_dedup_overflow_requests_resync_and_clears_context_without_claiming_full_tape -v",
+      "result": "PASS",
+      "tests": 1,
+      "elapsed_seconds": 0.233
+    },
+    {
+      "command": "python -m unittest test_mesa_control test_multimarket_domain test_multimarket_service -v",
+      "result": "PASS",
+      "tests": 48,
+      "elapsed_seconds": 7.203
+    }
+  ],
+  "additional_offline_verification": {
+    "scope": "scripts/verify.py full suite and desktop self-test, run in this isolated checkout before receiving root's message that root owns integration/fullverify",
+    "result": "PASS",
+    "python": "3.14.7",
+    "platform": "win32",
+    "tests": 326,
+    "tests_elapsed_seconds": 29.679,
+    "desktop_self_test": "PASS",
+    "python_socket_network_blocked": true,
+    "gui_opened": false,
+    "windows_runtime_validated": false,
+    "live_jev_api_tested": false,
+    "live_profit_excel_tested": false,
+    "order_execution_tested": false,
+    "artifact": ".artifacts/verification.json"
+  },
+  "diff_check": "git diff --check passed",
+  "changed_files": [
+    "app/desktop_service.py",
+    "app/multimarket/market_state.py",
+    "app/test_mesa_control.py",
+    "app/test_multimarket_domain.py",
+    "app/test_multimarket_service.py"
+  ],
+  "integration_seam": "MultimarketService/adapter already propagates MarketState invalidation through request_resync and context clearing; service test exercises that public path with a fake external API. No production service file change is needed.",
+  "known_limits": [
+    "OFF acknowledgement waits while an external JEV evaluation is already in flight under the shared lock.",
+    "The configured 3-second transport timeout does not establish an end-to-end deadline.",
+    "Verification was offline; no live JEV, Profit/Excel, Windows runtime GUI, or order execution was exercised."
+  ],
+  "publication_projection": {
+    "raw_source_sha256": "3eb1cb2b7e5861cb1a8eb7d2a9c59755396008b7b7b135e317971149168c3025",
+    "redactions": [
+      "personal checkout paths",
+      "conversation UUID"
+    ],
+    "acceptance_changed": false,
+    "provenance_retained": "Non-personal task and reviewer role labels are retained as provenance."
+  }
+}

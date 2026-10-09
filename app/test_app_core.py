@@ -1,7 +1,8 @@
 import tempfile
 from pathlib import Path
 import unittest
-from app_core import DEFAULT_INPUTS, ObservationSession, apply_manual_pnl, build_risk_study, can_classify, jev_observation_state, response_is_current, self_check
+from app_core import (DEFAULT_INPUTS, ObservationSession, apply_manual_pnl, build_risk_study, can_classify,
+                      declared_premise, jev_observation_state, premise_questions, response_is_current, self_check)
 from profit_bridge import read_csv_events
 
 
@@ -28,6 +29,23 @@ class AppCoreTests(unittest.TestCase):
         self.assertNotIn("account", state)
         self.assertNotIn("risk", state)
         self.assertTrue(can_classify(snapshot)[0])
+
+    def test_premise_questions_validate_and_keep_dimensions_separate(self):
+        from jev_client import build_payload
+        snapshot = ObservationSession().demo()
+        state = jev_observation_state(snapshot)
+        state["user_premise"] = declared_premise("  espero rompimento   comprado\nacima de 131.500 ", asof_ms=snapshot["ts_ms"])
+        self.assertEqual(state["user_premise"]["text"], "espero rompimento comprado acima de 131.500")
+        self.assertEqual(state["user_premise"]["declared_at_ms"], snapshot["ts_ms"])
+        questions = premise_questions()
+        self.assertEqual(set(questions), {"premise_evidence_support", "premise_evidence_contradiction", "premise_evaluable"})
+        build_payload(state, questions)  # raises if the question schema is invalid
+        support = questions["premise_evidence_support"]["instructions"]
+        contradiction = questions["premise_evidence_contradiction"]["instructions"]
+        self.assertIn("state.user_premise.text", support)
+        self.assertIn("Absence of support is not contradiction", contradiction)
+        self.assertIsNone(declared_premise("   ", asof_ms=1))
+        self.assertEqual(len(declared_premise("x" * 400, asof_ms=1)["text"]), 300)
 
     def test_csv_sampling_never_becomes_full_tape(self):
         with tempfile.TemporaryDirectory() as d:

@@ -1,0 +1,260 @@
+{
+  "kind": "sanitized_planning_receipts",
+  "receipts": [
+    {
+      "source": ".scratch/wayfinder-multimercado/jev-receipt.json",
+      "authority": "advisory_only",
+      "status": "assessed",
+      "receipt_id": "9cfb6ee1-26a5-4f2f-a44a-6b6b81bda599",
+      "input_digest": "6e04a071ebf7b4f57ea5b27ee5fa2e0cdf384371bbfeea9064716798f9f5d812",
+      "rubric_version": "batch-2026-09-26.2",
+      "model": "jev-1.13.0",
+      "answers": {
+        "processing_boundary": {
+          "type": "choice",
+          "domain": "strategy",
+          "providerChoice": "modular_local",
+          "bestCandidate": "modular_local",
+          "probabilities": {
+            "modular_local": 1,
+            "cloud_microservices": 0,
+            "full_rust_rewrite": 0,
+            "insufficient_evidence": 0
+          },
+          "confidence": 1,
+          "disposition": "recommendation",
+          "recommendation": "modular_local",
+          "policy": {
+            "version": "decision-policy-2026-09-26.1",
+            "mode": "conservative",
+            "minConfidence": 0.6,
+            "minProbability": 0.6,
+            "calibration": "not_locally_calibrated"
+          }
+        },
+        "instrument_identity": {
+          "type": "choice",
+          "domain": "general",
+          "providerChoice": "typed_instrument_venue",
+          "bestCandidate": "typed_instrument_venue",
+          "probabilities": {
+            "typed_instrument_venue": 0.99,
+            "symbol_string_global": 0,
+            "separate_products": 0.01,
+            "insufficient_evidence": 0
+          },
+          "confidence": 0.99,
+          "disposition": "recommendation",
+          "recommendation": "typed_instrument_venue",
+          "policy": {
+            "version": "decision-policy-2026-09-26.1",
+            "mode": "conservative",
+            "minConfidence": 0.6,
+            "minProbability": 0.6,
+            "calibration": "not_locally_calibrated"
+          }
+        },
+        "jev_intelligence": {
+          "type": "choice",
+          "domain": "strategy",
+          "providerChoice": "typed_evidence_scheduler",
+          "bestCandidate": "typed_evidence_scheduler",
+          "probabilities": {
+            "typed_evidence_scheduler": 1,
+            "tick_freeform": 0,
+            "manual_only": 0,
+            "insufficient_evidence": 0
+          },
+          "confidence": 1,
+          "disposition": "recommendation",
+          "recommendation": "typed_evidence_scheduler",
+          "policy": {
+            "version": "decision-policy-2026-09-26.1",
+            "mode": "conservative",
+            "minConfidence": 0.6,
+            "minProbability": 0.6,
+            "calibration": "not_locally_calibrated"
+          }
+        },
+        "frontend_journey": {
+          "type": "choice",
+          "domain": "general",
+          "providerChoice": "workspace_decision_center",
+          "bestCandidate": "workspace_decision_center",
+          "probabilities": {
+            "workspace_decision_center": 0.98,
+            "many_market_tabs": 0,
+            "three_d_primary": 0,
+            "insufficient_evidence": 0.02
+          },
+          "confidence": 0.97,
+          "disposition": "recommendation",
+          "recommendation": "workspace_decision_center",
+          "policy": {
+            "version": "decision-policy-2026-09-26.1",
+            "mode": "conservative",
+            "minConfidence": 0.6,
+            "minProbability": 0.6,
+            "calibration": "not_locally_calibrated"
+          }
+        },
+        "manual_reduction": {
+          "type": "choice",
+          "domain": "strategy",
+          "providerChoice": "read_only_reconciliation",
+          "bestCandidate": "read_only_reconciliation",
+          "probabilities": {
+            "read_only_reconciliation": 0.99,
+            "infer_account": 0,
+            "manual_everything": 0,
+            "insufficient_evidence": 0.01
+          },
+          "confidence": 0.99,
+          "disposition": "recommendation",
+          "recommendation": "read_only_reconciliation",
+          "policy": {
+            "version": "decision-policy-2026-09-26.1",
+            "mode": "conservative",
+            "minConfidence": 0.6,
+            "minProbability": 0.6,
+            "calibration": "not_locally_calibrated"
+          }
+        },
+        "pilot_sequence": {
+          "type": "choice",
+          "domain": "task",
+          "providerChoice": "public_spot_parallel_b3",
+          "bestCandidate": "public_spot_parallel_b3",
+          "probabilities": {
+            "public_spot_parallel_b3": 0.99,
+            "b3_access_first": 0,
+            "dual_full_rewrite": 0,
+            "insufficient_evidence": 0.01
+          },
+          "confidence": 0.99,
+          "disposition": "recommendation",
+          "recommendation": "public_spot_parallel_b3",
+          "policy": {
+            "version": "decision-policy-2026-09-26.1",
+            "mode": "conservative",
+            "minConfidence": 0.6,
+            "minProbability": 0.6,
+            "calibration": "not_locally_calibrated"
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 2168,
+        "output_tokens": 386
+      },
+      "billed_cost_usd": null,
+      "receipt_persisted": true
+    },
+    {
+      "source": ".scratch/wayfinder-multimercado/jev-supplement.json",
+      "authority": "advisory_only",
+      "status": "assessed",
+      "receipt_id": "707233ee-33cb-4bc2-9d53-22492f038f8a",
+      "input_digest": "31064554dc07a1b1dd49e9e28f1c4695d0c9dbfafa45532dffac2ecdb25096c5",
+      "rubric_version": "batch-2026-09-26.2",
+      "model": "jev-1.13.0",
+      "answers": {
+        "local_isolation": {
+          "type": "choice",
+          "domain": "strategy",
+          "providerChoice": "modular_reuse_isolation",
+          "bestCandidate": "modular_reuse_isolation",
+          "probabilities": {
+            "modular_reuse_isolation": 0.97,
+            "shared_data_supervisor": 0.02,
+            "provider_workers": 0.01,
+            "insufficient_evidence": 0
+          },
+          "confidence": 0.96,
+          "disposition": "recommendation",
+          "recommendation": "modular_reuse_isolation",
+          "policy": {
+            "version": "decision-policy-2026-09-26.1",
+            "mode": "conservative",
+            "minConfidence": 0.6,
+            "minProbability": 0.6,
+            "calibration": "not_locally_calibrated"
+          }
+        },
+        "crypto_pilot_cut": {
+          "type": "choice",
+          "domain": "task",
+          "providerChoice": "binance_trades_depth",
+          "bestCandidate": "binance_trades_depth",
+          "probabilities": {
+            "trades_l1_first": 0.39,
+            "binance_trades_depth": 0.58,
+            "coinbase_trades_depth": 0.01,
+            "dual_spot_depth": 0,
+            "insufficient_evidence": 0.02
+          },
+          "confidence": 0.47,
+          "disposition": "abstained",
+          "reasonCode": "low_confidence",
+          "policy": {
+            "version": "decision-policy-2026-09-26.1",
+            "mode": "conservative",
+            "minConfidence": 0.6,
+            "minProbability": 0.6,
+            "calibration": "not_locally_calibrated"
+          }
+        },
+        "ui_delivery": {
+          "type": "choice",
+          "domain": "strategy",
+          "providerChoice": "selected_snapshot",
+          "bestCandidate": "selected_snapshot",
+          "probabilities": {
+            "selected_snapshot": 0.99,
+            "filtered_subscriptions": 0,
+            "bounded_aggregate": 0,
+            "insufficient_evidence": 0.01
+          },
+          "confidence": 0.99,
+          "disposition": "recommendation",
+          "recommendation": "selected_snapshot",
+          "policy": {
+            "version": "decision-policy-2026-09-26.1",
+            "mode": "conservative",
+            "minConfidence": 0.6,
+            "minProbability": 0.6,
+            "calibration": "not_locally_calibrated"
+          }
+        },
+        "scheduler_policy": {
+          "type": "choice",
+          "domain": "strategy",
+          "providerChoice": "severity_priority_aging",
+          "bestCandidate": "severity_priority_aging",
+          "probabilities": {
+            "active_priority_max_wait": 0.04,
+            "fair_round_robin": 0.01,
+            "severity_priority_aging": 0.88,
+            "insufficient_evidence": 0.07
+          },
+          "confidence": 0.84,
+          "disposition": "recommendation",
+          "recommendation": "severity_priority_aging",
+          "policy": {
+            "version": "decision-policy-2026-09-26.1",
+            "mode": "conservative",
+            "minConfidence": 0.6,
+            "minProbability": 0.6,
+            "calibration": "not_locally_calibrated"
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 1849,
+        "output_tokens": 270
+      },
+      "billed_cost_usd": null,
+      "receipt_persisted": true
+    }
+  ]
+}

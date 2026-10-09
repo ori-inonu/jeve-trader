@@ -1,5 +1,6 @@
 """JEV WIN desktop observer and capital research application, Windows portable build."""
 from __future__ import annotations
+from context_requests import attach_candidates
 
 import argparse
 from datetime import datetime, timezone, timedelta
@@ -16,7 +17,8 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from app_core import (DEFAULT_INPUTS, ObservationSession, apply_manual_pnl, build_risk_study,
-                      build_decision_bundle, can_classify, jev_observation_state, money, number, response_is_current, self_check)
+                      build_decision_bundle, can_classify, declared_premise, jev_observation_state, money, number,
+                      premise_questions, response_is_current, self_check)
 from app_store import UserStore, VERSION, resource_path
 from copilot import load_json
 from candidate_research import build_market_candidates, generate_candidate_scenario
@@ -24,6 +26,7 @@ from dashboard import format_capacity
 from jev_client import JevClient, JevError
 from profit_bridge import BridgeError, ExcelBridge, CombinedExcelBridge, read_csv_events
 from decision_view import DecisionPanel
+from copilot_view import CopilotPanel
 from panel_report import export_panel
 
 
@@ -137,18 +140,20 @@ class JevWINApp:
         self.tabs = ttk.Notebook(shell)
         self.tabs.pack(fill="both", expand=True)
         self.pages = {}
-        for key, label in (("decision", "Central de decisão"), ("monitor", "Monitor"), ("candidates", "Cenários técnicos"), ("risk", "Capital e risco"), ("sources", "Conexões"),
-                           ("jev", "JEV"), ("journal", "Diário"), ("guide", "Guia")):
+        for key, label in (("copilot", "Copiloto"), ("monitor", "Fluxo"), ("candidates", "Cenários"), ("risk", "Conta"),
+                           ("config", "Configuração"), ("journal", "Diário"), ("guide", "Guia")):
             page = ttk.Frame(self.tabs, padding=12)
             self.tabs.add(page, text=label)
             self.pages[key] = page
-        self.decision_panel = DecisionPanel(self.pages["decision"], refresh=lambda: self.refresh_decision(force=True),
-                                            classify=self.request_jev, demonstrate=self.demo_candidates, export=self.export_decision)
+        self.premise = tk.StringVar()
+        self.copilot = CopilotPanel(self.pages["copilot"], refresh=lambda: self.refresh_decision(force=True),
+                                    classify=self.request_jev, demonstrate=self.demo_candidates,
+                                    export=self.export_decision, premise_var=self.premise)
+        self.decision_panel = self.copilot.decision
         self._monitor()
         self._candidates()
         self._risk()
-        self._sources()
-        self._jev()
+        self._config()
         self._journal()
         self._guide()
         self.tabs.bind("<<NotebookTabChanged>>", lambda _event: self.refresh_journal()
@@ -372,60 +377,56 @@ class JevWINApp:
                  "", "A conta continua informada manualmente. Essa combinação não foi validada como estratégia lucrativa."]
         put_text(self.candidate_details, "\n".join(lines))
 
-    def _sources(self):
-        page = self.pages["sources"]
-        ttk.Label(page, text="Profit → exportação RTD → Excel aberto → leitura pelo aplicativo", font=("Segoe UI", 13, "bold")).pack(anchor="w")
-        ttk.Label(page, text="O Excel e o Profit precisam estar configurados na mesma sessão do Windows. A leitura não altera o arquivo.", style="Muted.TLabel", wraplength=1120).pack(anchor="w", pady=(5, 12))
+    def _config(self):
+        page = self.pages["config"]
+        source_box = ttk.LabelFrame(page, text="Fonte de dados — Profit → exportação RTD → Excel já aberto", padding=10)
+        source_box.pack(fill="x", pady=(0, 12))
+        ttk.Label(source_box, text="O Excel e o Profit precisam estar configurados na mesma sessão do Windows. A leitura não altera o arquivo.", style="Muted.TLabel", wraplength=1120).pack(anchor="w", pady=(0, 10))
         self.connection_inputs = {}
-        form = ttk.Frame(page)
+        form = ttk.Frame(source_box)
         form.pack(fill="x")
         settings = (("symbol", "Contrato exato", "WIN_SIM"), ("workbook", "Arquivo já aberto no Excel", "Profit_RTD_Modelo.xlsx"),
                     ("sheet", "Planilha principal / cotações", "Dados"), ("cell_range", "Intervalo principal com cabeçalho", "A1:I2"),
                     ("tape_sheet", "Planilha de negócios (combined)", "Negocios"), ("tape_range", "Intervalo de negócios (combined)", "A1:F501"))
         for index, (key, title, default) in enumerate(settings):
-            ttk.Label(form, text=title).grid(row=index, column=0, sticky="w", padx=(0, 18), pady=5)
+            ttk.Label(form, text=title).grid(row=index, column=0, sticky="w", padx=(0, 18), pady=4)
             var = tk.StringVar(value=self.saved.get(key, default))
             self.connection_inputs[key] = var
-            ttk.Entry(form, textvariable=var, width=55).grid(row=index, column=1, sticky="ew", pady=5)
+            ttk.Entry(form, textvariable=var, width=55).grid(row=index, column=1, sticky="ew", pady=4)
         self.excel_mode = tk.StringVar(value=self.saved.get("excel_mode", "quote"))
-        ttk.Label(form, text="Modo: quote / tape / combined").grid(row=6, column=0, sticky="w", pady=5)
+        ttk.Label(form, text="Modo: quote / tape / combined").grid(row=6, column=0, sticky="w", pady=4)
         ttk.Combobox(form, textvariable=self.excel_mode, values=("quote", "tape", "combined"), state="readonly", width=18).grid(row=6, column=1, sticky="w")
         form.columnconfigure(1, weight=1)
-        row = ttk.Frame(page)
-        row.pack(fill="x", pady=12)
+        row = ttk.Frame(source_box)
+        row.pack(fill="x", pady=(10, 8))
         ttk.Button(row, text="Conectar leitura Excel", command=self.start_excel).pack(side="left", padx=(0, 8))
         ttk.Button(row, text="Parar leitura", command=self.stop_excel).pack(side="left", padx=4)
         ttk.Button(row, text="Carregar negócios CSV", command=self.load_csv).pack(side="left", padx=4)
         ttk.Button(row, text="Salvar modelos de exportação", command=self.save_templates).pack(side="left", padx=4)
-        self.connection_status = ttk.Label(page, text="Profit/Toro não conectados. O monitor iniciou em demonstração local.", style="Warn.TLabel", wraplength=1120)
-        self.connection_status.pack(fill="x", pady=(0, 10))
-        guide = text_box(page, height=10)
-        put_text(guide, "COMO PREPARAR\n\n1. No Profit: Arquivo → Exportar em Tempo Real (RTD/DDE). Habilite a transferência e selecione os dados.\n2. Salve os modelos por este aplicativo. Abra Profit_RTD_Modelo.xlsx no Excel e preencha o contrato em Dados!A2.\n3. Confira se as células atualizam. Indique aqui o nome exato do arquivo, planilha e intervalo.\n4. quote lê cotações; tape lê uma tabela única de negócios. combined lê cotações e negócios juntos no mesmo arquivo.\n5. Em combined, use Dados / A1:I2 e Negocios / A1:F501. A aba Negocios precisa receber eventos reais com id, symbol, ts_ms, price_points, quantity e aggressor, em ordem crescente de horário.\n\nLIMITES VISÍVEIS\nO modelo fornece cotações e uma aba Negocios vazia. O programa não cria uma exportação do Times & Trades automaticamente. Preencha essa fonte usando uma exportação real compatível; uma tabela vazia bloqueia o modo combinado. QUL é quantidade do último negócio, não uma sequência integral de negócios. Não gera agressão automaticamente.\nDados de janelas vinculadas podem pausar quando a aba fica inativa. Uma leitura Excel bem-sucedida não comprova conexão do feed.\nO pacote usa COM nativo para ler o Excel já aberto, sem alterar planilhas. No modo combined, a falha de qualquer tabela invalida todo o ciclo. Se o Excel estiver ocupado, a leitura pode aguardar; feche diálogos no Excel. PowerShell é alternativa apenas nos fontes sem comtypes, respeitando a política local.\nSaldo, margem e posições da Toro ainda não são consultados: use a aba Capital como estudo manual.\n\nCSV é replay, com relógio do arquivo. Arquivos sem horário/ID ou sem identificação de agressão não sustentam todas as análises.")
+        self.connection_status = ttk.Label(source_box, text="Profit/Toro não conectados. O monitor iniciou em demonstração local.", style="Warn.TLabel", wraplength=1120)
+        self.connection_status.pack(fill="x", pady=(0, 6))
+        guide = text_box(source_box, height=6)
+        put_text(guide, "COMO PREPARAR\n1. No Profit: Arquivo → Exportar em Tempo Real (RTD/DDE). Habilite a transferência e selecione os dados.\n2. Salve os modelos por este aplicativo. Abra Profit_RTD_Modelo.xlsx e preencha o contrato em Dados!A2.\n3. quote lê cotações; tape lê uma tabela de negócios; combined lê as duas (Negocios / A1:F501 precisa receber eventos reais com id, symbol, ts_ms, price_points, quantity, aggressor).\n\nLIMITES: o modelo não exporta Times & Trades sozinho; tabela vazia bloqueia combined. QUL é quantidade do último negócio, não uma sequência integral. Leitura Excel não comprova conexão do feed, e dados de janelas vinculadas podem pausar com a aba inativa. Saldo, margem e posições da Toro não são consultados. CSV é replay, com relógio do arquivo.")
 
-    def _jev(self):
-        page = self.pages["jev"]
-        ttk.Label(page, text="JEV · interpretação estruturada do contexto", font=("Segoe UI", 14, "bold")).pack(anchor="w")
-        ttk.Label(page, text="Modelo fixado: jev-1.13.0 • Endpoint oficial TypeSafe • Uma chamada reúne as perguntas independentes", style="Muted.TLabel").pack(anchor="w", pady=(5, 12))
-        row = ttk.Frame(page)
+        jev_box = ttk.LabelFrame(page, text="TypeSafe JEV — interpretação estruturada do contexto", padding=10)
+        jev_box.pack(fill="x")
+        ttk.Label(jev_box, text="Modelo fixado: jev-1.13.0 • Uma chamada reúne as perguntas independentes", style="Muted.TLabel").pack(anchor="w", pady=(0, 8))
+        row = ttk.Frame(jev_box)
         row.pack(fill="x")
         ttk.Label(row, text="Chave da API").pack(side="left")
         self.key = tk.StringVar(value=os.environ.get("TYPESAFE_API_KEY", ""))
         ttk.Entry(row, textvariable=self.key, show="•", width=65).pack(side="left", padx=10, fill="x", expand=True)
-        ttk.Button(row, text="Analisar agora", command=self.request_jev).pack(side="left")
-        ttk.Label(page, text="A chave fica na memória desta execução. Não é salva no diário nem nas configurações.", style="Muted.TLabel").pack(anchor="w", pady=(5, 12))
+        ttk.Label(jev_box, text="A chave fica na memória desta execução. Não é salva no diário nem nas configurações.", style="Muted.TLabel").pack(anchor="w", pady=(6, 6))
         self.auto_jev = tk.BooleanVar(value=False)
-        ttk.Checkbutton(page, text="Consultar automaticamente enquanto a leitura Excel estiver ativa (mínimo 10 s entre chamadas)", variable=self.auto_jev).pack(anchor="w")
-        budget_row = ttk.Frame(page)
+        ttk.Checkbutton(jev_box, text="Consultar automaticamente enquanto a leitura Excel estiver ativa (mínimo 10 s entre chamadas)", variable=self.auto_jev).pack(anchor="w")
+        budget_row = ttk.Frame(jev_box)
         budget_row.pack(fill="x", pady=(7, 5))
         ttk.Label(budget_row, text="Limite de consultas nesta execução").pack(side="left")
         self.api_budget = tk.StringVar(value=self.saved.get("api_call_limit", "120"))
         ttk.Entry(budget_row, textvariable=self.api_budget, width=9).pack(side="left", padx=9)
-        ttk.Label(budget_row, text="1 a 10.000 • contador reinicia ao abrir o aplicativo", style="Muted.TLabel").pack(side="left")
-        ttk.Label(page, text="Consultas usam sua conta TypeSafe. O limite conta chamadas, não reais; confira a cobrança no seu plano.", style="Muted.TLabel").pack(anchor="w", pady=(0, 10))
-        self.api_status = ttk.Label(page, text="Nenhuma chamada realizada nesta execução", style="Warn.TLabel")
-        self.api_status.pack(anchor="w", pady=(0, 8))
-        self.jev_text = text_box(page, height=15)
-        put_text(self.jev_text, "O JEV recebe as medidas calculadas e seus limites de cobertura.\n\nEle compara progressão, absorção potencial e exaustão. O resultado é uma classificação contextual; sua confiança não representa probabilidade de lucro.\n\nO patrimônio e a necessidade de recuperar perdas ficam fora dessas perguntas. Cálculos e limites continuam no motor financeiro.\n\nNenhuma análise foi obtida da API nesta execução.")
+        ttk.Label(budget_row, text="1 a 10.000 • contador reinicia ao abrir o aplicativo • consultas usam sua conta TypeSafe", style="Muted.TLabel").pack(side="left")
+        self.api_status = ttk.Label(jev_box, text="Nenhuma chamada realizada nesta execução", style="Warn.TLabel")
+        self.api_status.pack(anchor="w", pady=(6, 0))
 
     def _journal(self):
         page = self.pages["journal"]
@@ -442,7 +443,7 @@ class JevWINApp:
     def _guide(self):
         page = self.pages["guide"]
         box = text_box(page, height=25)
-        put_text(box, "COMECE AQUI\n\nCENTRAL DE DECISÃO\nMostra a conclusão, suas evidências e impedimentos. A comparação dos cenários fica na mesma tela. Dados parciais mantêm a conclusão em aguardar; o lote calculado não é ordem ou probabilidade de lucro. O botão Exportar painel HTML salva um registro visual estático.\n\n1. MONITOR\nExplore os quatro cenários locais: progression (progressão), absorption (absorção), exhaustion (exaustão) e choppy (alternância). buy/sell invertem o lado. Esses dados são sintéticos e não representam o pregão.\n\n2. CAPITAL E RISCO\nInforme patrimônio, pico, custo, margem, stop e limite por proposta. O cálculo acompanha ganhos e perdas e compara dez combinações de fração/base patrimonial. Não estima um lote de lucro máximo. O patrimônio é manual e a conta é assumida sem posição no cenário. Pausas projetadas são hipotéticas; perdas registradas respeitam 60 s.\n\n3. CONEXÕES\nA exportação RTD/Excel permite observar o que seu Profit disponibiliza sem a DLL Feed. Ela pode fornecer apenas cotações ou uma amostra do tape. A licença de dados não foi contratada e nenhum limite de acesso é contornado. Para cobertura mais completa é necessário um feed adequado e validação de sequência.\n\n4. JEV\nInsira sua chave na aba JEV e analise o contexto carregado. A consulta automática é opcional, funciona enquanto o aplicativo estiver aberto e a fonte Excel estiver ativa. Se faltar evidência ou houver atraso, a avaliação é limitada ou bloqueada.\n\n5. DIÁRIO\nRegistre resultados líquidos e exporte o histórico. O aplicativo guarda configurações e eventos no diretório de dados do seu usuário. Chaves não são persistidas.\n\nLEITURA DE FLUXO\nProgressão: agressão acompanhada de avanço observado do preço.\nAbsorção potencial: agressão sem avanço proporcional; não identifica intenção ou ordem oculta.\nExaustão potencial: perda de intensidade após avanço e falta de continuação; não prevê reversão.\nRedução de liquidez: quantidade visível diminuiu nos mesmos níveis; a causa pode ser execução, cancelamento ou atualização.\n\nESTADO DESTA VERSÃO\nColetor Excel implementado, mas ainda não validado na sua instalação. Conta Toro, envio de ordens, detector de notícias e gestão de posição aberta não estão conectados. Nenhuma rentabilidade foi comprovada. Margem e stop não garantem perda máxima.\n\nFONTES\nSkill TypeSafe: github.com/typesafe-ai/skills\nAPI e modelos: docs.typesafe.ai\nRTD/ProfitDLL: ajuda.nelogica.com.br\nContrato WIN e margem: b3.com.br\n\nO ZIP do projeto contém a documentação completa, fontes e testes para auditoria.")
+        put_text(box, "COMECE AQUI\n\nCOPILOTO\nTela principal centrada no JEV: estado da fonte, medidas capturadas, classificação do contexto e conclusão com evidências e impedimentos. Escreva sua leitura do mercado em \"Sua leitura\": a próxima consulta avalia apoio, contradição e suficiência da evidência observada sobre a sua frase — dimensões separadas, nunca recomendação. Dados parciais mantêm a conclusão em aguardar; o lote calculado não é ordem ou probabilidade de lucro. Exportar painel HTML salva um registro visual estático.\n\n1. FLUXO\nExplore os quatro cenários locais: progression (progressão), absorption (absorção), exhaustion (exaustão) e choppy (alternância). buy/sell invertem o lado. Esses dados são sintéticos e não representam o pregão. Mostra preços, delta/contratos capturados, hipóteses, idade e cobertura.\n\n2. CENÁRIOS\nComparação de entrada, invalidação e alvo pelos níveis observados. Cenários experimentais com capital manual; nenhuma operação é executada.\n\n3. CONTA\nInforme patrimônio, pico, custo, margem, stop e limite por proposta. O cálculo acompanha ganhos e perdas e compara dez combinações de fração/base patrimonial. Não estima um lote de lucro máximo. O patrimônio é manual e a conta é assumida sem posição no cenário. Pausas projetadas são hipotéticas; perdas registradas respeitam 60 s.\n\n4. CONFIGURAÇÃO\nFonte de dados (RTD/Excel e replay CSV) e chave TypeSafe JEV no mesmo lugar. A exportação RTD/Excel permite observar o que seu Profit disponibiliza sem a DLL Feed: cotações ou uma amostra do tape. A consulta automática do JEV é opcional, funciona enquanto o aplicativo estiver aberto e a fonte Excel estiver ativa. Se faltar evidência ou houver atraso, a avaliação é limitada ou bloqueada.\n\n5. DIÁRIO\nRegistre resultados líquidos e exporte o histórico. O aplicativo guarda configurações e eventos no diretório de dados do seu usuário. Chaves não são persistidas.\n\nLEITURA DE FLUXO\nProgressão: agressão acompanhada de avanço observado do preço.\nAbsorção potencial: agressão sem avanço proporcional; não identifica intenção ou ordem oculta.\nExaustão potencial: perda de intensidade após avanço e falta de continuação; não prevê reversão.\nRedução de liquidez: quantidade visível diminuiu nos mesmos níveis; a causa pode ser execução, cancelamento ou atualização.\n\nESTADO DESTA VERSÃO\nColetor Excel implementado, mas ainda não validado na sua instalação. Conta Toro, envio de ordens, detector de notícias e gestão de posição aberta não estão conectados. O JEV classifica contexto observado — não acompanha suas ações no Profit nem prevê lucro. Nenhuma rentabilidade foi comprovada. Margem e stop não garantem perda máxima.\n\nFONTES\nSkill TypeSafe: github.com/typesafe-ai/skills\nAPI e modelos: docs.typesafe.ai\nRTD/ProfitDLL: ajuda.nelogica.com.br\nContrato WIN e margem: b3.com.br\n\nO ZIP do projeto contém a documentação completa, fontes e testes para auditoria.")
 
     def values(self):
         return {key: value.get() for key, value in self.risk_inputs.items()}
@@ -453,7 +454,9 @@ class JevWINApp:
         self.model_deadline_ms = None
         self.clear_candidates()
         self.model_summary.configure(text="Contexto alterado. JEV ainda não consultado para esta fonte.")
-        put_text(self.jev_text, "Nenhuma análise atual para a fonte selecionada. Resultados anteriores permanecem no diário.")
+        self.copilot.render_jev_pending("Contexto alterado. JEV ainda não consultado para esta fonte.")
+        self.copilot.render_premise_pending("Fonte alterada; sua leitura será reavaliada na próxima consulta.")
+        put_text(self.copilot.jev_details, "Nenhuma análise atual para a fonte selecionada. Resultados anteriores permanecem no diário.")
 
     def load_demo(self):
         self.stop_excel(quiet=True)
@@ -567,7 +570,7 @@ class JevWINApp:
             return
         key = self.key.get().strip()
         if not key:
-            self.tabs.select(self.pages["jev"])
+            self.tabs.select(self.pages["config"])
             self.api_status.configure(text="Insira sua chave TypeSafe. Ela será usada somente nesta execução.")
             return
         if "jev" in self.busy:
@@ -595,19 +598,17 @@ class JevWINApp:
             clock = snapshot["ts_ms"]
             study = build_risk_study(self.values(), now_ms=clock, last_loss_ms=self.last_loss_ms if snapshot["application_mode"] == "excel_observation" else None)
             technical = build_market_candidates(self.session.engine, snapshot, study["config"], study["account"], clock)
-            state["candidate_setups"] = []
-            for row in technical["rows"]:
-                if row["risk"]["status"] != "ALLOW_SIMULATION":
-                    continue
-                index = len(state["candidate_setups"])
-                state["candidate_setups"].append({key: row[key] for key in ("id", "side", "entry_points", "stop_points", "target_points", "reference_levels")})
-                questions[f"candidate_{index}_support"] = {"type": "noul", "instructions": f"Does the observed market context support the technical hypothesis in state.candidate_setups[{index}]? Use measured flow, its coverage limits and supplied reference levels. This asks evidential support, not probability of profit. Do not infer that financial viability or a large target implies support."}
-                questions[f"candidate_{index}_contradiction"] = {"type": "noul", "instructions": f"Does observed market evidence contradict the directional hypothesis in state.candidate_setups[{index}]? Assess contradictory aggression, price response and missing decisive coverage. Do not predict the result or use account information."}
+            attach_candidates(state, questions, [row for row in technical['rows'] if row['risk']['status'] == 'ALLOW_SIMULATION'])
         except (ValueError, KeyError):
             state["candidate_setups"] = []
+        premise = declared_premise(self.premise.get(), asof_ms=snapshot["ts_ms"])
+        if premise is not None:
+            state["user_premise"] = premise
+            questions.update(premise_questions())
+            self.copilot.render_premise_pending("Sua leitura será avaliada junto à próxima resposta JEV…")
         def evaluate():
             response = JevClient(timeout_seconds=3, api_key=key).evaluate(state, questions)
-            return {"response": response, "state": state, "source_ts_ms": snapshot["ts_ms"],
+            return {"response": response, "state": state, 'questions': questions, "source_ts_ms": snapshot["ts_ms"],
                     "flow_ts_ms": snapshot.get("flow_ts_ms"), "mode": snapshot["application_mode"],
                     "source_generation": snapshot["source_generation"]}
         self.run_job("jev", evaluate)
@@ -637,12 +638,31 @@ class JevWINApp:
                 support = response["answers"][f"candidate_{index}_support"]["noul"]
                 contrary = response["answers"][f"candidate_{index}_contradiction"]["noul"]
                 lines.append(f"{setup['id']}: apoio {support:.3f}; contradição {contrary:.3f}.")
+        answers = response["answers"]
+        if "premise_evidence_support" in answers:
+            premise = result["state"].get("user_premise", {})
+            sup, con = answers["premise_evidence_support"]["noul"], answers["premise_evidence_contradiction"]["noul"]
+            evl = answers["premise_evaluable"]["noul"]
+            lines += ["", f"SUA LEITURA «{premise.get('text', '')}»",
+                      f"Apoio {sup:.3f} · contradição {con:.3f} · evidência avaliável {evl:.3f} — dimensões separadas, sem recomendação."]
+            self.copilot.render_premise(support=sup, contradiction=con, evaluable=evl,
+                                        premise=premise.get("text", ""), late=late)
         partial = result["state"]["evidence_coverage"]["source_quality"].get("full_tape") is not True
         if partial:
             lines += ["", "COBERTURA PARCIAL: a classificação se refere somente aos negócios capturados; não confirma o fluxo integral."]
         lines += ["", "Resultado histórico: prazo excedido." if late else "Esta leitura descreve o instante informado. Mudanças do mercado podem invalidá-la.",
                   "Nenhuma instrução de entrada ou ordem foi gerada."]
-        put_text(self.jev_text, "\n".join(lines))
+        put_text(self.copilot.jev_details, "\n".join(lines))
+        dims = " · ".join(f"{short} {answers[key]['noul']:.2f}" for key, short in
+                          (("buy_progression_supported", "prog.compra"), ("sell_progression_supported", "prog.venda"),
+                           ("buy_absorption_supported", "abs.compra"), ("sell_absorption_supported", "abs.venda"),
+                           ("exhaustion_supported", "exaustão"), ("evidence_insufficient", "insuficiência")))
+        self.copilot.render_jev(
+            context=name,
+            dimensions=f"Confiança {context['confidence']:.2f} na classificação (não é chance de lucro) · {dims}",
+            validity=(f"Referência {local_time(result['source_ts_ms'])} · "
+                      + ("expirada — leitura histórica" if late else "válida para o instante informado")),
+            late=late)
         self.model_summary.configure(text=("JEV histórico: " if late else "JEV: ") + name + (" • amostra parcial" if partial else "") + " • " + local_time(result["source_ts_ms"]))
         self.refresh_decision(force=True)
 
@@ -665,6 +685,7 @@ class JevWINApp:
                     self.model_deadline_ms = None
                     self.api_status.configure(text=error)
                     self.model_summary.configure(text="JEV indisponível nesta avaliação.")
+                    self.copilot.render_jev_pending("JEV indisponível nesta avaliação.")
                 else:
                     self.generation += 1
                     self.connection_status.configure(text=error)
@@ -709,7 +730,8 @@ class JevWINApp:
             self.request_jev()
         if self.last_model_at is not None and self.session.mode == "excel_observation" and (self.model_deadline_ms is None
             or int(time.time()*1000) > self.model_deadline_ms or self.snapshot is None or not can_classify(self.snapshot)[0]):
-            self.model_summary.configure(text="A última avaliação JEV expirou para acompanhamento atual. Consulte o registro na aba JEV.")
+            self.model_summary.configure(text="A última avaliação JEV expirou para acompanhamento atual. Consulte o registro no diário.")
+            self.copilot.render_jev_pending("A última avaliação JEV expirou para acompanhamento atual.")
             self.last_model_at = None
             self.model_deadline_ms = None
         self.refresh_decision()
@@ -718,6 +740,7 @@ class JevWINApp:
     def clear_monitor(self):
         for card in self.flow_cards.values():
             card.configure(text="—")
+        self.copilot.clear_market()
         self.patterns.delete(*self.patterns.get_children())
         self.chart.delete("all")
         self.coverage.configure(text="Aguardando dados válidos da fonte selecionada.")
@@ -729,18 +752,25 @@ class JevWINApp:
         features = state["computed_features"]
         quote = state.get("last_quote")
         last = features.get("last_price_points") or (quote.get("last") if quote else None)
-        self.flow_cards["last"].configure(text=f"{number(last):,.0f}".replace(",", ".") if last is not None else "—")
-        self.flow_cards["delta"].configure(text=str(features["delta_contracts"]) if features["trade_count"] else "—")
-        self.flow_cards["volume"].configure(text=str(features["total_contracts"]) if features["trade_count"] else "—")
+        last_text = f"{number(last):,.0f}".replace(",", ".") if last is not None else "—"
+        delta_text = str(features["delta_contracts"]) if features["trade_count"] else "—"
+        volume_text = str(features["total_contracts"]) if features["trade_count"] else "—"
         spread = features.get("spread_points")
         if spread is None and quote and quote.get("bid") is not None and quote.get("ask") is not None and quote["ask"] > quote["bid"]:
             spread = str(number(quote["ask"])-number(quote["bid"])) + " *"
-        self.flow_cards["spread"].configure(text=str(spread or "—"))
         stamp = state.get("flow_ts_ms") or state.get("quote_ts_ms") or (quote.get("ts_ms") if quote else None)
         age = state["ts_ms"]-stamp if stamp is not None else None
-        self.flow_cards["age"].configure(text=(f"{age/1000:.1f} s" if age is not None and age >= 0 else "Desconhecida"))
+        age_text = f"{age/1000:.1f} s" if age is not None and age >= 0 else "Desconhecida"
         mode = {"synthetic": "DEMONSTRAÇÃO LOCAL", "replay": "REPLAY CSV", "excel_observation": "OBSERVAÇÃO EXCEL"}.get(state["application_mode"], "SEM FONTE")
+        self.flow_cards["last"].configure(text=last_text)
+        self.flow_cards["delta"].configure(text=delta_text)
+        self.flow_cards["volume"].configure(text=volume_text)
+        self.flow_cards["spread"].configure(text=str(spread or "—"))
+        self.flow_cards["age"].configure(text=age_text)
         self.source_badge.configure(text=f"{mode} • {state['symbol']} • {local_time(state['ts_ms'])} • Conta Toro não conectada")
+        self.copilot.render_source({"mode": mode, "symbol": state["symbol"], "ref": local_time(state["ts_ms"]),
+                                    "last": last_text, "delta": delta_text, "volume": volume_text,
+                                    "spread": str(spread or "—"), "age": age_text})
         self.patterns.delete(*self.patterns.get_children())
         for hypothesis in state["hypotheses"]:
             name = KIND_NAMES[hypothesis["kind"]] + " " + SIDE_NAMES[hypothesis["side"]]

@@ -161,6 +161,11 @@ class FlowEngine:
                 raise ValueError("Invalid aggressor")
             trade = {"id": identity, "symbol": self.symbol, "ts_ms": ts, "price_points": price,
                      "quantity": quantity, "aggressor": aggressor.lower()}
+            for key in ("buyer_broker", "seller_broker"):
+                broker = event.get(key)
+                if broker is not None and (not isinstance(broker, str) or not broker.strip() or len(broker) > 80):
+                    raise ValueError("Invalid broker identity")
+                trade[key] = broker
             if identity in self.ids:
                 conflict = trade != self.ids[identity]
                 return self._reject("CONFLICTING_TRADE_ID" if conflict else "DUPLICATE_TRADE", "duplicates", conflict)
@@ -224,18 +229,42 @@ class FlowEngine:
         sell = sum(t["quantity"] for t in trades if t["aggressor"] == "sell")
         unknown = sum(t["quantity"] for t in trades if t["aggressor"] == "unknown")
         prices = [t["price_points"] for t in trades]
-        progress = prices[-1] - prices[0] if prices else None
-        span = max(prices) - min(prices) if prices else None
-        total = buy + sell + unknown
         complete = (self.tape_coverage_start_ms is not None and self.tape_coverage_start_ms <= start
                     and (self.truncated_trade_through_ms is None or self.truncated_trade_through_ms <= start)
                     and self.source_quality["full_tape"] is True)
+        progress = prices[-1] - prices[0] if prices else None
+        span = max(prices) - min(prices) if prices else None
+        path = None
+        if len(prices) >= 2:
+            first, last = prices[0], prices[-1]
+            highest, lowest = max(prices), min(prices)
+            path = {
+                "observation_count": len(prices),
+                "basis": "first_observed_trade",
+                "upward_excursion_ticks": _text((highest - first) / self.tick),
+                "downward_excursion_ticks": _text((first - lowest) / self.tick),
+                "buy_retracement_ticks": _text((highest - last) / self.tick),
+                "sell_retracement_ticks": _text((last - lowest) / self.tick),
+                "scope": "complete" if complete else "partial",
+            }
+        else:
+            path = {
+                "observation_count": len(prices),
+                "basis": "first_observed_trade",
+                "upward_excursion_ticks": None,
+                "downward_excursion_ticks": None,
+                "buy_retracement_ticks": None,
+                "sell_retracement_ticks": None,
+                "scope": "complete" if complete else "partial",
+            }
+        total = buy + sell + unknown
         return {"window_ms": duration_ms, "start_exclusive_ms": start, "end_inclusive_ms": end_ms,
                 "trade_count": len(trades), "buy_aggressed_contracts": buy, "sell_aggressed_contracts": sell,
                 "unknown_aggressor_contracts": unknown, "total_contracts": total, "delta_contracts": buy - sell,
                 "price_change_points": _text(progress), "price_range_points": _text(span),
                 "first_price_points": _text(prices[0]) if prices else None,
                 "last_price_points": _text(prices[-1]) if prices else None,
+                "price_path": path,
                 "contracts_per_second": _text(Decimal(total) * 1000 / duration_ms),
                 "trades_per_second": _text(Decimal(len(trades)) * 1000 / duration_ms),
                 "buy_dominance_fraction": _text(Decimal(buy) / (buy + sell)) if buy + sell else None,
@@ -271,6 +300,7 @@ class FlowEngine:
         visible_bid = sum(q for _, q in book["bids"]) if book_fresh else None
         visible_ask = sum(q for _, q in book["asks"]) if book_fresh else None
         features = {**current, "windows": windows, "source": "normalized_event_calculation",
+                    "price_progression_ticks": _text(_decimal(current["price_change_points"]) / self.tick) if current["price_change_points"] is not None else None,
                     "spread_points": _text(ask - bid) if book_fresh else None,
                     "visible_bid_contracts": visible_bid, "visible_ask_contracts": visible_ask,
                     "book_imbalance": _text(Decimal(visible_bid - visible_ask) / (visible_bid + visible_ask)) if book_fresh else None,
@@ -293,7 +323,29 @@ class FlowEngine:
                 "observations": {"hypotheses": hypotheses, "description": "Observed flow patterns; no future outcome estimate.",
                                  "rule_status": self.rules["status"]},
                 "computed_features": features, "evidence_coverage": coverage, "hypotheses": hypotheses,
+                "order_flow": self.observed_flow(now_ms),
                 "actionable_live_signal": False, "strategy_validated": False, "win_probability": None}
+
+    def observed_flow(self, now_ms):
+        trades = [t for t in self.trades if now_ms - self.rules["short_window_ms"] < t["ts_ms"] <= now_ms]
+        brokers, path, delta = {}, [], 0
+        for trade in trades:
+            qty = trade["quantity"]
+            delta += qty if trade["aggressor"] == "buy" else -qty if trade["aggressor"] == "sell" else 0
+            path.append({"ts_ms": trade["ts_ms"], "delta_contracts": delta})
+            for key, side in (("buyer_broker", "buy"), ("seller_broker", "sell")):
+                name = trade.get(key)
+                if name:
+                    row = brokers.setdefault(name, {"broker": name, "buy_contracts": 0, "sell_contracts": 0, "net_contracts": 0})
+                    row[side + "_contracts"] += qty
+                    row["net_contracts"] += qty if side == "buy" else -qty
+        return {"window_ms": self.rules["short_window_ms"],
+                "recent_trades": [{**t, "price_points": _text(t["price_points"])} for t in trades[-40:]],
+                "delta_path": path[-400:],
+                "brokers": sorted(brokers.values(), key=lambda row: (-abs(row["net_contracts"]), row["broker"]))[:20],
+                "broker_identified_trades": sum(bool(t.get("buyer_broker") and t.get("seller_broker")) for t in trades),
+                "broker_scope": "Saldo da janela observada; não representa posição de investidores.",
+                "investor_positions_known": False}
 
     def _hypotheses(self, current, previous, reasons, book_fresh, now_ms):
         result = []
@@ -306,6 +358,9 @@ class FlowEngine:
         def record(kind, side, condition, missing, evidence, description):
             status = "inconclusive" if missing else ("observed" if kind == "progression" else "potential") if condition else "not_observed"
             result.append({"id": f"{kind}_{side}", "kind": kind, "side": side, "status": status,
+                           "aggressor_side": side if side in ("buy", "sell") else None,
+                           "scenario_side": ("sell" if side == "buy" else "buy") if kind == "absorption" else side if kind == "progression" else None,
+                           "scenario_effect": "weakens_aggressor_without_confirming_reversal" if kind == "exhaustion" else "supports_opposite_scenario_hypothesis" if kind == "absorption" else "supports_aggressor_scenario" if kind == "progression" else "observed_liquidity_only",
                            "description": description, "evidence": evidence, "missing": list(dict.fromkeys(missing)),
                            "descriptive_only": True, "future_profit_probability": None})
 
@@ -332,23 +387,59 @@ class FlowEngine:
                    exhaustion_missing, {**evidence, "previous_aggressed_contracts": prev_volume, "side_intensity_ratio": _text(ratio),
                                         "previous_directional_progress_points": _text(prev_progress)},
                    "Desaceleração da agressão após avanço, sem continuação observada; hipótese de exaustão, sem previsão de reversão.")
+        books = list(self.books)
+        before_book = books[-2] if len(books) >= 2 else None
+        after_book = books[-1] if books else None
+        elapsed_ms = after_book["ts_ms"] - before_book["ts_ms"] if before_book and after_book else None
+        before_age_ms = now_ms - before_book["ts_ms"] if before_book else None
+        after_age_ms = now_ms - after_book["ts_ms"] if after_book else None
+        endpoint_ages_valid = all(
+            age is not None and 0 <= age <= self.rules["max_age_ms"]
+            for age in (before_age_ms, after_age_ms)
+        ) if before_book and after_book else False
+        short_window_start_ms = now_ms - self.rules["short_window_ms"]
+        within_window = (
+            before_book is not None
+            and after_book is not None
+            and short_window_start_ms < before_book["ts_ms"] <= now_ms
+            and short_window_start_ms < after_book["ts_ms"] <= now_ms
+            and elapsed_ms is not None
+            and 0 <= elapsed_ms <= self.rules["short_window_ms"]
+        )
         for side in ("bids", "asks"):
-            depth = [book for book in self.books if now_ms - self.rules["short_window_ms"] < book["ts_ms"] <= now_ms and len(book[side]) > 1]
+            before_levels = len(before_book[side]) if before_book else None
+            after_levels = len(after_book[side]) if after_book else None
+            comparison = {
+                "scope": "consecutive_observed_snapshots",
+                "before_ts_ms": before_book["ts_ms"] if before_book else None,
+                "after_ts_ms": after_book["ts_ms"] if after_book else None,
+                "elapsed_ms": elapsed_ms,
+                "before_age_ms": before_age_ms,
+                "after_age_ms": after_age_ms,
+                "before_depth_levels": before_levels,
+                "after_depth_levels": after_levels,
+            }
             missing = sorted(self.faults)
-            if not book_fresh or len(depth) < 2:
+            enough_depth = before_levels is not None and after_levels is not None and before_levels > 1 and after_levels > 1
+            if not within_window or not enough_depth:
                 missing.append("DEPTH_SEQUENCE_REQUIRED")
+            endpoint_ages = [age for age in (before_age_ms, after_age_ms) if age is not None]
+            if any(age < 0 or age > self.rules["max_age_ms"] for age in endpoint_ages):
+                missing.append("BOOK_COMPARISON_EXPIRED")
             if self.source_quality["feed_connected"] is not True or self.source_quality["sequence_ok"] is not True:
                 missing.append("SOURCE_INTEGRITY_NOT_VERIFIED")
             fraction = None
-            if len(depth) >= 2:
-                first, last = depth[-2], depth[-1]
+            if enough_depth and within_window and endpoint_ages_valid:
+                first, last = before_book, after_book
                 if [p for p, _ in first[side]] != [p for p, _ in last[side]]:
                     missing.append("DEPTH_PRICE_GRID_CHANGED")
                 else:
-                    before, after = sum(q for _, q in first[side]), sum(q for _, q in last[side])
-                    fraction = Decimal(before - after) / before
+                    before_quantity = sum(q for _, q in first[side])
+                    after_quantity = sum(q for _, q in last[side])
+                    fraction = Decimal(before_quantity - after_quantity) / before_quantity
             record("liquidity_withdrawal", side, fraction is not None and fraction >= _decimal(self.rules["depth_reduction_fraction_min"]), missing,
-                   {"displayed_quantity_reduction_fraction": _text(fraction), "cause": "unknown; execution, cancellation or refresh may explain reduction"},
+                   {"displayed_quantity_reduction_fraction": _text(fraction), "comparison": comparison,
+                    "cause": "unknown; execution, cancellation or refresh may explain reduction"},
                    "Redução da liquidez exibida nos mesmos níveis entre snapshots de profundidade; não comprova cancelamento ou identidade.")
         return result
 

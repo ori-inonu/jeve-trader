@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "candidate_commit": "e52172de0c127a8f1d3768cc072964501eb8ff69",
+  "candidate_tree": "3e2e3ceb4856ea71ec1b903efda4fc6fd729098e",
+  "main_baseline": "0171aed6c4a25adf26d349bfe2c3140805a35e97",
+  "backend": {
+    "status": "passed",
+    "generated_at_utc": "2026-10-09T12:43:14.812237+00:00",
+    "python": "3.14.7 (tags/v3.14.7:823f032, Aug  5 2026, 10:51:32) [MSC v.1944 64 bit (AMD64)]",
+    "executable": "{integration_checkout}\\.venv\\Scripts\\python.exe",
+    "platform": "win32",
+    "checks": {
+      "tests": {
+        "command": [
+          "{integration_checkout}\\.venv\\Scripts\\python.exe",
+          "-E",
+          "-s",
+          "-B",
+          "{integration_checkout}\\scripts\\verify.py",
+          "--_child",
+          "tests"
+        ],
+        "cwd": "{integration_checkout}\\app",
+        "returncode": 0,
+        "elapsed_seconds": 33.258,
+        "tests_run": 326,
+        "passed": true
+      },
+      "desktop": {
+        "command": [
+          "{integration_checkout}\\.venv\\Scripts\\python.exe",
+          "-E",
+          "-s",
+          "-B",
+          "{integration_checkout}\\scripts\\verify.py",
+          "--_child",
+          "desktop"
+        ],
+        "cwd": "{integration_checkout}\\app",
+        "returncode": 0,
+        "elapsed_seconds": 0.724,
+        "passed": true
+      }
+    },
+    "python_socket_network_blocked": true,
+    "gui_opened": false,
+    "windows_runtime_validated": false,
+    "live_jev_api_tested": false,
+    "live_profit_excel_tested": false,
+    "order_execution_tested": false
+  },
+  "frontend": {
+    "tests": 36,
+    "failed": 0,
+    "test_exit_code": 0,
+    "build_exit_code": 0,
+    "tsc": "passed",
+    "vite": "passed",
+    "large_legacy_chunk_warning": true
+  },
+  "rust": {
+    "command": "cargo check --locked --offline",
+    "exit_code": 0,
+    "completed_at_utc": "2026-10-09T12:07:59Z",
+    "tested_commit": "5f15ab73f4f5adfd3221b9bd5f785c24c9afc496",
+    "reused_reason": "No Rust or Cargo source changed in e521 repair. Compile check does not certify native GUI/package/install."
+  },
+  "merge_tree": {
+    "exit_code": 0,
+    "tree": "3e2e3ceb4856ea71ec1b903efda4fc6fd729098e"
+  },
+  "external_gates": {
+    "native_window": null,
+    "installer_candidate": null,
+    "paired_human_gain": null,
+    "b3_contract": null,
+    "private_account": null,
+    "financial_approval": null
+  },
+  "log_hashes": {
+    "pr2-repair-backend.log": "9b0f5abbe9a2a640314473d97039ed63c071017778d76055e0b5feb2aa4ac483",
+    "pr2-repair-frontend-test.log": "16df7476782525d872fb669b847ee01d047d3a9679b6e626dfa73b42a14b34d9",
+    "pr2-repair-frontend-build.log": "ccb4d695938311adcfb4d8d0586a3ad9cd885677ffbf40dfb191d7941741cc22"
+  },
+  "publication_projection": {
+    "raw_source_sha256": "bc7c5918e72e5502a2fd04b26c2d771e92f525ad7c0d6f924407cb48d84ae95b",
+    "redactions": [
+      "personal checkout paths",
+      "conversation UUID"
+    ],
+    "acceptance_changed": false,
+    "provenance_retained": "Non-personal task and reviewer role labels are retained as provenance."
+  }
+}

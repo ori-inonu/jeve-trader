@@ -1,0 +1,185 @@
+{
+  "input": {
+    "mode": "evaluate",
+    "state": {
+      "objective": "Implement local multimarket observer, no orders. Existing React/Tauri/Python, Decimal rules, offline tests.",
+      "crypto": "Business hypothesis uses individual spot trade participation and best bid/ask spread/staleness. L2 liquidity not claimed. Binance documents individual trade/bookTicker and metadata market-data-only endpoints; Coinbase batches trades. No private accounts. Tape remains partial.",
+      "performance": "Prospective engineering process-only synthetic workload does not certify native latency/GPU/manual benefit; paired native gate kept external."
+    },
+    "questions": {
+      "crypto_pilot": {
+        "type": "choice",
+        "instructions": "Choose the smallest public crypto pilot meeting the business hypothesis.",
+        "candidates": [
+          {
+            "id": "binance_l1_trades",
+            "description": "BTCUSDT Binance spot individual trade + bookTicker L1, REST metadata, explicit partial tape and no L2."
+          },
+          {
+            "id": "coinbase_l2_trades",
+            "description": "BTC-USD Coinbase batched trades + L2, qualify sequencing and recovery first."
+          },
+          {
+            "id": "dual_l1_trades",
+            "description": "Two isolated venues at once, double qualification."
+          }
+        ]
+      },
+      "test_seams": {
+        "type": "choice",
+        "instructions": "Choose stable public test seams covering causal identity, money and cockpit, offline/no paid API.",
+        "candidates": [
+          {
+            "id": "domain_rpc_projection",
+            "description": "Public domain contracts + registry RPC/event projections with injected clock, provider fixtures and accessible UI integration."
+          },
+          {
+            "id": "internal_units",
+            "description": "Private-method implementation mirrors for every module."
+          },
+          {
+            "id": "ui_only",
+            "description": "Only UI end-to-end tests, no deterministic contract tests."
+          }
+        ]
+      },
+      "workload": {
+        "type": "choice",
+        "instructions": "Select finite pre-code synthetic engineering workload; separate native/human acceptance still required.",
+        "candidates": [
+          {
+            "id": "bounded_1000",
+            "description": "1000events/s10s; queue2000; drain<=500/tick; snapshot<=4Hz <=200trades; processp95<=50ms pairedhost; recordRSS."
+          },
+          {
+            "id": "bounded_10000",
+            "description": "10000events/s queue20000 UI20Hz, much wider performance scope."
+          },
+          {
+            "id": "unbounded",
+            "description": "Unbounded queue render everyevent, no budget."
+          }
+        ]
+      }
+    }
+  },
+  "result": {
+    "status": "assessed",
+    "receiptId": "b61dc6ba-c81b-4756-ba4d-a63bb563dd1f",
+    "questionIds": [
+      "crypto_pilot",
+      "test_seams",
+      "workload"
+    ],
+    "inputDigest": "1c157e9ab716a5e8ab7964ba7b709e260b5ef2c3737c6216a78a92594b03f562",
+    "rubricVersion": "batch-2026-09-26.2",
+    "policies": {
+      "crypto_pilot": {
+        "version": "decision-policy-2026-09-26.1",
+        "mode": "conservative",
+        "minConfidence": 0.6,
+        "minProbability": 0.6,
+        "calibration": "not_locally_calibrated"
+      },
+      "test_seams": {
+        "version": "decision-policy-2026-09-26.1",
+        "mode": "conservative",
+        "minConfidence": 0.6,
+        "minProbability": 0.6,
+        "calibration": "not_locally_calibrated"
+      },
+      "workload": {
+        "version": "decision-policy-2026-09-26.1",
+        "mode": "conservative",
+        "minConfidence": 0.6,
+        "minProbability": 0.6,
+        "calibration": "not_locally_calibrated"
+      }
+    },
+    "authority": "advisory_only",
+    "model": "jev-1.13.0",
+    "answers": {
+      "crypto_pilot": {
+        "type": "choice",
+        "providerChoice": "binance_l1_trades",
+        "bestCandidate": "binance_l1_trades",
+        "probabilities": {
+          "binance_l1_trades": 1,
+          "coinbase_l2_trades": 0,
+          "dual_l1_trades": 0,
+          "insufficient_evidence": 0
+        },
+        "confidence": 1,
+        "disposition": "recommendation",
+        "recommendation": "binance_l1_trades",
+        "policy": {
+          "version": "decision-policy-2026-09-26.1",
+          "mode": "conservative",
+          "minConfidence": 0.6,
+          "minProbability": 0.6,
+          "calibration": "not_locally_calibrated"
+        }
+      },
+      "test_seams": {
+        "type": "choice",
+        "providerChoice": "insufficient_evidence",
+        "bestCandidate": "domain_rpc_projection",
+        "probabilities": {
+          "domain_rpc_projection": 0.45,
+          "internal_units": 0.03,
+          "ui_only": 0.01,
+          "insufficient_evidence": 0.51
+        },
+        "confidence": 0.35,
+        "disposition": "abstained",
+        "reasonCode": "insufficient_evidence",
+        "policy": {
+          "version": "decision-policy-2026-09-26.1",
+          "mode": "conservative",
+          "minConfidence": 0.6,
+          "minProbability": 0.6,
+          "calibration": "not_locally_calibrated"
+        }
+      },
+      "workload": {
+        "type": "choice",
+        "providerChoice": "insufficient_evidence",
+        "bestCandidate": "bounded_1000",
+        "probabilities": {
+          "bounded_1000": 0.31,
+          "bounded_10000": 0.01,
+          "unbounded": 0,
+          "insufficient_evidence": 0.68
+        },
+        "confidence": 0.57,
+        "disposition": "abstained",
+        "reasonCode": "insufficient_evidence",
+        "policy": {
+          "version": "decision-policy-2026-09-26.1",
+          "mode": "conservative",
+          "minConfidence": 0.6,
+          "minProbability": 0.6,
+          "calibration": "not_locally_calibrated"
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 882,
+      "output_tokens": 203
+    },
+    "transport": {
+      "requestStartedAt": "2026-10-09T05:30:33.468Z",
+      "fetchInvoked": true,
+      "responseReceivedAt": "2026-10-09T05:30:33.754Z",
+      "responseStatus": 200,
+      "validatedResponse": true,
+      "providerRequestId": "req_01a11f252a4c7c3289706bec85148c01",
+      "providerRequestIdHeader": "x-typesafe-request-id",
+      "retryAfter": null
+    },
+    "latencyMs": 320,
+    "receiptPersisted": true,
+    "billed_usd": null
+  },
+  "interpretation": "Binance pilot advised; test seams and workload abstained. Public contract/RPC projection seams and finite process-only workload are reversible engineering choices grounded in MM01–12; no native/live benefit certified."
+}

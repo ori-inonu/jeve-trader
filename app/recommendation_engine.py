@@ -87,6 +87,13 @@ def _model(result, snapshot, now_ms):
         if choice not in FLOW_CHOICES or flow.get("type") != "choice":
             raise ValueError("Unsupported contextual choice")
         confidence = _unit(flow["confidence"])
+        insuff = response['answers']['evidence_insufficient']
+        if insuff.get('type') != 'noul':
+            raise ValueError('Missing insufficiency')
+        view['insufficiency'] = _unit(insuff['noul'])
+        view['review_policy_version'] = 'context-dimensions-v2'
+        if view['insufficiency'] >= 0.5:
+            view['reasons'].append('JEV_EVIDENCE_INSUFFICIENT')
         view.update(available=True, choice=choice, classification_confidence=confidence)
         ts, flow_ts = result.get("source_ts_ms"), result.get("flow_ts_ms")
         mode = snapshot.get("application_mode")
@@ -112,10 +119,13 @@ def _model(result, snapshot, now_ms):
                 raise ValueError("Duplicate model setup")
             support = response["answers"].get(f"candidate_{index}_support")
             contradiction = response["answers"].get(f"candidate_{index}_contradiction")
+            insufficient = response['answers'].get(f'candidate_{index}_insufficient')
+            if not isinstance(insufficient, dict) or insufficient.get('type') != 'noul':
+                raise ValueError('Candidate insufficiency missing')
             if not isinstance(support, dict) or not isinstance(contradiction, dict) or support.get("type") != "noul" or contradiction.get("type") != "noul":
                 raise ValueError("Candidate model evidence missing")
             setup_scores[identity] = {"setup": setup, "support": _unit(support["noul"]),
-                                      "contradiction": _unit(contradiction["noul"])}
+                                      "contradiction": _unit(contradiction["noul"]), 'insufficiency': _unit(insufficient['noul'])}
         view["current"] = not view["reasons"]
         return view, setup_scores, setups
     except (KeyError, TypeError, ValueError, DecimalException, OverflowError):
@@ -267,6 +277,8 @@ def build_recommendation(snapshot, candidate_report, risk_study, latest_jev_resu
                                       "status": "BLOQUEADO_RISCO" if risk["status"] != "ALLOW_SIMULATION" else "AGUARDAR",
                                       "reasons": option_reasons, "reference_evidence_ids": reference_ids,
                                       "model_evidence": None, "actionable_live_signal": False})
+            result['options'][-1]['premise'] = row.get('premise')
+            result['options'][-1]['hypothesis_version'] = row.get('hypothesis_version')
         if global_vetoes or result["options"] and all(option["risk"]["status"] != "ALLOW_SIMULATION" for option in result["options"]):
             result["status"] = "BLOQUEADO_RISCO"
             result["action"] = "Manter propostas bloqueadas pelos limites do cenário manual."
@@ -287,11 +299,14 @@ def build_recommendation(snapshot, candidate_report, risk_study, latest_jev_resu
             result["contradictions"].append("ABSORPTION_OR_EXHAUSTION_DOES_NOT_CONFIRM_REVERSAL")
         for option in result["options"]:
             evidence = scores.get(option["id"])
-            if evidence is None or not _same_geometry(evidence["setup"], option):
+            if (evidence is None or not _same_geometry(evidence["setup"], option)
+                    or not option.get('premise') or evidence['setup'].get('premise') != option['premise']
+                    or evidence['setup'].get('hypothesis_version') != option['hypothesis_version']):
                 option["reasons"].append("JEV_CANDIDATE_GEOMETRY_NOT_EVALUATED")
                 continue
             support, contradiction = evidence["support"], evidence["contradiction"]
             option["model_evidence"] = {"support": support, "contradiction": contradiction,
+                                         'insufficiency': evidence['insufficiency'],
                                          "support_exceeds_contradiction": support > contradiction,
                                          "scores_calibrated_on_WIN": False, "win_probability": None}
             if contradiction >= support:
@@ -299,7 +314,7 @@ def build_recommendation(snapshot, candidate_report, risk_study, latest_jev_resu
             if model.get("choice") == "buy_progression" and option["side"] == "sell" or model.get("choice") == "sell_progression" and option["side"] == "buy":
                 option["reasons"].append("MODEL_FLOW_DIRECTION_CONTRADICTS_OPTION")
             if (model["current"] and not result["missing_evidence"] and not option["reasons"]
-                    and model.get("choice") != "mixed_or_insufficient" and support > contradiction):
+                    and model.get("choice") != "mixed_or_insufficient" and support > contradiction and evidence['insufficiency'] < 0.5):
                 option["status"] = "HIPOTESE_PARA_REVISAO"
                 result["review_candidate_ids"].append(option["id"])
         if result["review_candidate_ids"]:

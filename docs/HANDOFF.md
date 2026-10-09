@@ -1,5 +1,51 @@
 # Retomada — Jeve Trader
 
+## Revisão contra main e próximo ciclo — 09/10/2026
+
+O [PR #2](https://github.com/ori-inonu/jeve-trader/pull/2) foi revisado contra `main` (`0171aed6c4a25adf26d349bfe2c3140805a35e97`). O candidato de código corrigido é `e52172de0c127a8f1d3768cc072964501eb8ff69`, árvore `3e2e3ceb4856ea71ec1b903efda4fc6fd729098e`. As revisões independentes [Standards](evidence/pr2-main-standards-final.md) e [Spec](evidence/pr2-main-spec-final.md) terminaram com zero achados restantes. A [evidência Windows offline](evidence/pr2-main-verification-public.json) registra 326 testes Python, autoteste legado, 36 testes frontend e build TypeScript/Vite aprovados. Rust offline foi reaproveitado porque seus arquivos não mudaram. O merge local com a baseline não tem conflitos; checks e base remotos são conferidos separadamente antes da entrega.
+
+Corrigidos os dois achados reproduzidos: concorrência entre OFF e despacho JEV e retenção ilimitada de identidades. Os [aceites R-01–R-04](specs/PR2_Revisao_Main_2026-10-09.md) e o [RED/GREEN](evidence/pr2-repair-tests.md) preservam FW-01 e I-01–I-12. OFF pode aguardar uma tentativa já iniciada; timeout de transporte não comprova latência da janela.
+
+A [SPEC de instrumentação e protocolo](specs/Instrumentacao_Protocolo_Multimercado_2026-10-09.md) está **ready_local para EN-T1–EN-T3**, conforme [revisão independente](evidence/rt12-next-spec-readiness-final.md), SHA-256 `9e6d06ed4ea275981bdcf8c0d4d26e568b3ff79d9f9be20482feb06e77565e26`. O cabeçalho draft conserva o snapshot exato revisado; este registro e o relatório fixam sua prontidão. Isso é planejamento concluído, sem implementação dessas três tarefas nesta rodada.
+
+| Próxima entrega | Dependência e aceite |
+|---|---|
+| EN-T1 — origem e manifest de pacote | Hashes de código/artefatos, validação fechada e regressões offline; primeiro incremento local elegível |
+| EN-T2 — correlação de telemetria | Origem EN-T1; relógio único do renderer, allowlist, buffer limitado e sanitização |
+| EN-T3 — protocolo verificável | Schemas de run/tarefa/evento/pares; estados e falhas preservados; ganho null |
+| EN-T4 — jornada Windows J1–J6 | Pacote identificado, observação nativa e ponte J6 comprovada; não executada |
+| EN-T5 — comparação humana prospectiva | Tratamento B congelado, ambiente equivalente ou diferenças qualificadas e cinco pares completos; não executada |
+
+O JEV recomendou [fechar schemas locais](evidence/rt12-schema-jev.json) e [aprofundar o schema público Cedro](evidence/b3-next-diligence-jev.json). A consulta anterior de prioridade foi inválida e não virou recomendação. O [dossiê B3](research/B3_Qualificacao_Publica_2026-10-09.md) delimita Cedro/CQG/UMDF; SKU WIN/WDO, entitlement, licença e direitos de retenção/envio ao JEV continuam sem confirmação. O [adendo Cedro](research/Cedro_Socket_Schema_Publico_2026-10-09.md) encerrou quatro páginas de pesquisa: parser real não ready; faltam payload versionado, identidade WDO e recuperação aplicável. Conta real depende de fonte/formato/autorização; calibração financeira depende de corpus e aprovação por escopo. Ordens permanecem desabilitadas. O piloto FW-11 de 30 minutos e seus critérios originais continuam abertos; a prontidão local do código não certifica release operacional.
+
+## Incremento multimercado — 09/10/2026
+
+Entrega isolada na branch `codex/multimarket-spec`, com [SPEC finita](specs/Multimercado_Implementacao_2026-10-09.md), [grafo SDD](SDD.md) e [matriz de aceite](evidence/multimarket-acceptance.md). O cockpit React acessa BTCUSDT spot por API pública, mantém identidade/metadata/frescor por fonte e instrumento e expõe causas de AGUARDAR. O motor modular inclui conta reconciliada, risco Decimal, scheduler JEV causal, journal condicionado à licença e métricas exportáveis.
+
+Nenhuma fonte, conta ou chamada JEV é ativada no boot. A inicialização exige conexão explícita; a reconexão posterior e a descoberta de metadata são automáticas. Ordens continuam desligadas. A pasta `multimarket/` separa o novo armazenamento dos dados JevWIN; Excel/OCR/laboratório continuam acessíveis pelo modo legado.
+
+Verifique com `.venv/Scripts/python.exe scripts/verify.py`, `npm test` e `npm run build` em `desktop/`. A [evidência de desempenho](evidence/multimarket-performance.json) mede processamento sintético pós-recebimento; o [smoke público](evidence/multimarket-public-smoke.json) mede alcance pontual de HTTPS/WSS, sem persistir cotações. Consulte a matriz para os resultados finais e os limites da revisão.
+
+Continuam pendentes: fornecedor/SKU/entitlement/licença B3 para WIN/WDO; conta privada com escopos read-only; corpus autorizado e aprovação financeira por instrumento; instalação e jornada da nova versão na janela Windows com avaliação prospectiva pareada. A observação no navegador não substitui essa medição. O estado de 07/10 abaixo é histórico e descreve o painel anterior.
+
+## Estado atual — 07/10/2026
+
+A implementação local 0.4.0 está neste checkout, ainda sem commit/PR. Preserve as alterações que já existiam antes desta tarefa; o patch inicial está em `.artifacts/before-implementation.patch`. Não clone por cima deste diretório. [Guia atual](DECISION_PANEL.md), [status](IMPLEMENTATION_STATUS.md), [backlog](BACKLOG.md) e [evidência](evidence/decision-panel-2026-10-07.json) descrevem o escopo demonstrado.
+
+Entregues o painel Tauri/React em quatro áreas, serviço Python independente, coletor COM isolado, contratos JEV com premissas literais, dimensões contextuais separadas, registro experimental, banca inteira e posições reais informadas manualmente. Há comparação determinística de quantidades e contratos financeiros/seleção tipada. O laboratório offline executa replay causal, logística multiclasse, calibração temporal e comparação de 17 variantes de dimensionamento. O serviço ainda não carrega um modelo financeiro aprovado nem chama a seleção econômica JEV; mantém Aguardar e probabilidade não estimada. Isso é trabalho pendente, além da falta de dados empíricos.
+
+Verificados no Windows: 188 testes, autoteste legado, build React/Tauri, diagnóstico Python congelado e instalação/reinstalação/desinstalação isoladas com preservação dos dados. A janela nativa e o processo supervisionado foram observados. Os formulários foram exercitados na prévia React conectada ao mesmo serviço: R$400 → R$800 → R$600 e duas saídas parciais com resultado final R$627, sem ordens. Interações nos formulários nativos, Excel/RTD real, API JEV real, SDK ProfitDLL e rentabilidade não foram verificados. O teste estatístico é sintético e não aprova um modelo para operação.
+
+O instalador e ZIP estão em `.artifacts/desktop-windows/`. Abra a UI com `powershell -File scripts/start-desktop.ps1`; o build exige PowerShell 7, Rust/MSVC, Node/npm, NSIS e as dependências Python de build. Use `.venv/Scripts/python.exe scripts/verify.py`. O laboratório requer `app/requirements-lab.txt` e usa `scripts/run_decision_lab.py`. Preserve `%LOCALAPPDATA%/JevWIN`; o novo `decision-lab.sqlite3` fica separado do diário legado, com importação inicial de valores compatíveis, sem sincronização contínua.
+
+Próximos trabalhos: completar hipótese específica de exaustão (JT-002); conferir contrato RTD real sem ampliar cobertura; obter amostra WIN autorizada e auditável; validar prospectivamente estimativas/custos/latência; definir artefato versionado e ligação estimador → serviço → seleção tipada JEV (JT-013/JT-015); validar formulários na janela Windows e SDK/licença ProfitDLL quando disponíveis. Não promover `--smoke` nem um relatório com `deployment_approved=false`. Sem acesso autorizado ao SDK, continue apenas o adaptador contratual.
+
+Mission Control não respondeu à consulta inicial; respondeu à nova consulta antes da conclusão, disponível e sem tarefas neste projeto. Consulte novamente o contexto antes de iniciar novos escritores. Não faça chamadas pagas em testes/setup. A preferência do agente de desenvolvimento continua GPT-6.1 Sol, separada do modelo/chave do aplicativo.
+
+## Histórico da transferência — 06/10/2026
+
+As seções abaixo descrevem a transferência anterior. Use o estado atual acima para retomar.
+
 Data de consolidação: 06/10/2026, America/Sao_Paulo.
 
 Publicação no GitHub e no Codex confirmada em 07/10/2026 (UTC).

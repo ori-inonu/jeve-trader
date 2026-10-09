@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "kind": "b3_next_diligence",
+  "status": "assessed",
+  "choice": "cedro_schema",
+  "reason": null,
+  "confidence": 0.96,
+  "receipt_id": "c6639729-9e7e-4aa0-b48f-5c4acecdbc34",
+  "input_digest": "eb0db0464b2f9c3480635b47d7f74df877655fa7202c362f6a3e24e4769a0680",
+  "usage": {
+    "input_tokens": 981,
+    "output_tokens": 59
+  },
+  "billed_cost_usd": null,
+  "authority": "advisory_only",
+  "api_request": true,
+  "validated_response": true
+}

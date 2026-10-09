@@ -1,0 +1,38 @@
+{
+  "status": "abstained",
+  "receipt_id": "f316fe30-e3cd-491e-ac58-5d195a61bf79",
+  "input_digest": "9379230e64a57dbccc10315699ff1e616bb8b73ed448bc25d2ed08c4f88f62ab",
+  "model": "jev-1.13.0",
+  "answers": {
+    "next_spec": {
+      "type": "choice",
+      "domain": "task",
+      "providerChoice": "native_observability",
+      "bestCandidate": "native_observability",
+      "probabilities": {
+        "native_observability": 0.58,
+        "b3_qualification": 0.36,
+        "account_import": 0.05,
+        "insufficient_evidence": 0.01
+      },
+      "confidence": 0.44,
+      "disposition": "abstained",
+      "reasonCode": "low_confidence",
+      "policy": {
+        "version": "decision-policy-2026-09-26.1",
+        "mode": "conservative",
+        "minConfidence": 0.6,
+        "minProbability": 0.6,
+        "calibration": "not_locally_calibrated"
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 671,
+    "output_tokens": 66
+  },
+  "billed_cost_usd": null,
+  "fetch_invoked": true,
+  "receipt_persisted": true,
+  "authority": "advisory_only"
+}

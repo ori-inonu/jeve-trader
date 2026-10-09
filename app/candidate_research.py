@@ -194,6 +194,7 @@ def build_market_candidates(flow_engine, snapshot, config, account, now_ms):
                                    "stop_distance_points": _text(abs(entry - stop)), "target_distance_points": _text(abs(target - entry)),
                                    "lots": risk["contracts"], "contracts": risk["contracts"], "risk": risk,
                                    "reasons": list(risk["reasons"]), "premise": candidate["premise"],
+                                   'hypothesis_version': candidate['hypothesis_version'], 'hypotheses': candidate['hypotheses'],
                                    "reference_evidence_ids": list(candidate["reference_evidence_ids"]),
                                    "reference_levels": [deepcopy(by_id[identity]) for identity in candidate["reference_evidence_ids"]],
                                    "recipe": candidate["recipe"], "quote_source": quote_source,

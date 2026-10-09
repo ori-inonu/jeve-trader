@@ -1,0 +1,62 @@
+{
+  "reviewer_id": "pr2-main-spec-review",
+  "review_type": "independent_spec_readiness",
+  "reviewed_spec": "{integration_checkout}/docs/specs/Instrumentacao_Protocolo_Multimercado_2026-10-09.md",
+  "spec_sha256": "9e6d06ed4ea275981bdcf8c0d4d26e568b3ff79d9f9be20482feb06e77565e26",
+  "baseline_research": {
+    "path": "docs/research/RT12_Proximo_Ciclo_2026-10-09.md",
+    "sha256": "607acb62c3df7c05bbf93298814c2282f690de7dfcd367fef85ad6c991b1ef73"
+  },
+  "source_hashes": {
+    "wayfinder_fw01_fw12": "0183310d90dcfffd921ac551df12e7d2590db55fdfb7c1e1604a7c2b22f1ced6",
+    "implementation_i01_i12": "af174497bf764b1a7c67818cee6e3b925a40933d98c40c8e14f5b1b0f6bc01f4",
+    "next_cycle_n01_n05": "fff2b8adb6ef815fcc70ead80f1ff46e91d4bd60ba5a7e7bb3239b078c46c632",
+    "pr2_regression_r01_r04": "89f127a4fd48e30790ffb2d8fdb8e1f662e586eb89e2b29078d31862119a1c5c",
+    "jev_planning_evidence": "9c8a2b673eb406105888228a7fbace36013933ff8e07f24f6c3f0fb70a117bf3"
+  },
+  "ready_local": true,
+  "scope_reviewed": "EN-T1 through EN-T3 only: package identity/validation, sanitized telemetry correlation/schema and local run/protocol validation. No implementation performed.",
+  "acceptance_coverage": {
+    "EN01": "Ready: closed origin/manifest schemas, hashes, path/root rules, dirty eligibility and testable negative cases.",
+    "EN02": "Ready: closed typed allowlist, explicit null rules, same-renderer clock, receipt correlation, 1024-sample ring-buffer/drop semantics, sanitization and negative fixtures.",
+    "EN03": "Ready: definitions fix units, clock domains, method/scope; GPU null and stale-context/TTL constraints remain explicit.",
+    "EN04": "Ready: closed run/task/event/comparison schemas represent stages, tasks, actions, interventions, gates, failures, prospective timestamps and paired attempts without claiming native execution or gain.",
+    "N01_N05": "Covered without replacing original acceptance: identity/environment/instrument/protocol; J1-J6 remain external; gain null absent prospectively complete pairs; telemetry sanitization is explicit and screenshots are explicitly deferred; build/install/native/gain stages are distinct.",
+    "I01_I12_FW01_FW12": "Preserved as fixed constraints; package/telemetry work does not change domain rules, OFF behavior, coverage, or FW-11 native pilot criteria. R01-R04 remain separate code-regression acceptance."
+  },
+  "prior_blockers": [
+    "EN-02 now defines exact closed objects, allowed fields/types, nullability, limits, clocks and screenshot exclusion.",
+    "EN-04 now defines run, task, event/action/intervention, stage, clock and prospective pair records with immutable acceptance."
+  ],
+  "findings": [],
+  "nonblocking_followups": [
+    "N-04 sanitized screenshot evidence remains open: v1 deliberately excludes images and does not claim that part of N-04 complete.",
+    "T5 must freeze a finite B treatment prospectively and should require equivalent host/runtime/environment within pairs (or explicitly qualify differences); the current pair validator checks task, identity, operator and policy, but not full environment equality. T5 is outside this local readiness decision and has a separate gating SPEC/method requirement.",
+    "T4/T5 native execution and comparison are not ready for claiming as complete: require real Windows native observation, a proven J6 bridge, package/source evidence and prospectively complete pairs."
+  ],
+  "native_external_states": {
+    "T1_T3": "ready for local implementation and offline verification only",
+    "T4": "open; native Windows/WebView2 observation and J6 stub-to-window bridge not demonstrated",
+    "T5": "open; no frozen B treatment or prospective paired evidence; gain remains null",
+    "B3": "open external qualification/licensing/entitlement gate; no feed purchase or activation",
+    "private_account": "open; source/format/authorization/scopes not fixed; no private account access",
+    "financial_promotion": "open; no calibration/approval evidence; WAIT and q=0 remain"
+  },
+  "checks": {
+    "hashes": "All listed source hashes matched at review time.",
+    "spec_read_with_line_numbers": true,
+    "original_acceptances_compared": true,
+    "tests_run": false,
+    "reason_tests_not_run": "This was a read-only readiness review of a specification; no implementation was made."
+  },
+  "jev": "Existing planning response failed probability validation; local fallback only. No additional consultation was made; Jev advice does not authorize scope.",
+  "publication_projection": {
+    "raw_source_sha256": "2a8f48ee09e3a85de21cedec2c1fe4eac083e2e539ebbab74416539cc38f8917",
+    "redactions": [
+      "personal checkout paths",
+      "conversation UUID"
+    ],
+    "acceptance_changed": false,
+    "provenance_retained": "Non-personal task and reviewer role labels are retained as provenance."
+  }
+}

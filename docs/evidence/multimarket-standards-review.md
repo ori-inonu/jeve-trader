@@ -1,0 +1,9 @@
+# Standards review: final multimarket candidate
+
+Final candidate `ba001155ce83af8c8458fc7ad5c7d5e4e3113618` against baseline `da96c6ad4187030a98c4daa86a6b96e1e5b809a9`, reviewed in isolated worktree `C:\Users\gabri\.codex\worktrees\multimarket-standards-review\jeve-trader`. The worktree was clean before checkout and after review. The final diff covers 74 paths. Frozen SPEC SHA-256 remains `af174497bf764b1a7c67818cee6e3b925a40933d98c40c8e14f5b1b0f6bc01f4`.
+
+The bounded delta since approved `f366741ce0d1ea92e5b4b9288e07cbcd3de3d38c` contains one service regression test and three evidence updates. The test switches selection A→B while a fake JEV response is pending, verifies `identity_changed` and no late context on B, then verifies rejected context was not published to A. No production code changed in the workload applicability commit `cc260fbff137953ee5c6351c56e6de5dbca5e2dd`; it adds only this test. The recorded Windows backend evidence reports 322 passing tests and legacy self-test pass. The workload records 10,000 events at 1,000/s, 3.0231 ms batch post-receive p95 versus a 50 ms threshold. It explicitly remains synthetic, without native performance or financial-gain claims.
+
+The prior full Standards review remains valid: all I-01–I-12 and the stress matrix were reviewed; documented rules on Decimal risk, disabled orders, TLS, privacy, and partial source coverage remain met. Limits remain: no continuous/regional feed certification, private-account access, paid JEV, native UI/release validation, GPU/user-journey benefit, or profitability claim. The earlier duplicated-parser advisory remains resolved; remaining findings: zero.
+
+No tests were run by this reviewer; evidence artifacts and bounded test delta were inspected read-only. The bounded delta passes `git diff --check`; the full diff retains three added blank-line-at-EOF warnings, excluded as tooling-enforced. No candidate or acceptance files were edited. Standards axis: approved.

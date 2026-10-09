@@ -1,0 +1,21 @@
+{
+  "id": "multimarket-rt12-2026-10-09",
+  "summary": "Repair independently reproduced FW-01 dispatch and bounded dedup defects under unchanged multimarket acceptance; then research RT-12 and specify the next source-backed improvement, without merge, installation, orders, purchases or private access.",
+  "references": [
+    {
+      "path": ".scratch/wayfinder-multimercado/next-cycle-proposal.md",
+      "sha256": "68e3167814a290974ab1eee1cfa60eeef13d6d3bc3cea609f9328d35269da26b",
+      "excerpt": "# Proposta de ciclo: evidência e fronteira multimercado"
+    },
+    {
+      "path": ".scratch/wayfinder-multimercado/issues/12-evidencia-proximo-ciclo.md",
+      "sha256": "1ea75d8a2522e6c2c800c7e9b00a82084589e1a48d2b3f7ffcf8a11774bf4a89",
+      "excerpt": "# RT-12 — evidência para a próxima entrega"
+    },
+    {
+      "path": "docs/specs/Multimercado_Proximo_Ciclo_2026-10-09.md",
+      "sha256": "fff2b8adb6ef815fcc70ead80f1ff46e91d4bd60ba5a7e7bb3239b078c46c632",
+      "excerpt": "# Próxima melhoria — evidência da jornada Windows"
+    }
+  ]
+}

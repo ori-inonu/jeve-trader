@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "purpose": "Public copies omit personal checkout paths and the conversation UUID; non-personal task and reviewer role labels are retained as provenance. Exact raw originals remain in the ignored local evidence archive. Hashes within copied historical reports identify raw originals unless explicitly labeled publication hashes.",
+  "projections": [
+    {
+      "path": ".scratch/wayfinder-multimercado/map.md",
+      "raw_source_sha256": "28b19d43efed203706b4ac339ccc5b3ac3c39792b043b2bc15a66cf9a61773e9",
+      "publication_sha256": "127d46011584a1d877d047311baa1a4f754466cf9d0f0976a783db37eeff9e03",
+      "acceptance_changed": false
+    },
+    {
+      "path": "docs/research/RT12_Proximo_Ciclo_2026-10-09.md",
+      "raw_source_sha256": "607acb62c3df7c05bbf93298814c2282f690de7dfcd367fef85ad6c991b1ef73",
+      "publication_sha256": "816619846ff7740e0c543af6d1d5e4f84fe7f884225e56acfe5af72ac6107684",
+      "acceptance_changed": false
+    },
+    {
+      "path": "docs/research/B3_Qualificacao_Publica_2026-10-09.md",
+      "raw_source_sha256": "372c44b66d683fb7bd6aceb0208f81b3a1b35cfdbe0f36da70666f16a6e68255",
+      "publication_sha256": "1e5581c3286f2ef7839ea03366d2d0b8db75b8badf4e2f24ead803ca3f4d1d7f",
+      "acceptance_changed": false
+    },
+    {
+      "path": "docs/research/Cedro_Socket_Schema_Publico_2026-10-09.md",
+      "raw_source_sha256": "feb5c43cbaf00bd615d0f126f1bfba98a98f548923cf729aa4007f9e54f37d83",
+      "publication_sha256": "c8f227ea3d1a19de685e17ada89cf207967fd0cd8ed297877d447ee9bc7738b6",
+      "acceptance_changed": false
+    },
+    {
+      "path": "docs/evidence/pr2-main-standards-final-public.json",
+      "raw_source_sha256": "c03136f2502c196f35932f90e42afc0049256bd472d878d1aaa218e681ec8af3",
+      "publication_sha256": "71bae427906399243768880a138e6b821725c73672455c050c10b2bddc47bf7c",
+      "acceptance_changed": false,
+      "raw_source_path": "docs/evidence/pr2-main-standards-final.json"
+    },
+    {
+      "path": "docs/evidence/pr2-main-spec-final-public.json",
+      "raw_source_sha256": "ac10bf54d8df1cd4a67374d6519f3444fa8e2ad56c7b8b19d715eb1febc1cee6",
+      "publication_sha256": "145ec90633eb84c9bb0a93136176bd20068f464cfe9edc06da2af418664ef15d",
+      "acceptance_changed": false,
+      "raw_source_path": "docs/evidence/pr2-main-spec-final.json"
+    },
+    {
+      "path": "docs/evidence/pr2-main-verification-public.json",
+      "raw_source_sha256": "bc7c5918e72e5502a2fd04b26c2d771e92f525ad7c0d6f924407cb48d84ae95b",
+      "publication_sha256": "ba3a7a3ba0c1c7178ab724ddc1947f9d40ce8e489c3153b88f6bbc90007c747e",
+      "acceptance_changed": false,
+      "raw_source_path": "docs/evidence/pr2-main-verification.json"
+    },
+    {
+      "path": "docs/evidence/pr2-repair-tests.md",
+      "raw_source_sha256": "6edac6ac5c826028424e3a4f0b6ec48853d79163dbd4768bcbd2f85b969914f5",
+      "publication_sha256": "d15bba1dfd7515583736f16e4676e325b99235eaf7930378541724eec91ea453",
+      "acceptance_changed": false
+    },
+    {
+      "path": "docs/evidence/pr2-repair-tests.json",
+      "raw_source_sha256": "3eb1cb2b7e5861cb1a8eb7d2a9c59755396008b7b7b135e317971149168c3025",
+      "publication_sha256": "55af5f116ef1d5f718568cc648e7eaf8ed38f018a3f1cd2059def383cc5a1548",
+      "acceptance_changed": false
+    },
+    {
+      "path": "docs/evidence/rt12-next-spec-readiness-final.json",
+      "raw_source_sha256": "2a8f48ee09e3a85de21cedec2c1fe4eac083e2e539ebbab74416539cc38f8917",
+      "publication_sha256": "3f2a8dba8357eea31c23e956eafa602dab38854cc7e6935b7fffd43672769217",
+      "acceptance_changed": false
+    }
+  ]
+}

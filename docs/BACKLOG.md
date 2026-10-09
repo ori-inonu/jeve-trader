@@ -1,6 +1,68 @@
 # Backlog acionável do Jeve Trader
 
-**Data:** 06/10/2026. Todos os itens abaixo têm status **PROPOSTO — NÃO IMPLEMENTADO/VALIDADO NESTE PLANO**. São tarefas sem atribuição de responsável. A v0.3 permanece entregue. Ordem e gates: [ROADMAP.md](ROADMAP.md). Decisões a registrar: [decisions/README.md](decisions/README.md).
+## Revisão contra main e próximo ciclo — 09/10/2026
+
+O [PR #2](https://github.com/ori-inonu/jeve-trader/pull/2) foi revisado contra `main` (`0171aed6c4a25adf26d349bfe2c3140805a35e97`). O candidato de código corrigido é `e52172de0c127a8f1d3768cc072964501eb8ff69`, árvore `3e2e3ceb4856ea71ec1b903efda4fc6fd729098e`. As revisões independentes [Standards](evidence/pr2-main-standards-final.md) e [Spec](evidence/pr2-main-spec-final.md) terminaram com zero achados restantes. A [evidência Windows offline](evidence/pr2-main-verification-public.json) registra 326 testes Python, autoteste legado, 36 testes frontend e build TypeScript/Vite aprovados. Rust offline foi reaproveitado porque seus arquivos não mudaram. O merge local com a baseline não tem conflitos; checks e base remotos são conferidos separadamente antes da entrega.
+
+Corrigidos os dois achados reproduzidos: concorrência entre OFF e despacho JEV e retenção ilimitada de identidades. Os [aceites R-01–R-04](specs/PR2_Revisao_Main_2026-10-09.md) e o [RED/GREEN](evidence/pr2-repair-tests.md) preservam FW-01 e I-01–I-12. OFF pode aguardar uma tentativa já iniciada; timeout de transporte não comprova latência da janela.
+
+A [SPEC de instrumentação e protocolo](specs/Instrumentacao_Protocolo_Multimercado_2026-10-09.md) está **ready_local para EN-T1–EN-T3**, conforme [revisão independente](evidence/rt12-next-spec-readiness-final.md), SHA-256 `9e6d06ed4ea275981bdcf8c0d4d26e568b3ff79d9f9be20482feb06e77565e26`. O cabeçalho draft conserva o snapshot exato revisado; este registro e o relatório fixam sua prontidão. Isso é planejamento concluído, sem implementação dessas três tarefas nesta rodada.
+
+| Próxima entrega | Dependência e aceite |
+|---|---|
+| EN-T1 — origem e manifest de pacote | Hashes de código/artefatos, validação fechada e regressões offline; primeiro incremento local elegível |
+| EN-T2 — correlação de telemetria | Origem EN-T1; relógio único do renderer, allowlist, buffer limitado e sanitização |
+| EN-T3 — protocolo verificável | Schemas de run/tarefa/evento/pares; estados e falhas preservados; ganho null |
+| EN-T4 — jornada Windows J1–J6 | Pacote identificado, observação nativa e ponte J6 comprovada; não executada |
+| EN-T5 — comparação humana prospectiva | Tratamento B congelado, ambiente equivalente ou diferenças qualificadas e cinco pares completos; não executada |
+
+O JEV recomendou [fechar schemas locais](evidence/rt12-schema-jev.json) e [aprofundar o schema público Cedro](evidence/b3-next-diligence-jev.json). A consulta anterior de prioridade foi inválida e não virou recomendação. O [dossiê B3](research/B3_Qualificacao_Publica_2026-10-09.md) delimita Cedro/CQG/UMDF; SKU WIN/WDO, entitlement, licença e direitos de retenção/envio ao JEV continuam sem confirmação. O [adendo Cedro](research/Cedro_Socket_Schema_Publico_2026-10-09.md) encerrou quatro páginas de pesquisa: parser real não ready; faltam payload versionado, identidade WDO e recuperação aplicável. Conta real depende de fonte/formato/autorização; calibração financeira depende de corpus e aprovação por escopo. Ordens permanecem desabilitadas. O piloto FW-11 de 30 minutos e seus critérios originais continuam abertos; a prontidão local do código não certifica release operacional.
+
+## Incremento multimercado — 09/10/2026
+
+IMP-01–IMP-05 estão concluídos no escopo local e revisados independentemente na branch `codex/multimarket-spec`. IMP-05 registra a verificação e a revisão independente no [contrato finito](specs/Multimercado_Implementacao_2026-10-09.md), com [evidência por aceite](evidence/multimarket-acceptance.md). A conclusão local desses tickets conserva as dependências externas abaixo e o histórico JT.
+
+| Próxima fronteira | Evidência necessária antes de habilitar |
+|---|---|
+| B3 sem Profit | Fornecedor/SKU WIN/WDO, entitlement, schema/captura autorizada e licença de uso/retention/export |
+| Conta automática | Escopos read-only, fixture autorizada, reconciliação com posição/saldo reais |
+| Modelo financeiro por mercado | Corpus licenciado, comparação temporal sem leakage, custos e aprovação por instrumento/venue/horizonte/metadata |
+| Nova distribuição Windows | Build instalável, jornada nativa e comparação prospectiva pareada; métricas sintéticas não comprovam benefício |
+
+Nenhum desses gates é encerrado pela presença de contratos ou botões no cockpit. O planejamento histórico de 07/10 abaixo mantém seus próprios critérios.
+
+**Atualizado em 07/10/2026.** Critérios abaixo preservam o escopo do estudo de 06/10; o quadro atual identifica o que já foi demonstrado. Protocolo e gates: [ROADMAP.md](ROADMAP.md). Decisão aceita: [ADR 0010](decisions/0010-painel-e-capital-progressivo.md). Evidência: [status](IMPLEMENTATION_STATUS.md).
+
+## Planejamento Wayfinder — 07/10/2026
+
+Resolvidos documentalmente WF-01–06 no [Scratch de inteligência e interface](../.scratch/wayfinder-evolucao-decisao/map.md), com [contratos/parâmetros](../.scratch/wayfinder-evolucao-decisao/spec.md), [sequência de implementação](../.scratch/wayfinder-evolucao-decisao/implementation-plan.md) e [auditoria de aceite](../.scratch/wayfinder-evolucao-decisao/acceptance-audit.md). Quando a implementação for retomada, a sequência começa pela identidade causal no código, após recapturar o checkout e reivindicar o incremento. Os tickets estendem E01–E10 e os itens JT existentes; o fechamento documental não altera os estados empíricos abaixo. Dados, custos, orçamento e limites de confirmação permanecem pendentes no protocolo. Evidências e limites no [complemento datado](research/Complemento_Wayfinder_JEV_WIN_2026-10-07.md).
+
+Gabriel solicitou continuar em planejamento após esse fechamento. A nova rodada está no [mapa de oportunidades com valor verificável](../.scratch/wayfinder-proximas-oportunidades/map.md): investigar composições JEV, aquisição/anotação de evidência e compreensão da interface; depois escolher uma direção para especificar. Esta descoberta não promove experimentos nem substitui os seis contratos anteriores.
+
+## Estado atual por item
+
+| Item | Estado em 07/10/2026 | Continuação concreta |
+|---|---|---|
+| JT-001 | Concluído no escopo offline Windows: 188 testes/autoteste, regressões e preservação da revisão local. | Manter regressões ao alterar contratos. |
+| JT-002 | Parcial: premissa literal/versionada e continuidade/absorção separadas no payload/registro. | Projetar família de exaustão e verificar todas as dependências de dados por família. |
+| JT-003 | Composição local implementada/testada; dimensões independentes e ausência explícita. | Validação empírica dos seletores pertence a JT-008/016. |
+| JT-004 | Parcial: registro reproduzível de pedidos/respostas/falhas, clocks, conta/custos e hashes. | Protocolo experimental final, retenção e associação completa aos desfechos reais. |
+| JT-005 | Parcial: timeout, geração/revisão e contexto vencido verificados offline. | Medir clocks, cobertura e latência reais; sem percentis simulados como medidos. |
+| JT-006 | Parcial: novo pacote instalado/reinstalado/desinstalado em Windows; janela e processos verificados; formulários na prévia React. | Exercitar formulários na janela nativa e RTD real em uso prolongado. |
+| JT-007 | Pendente externo: não há contrato real reconciliado do feed. | Obter amostra autorizada, mapa de campos/IDs, símbolos, relógios e correções. |
+| JT-008/009/016 | Protocolos empíricos pendentes. | Congelar hipóteses/perguntas, orçamento e avaliação remota sem usar teste futuro na seleção. |
+| JT-010 | Parcial: replay causal de preço, censura por cobertura/hash/contrato e custos implementados. | Validar captura WIN e acrescentar fila, liquidez/executabilidade e execução parcial. |
+| JT-011 | Parcial: comparação pareada com/sem JEV e bootstrap por sessão implementados; smoke sintético. | Avaliar utilidade incremental em dados WIN futuros e custo real da API. |
+| JT-012 | Pendente empírico. | Ablacionar features e episódios após integridade/apuração. |
+| JT-013 | Parcial: logística multiclasse, calibração temporal, Brier/log-loss/ECE e intervalos offline. | Aprovação em WIN, monitoramento de regime, artefato versionado e integração online. |
+| JT-014 | Parcial: livro manual com entrada/saída parcial, margem, custos e revisão. | Conciliação externa autorizada e observação de exposição real. |
+| JT-015 | Parcial: comparação finita de quantidades/aguardar e Choice tipado no motor; políticas no laboratório. | Integrar estimativas aprovadas e Choice ao serviço, selecionar parâmetros temporalmente e avaliar live sem ordens. |
+
+**Painel e distribuição 0.4 entregues:** Tauri/React/Python, quatro áreas, COM isolado, capital progressivo e instalador/portátil Windows. **ProfitDLL real pendente:** contrato de Market Data preparado; SDK/licença/ABI ainda necessários. **Pesquisa de risco:** 17 variantes executáveis offline, com progressões após perdas restritas ao laboratório; piramidagem é protótipo sem trajetória intratrade, e trailing/stops alternativos permanecem pesquisa. [Guia](DECISION_PANEL.md) e [estudo atualizado](research/Pesquisa_Decisao_JEV_WIN_2026-10-06.md#13-implementação-experimental-em-07102026).
+
+## Critérios históricos e entregas restantes
+
+Os estados “proposto” nos detalhes abaixo representam a redação original; use o quadro acima para o status atual. Nenhum item empírico passa a concluído apenas porque há código ou dados sintéticos.
 
 ## Como usar
 
@@ -16,7 +78,7 @@ Cada item especifica dependências de engenharia, fonte da necessidade, entrega 
 - **Evidência:** R §§2 e 12; V, alcance dos testes; `research/study-2026-10-06/reproduce_examples.py` e resultados auditados.
 - **Trabalho:** localizar comandos da suíte/autoteste e executar a revisão atual; reproduzir os exemplos a partir da cópia auditada e confrontar o caminho atual; criar fixtures rotuladas para premissa omitida, contradição direta, informação ausente, estado misto, resposta insuficiente, resposta inválida, mudança de fonte/geração, geometria alterada, expiração e veto financeiro.
 - **Concluído quando:** ambiente, revisão, comandos e resultados da linha de base estiverem registrados; os defeitos relevantes estiverem reproduzidos e as fixtures de regressão demonstrarem a falha anterior à correção; cobertura testar comportamento observável na Central/HTML e não apenas repetir expressões da implementação; diferenças entre cópia auditada e app atual estiverem explicadas. Este gate inicial não exige corrigir os defeitos. A passagem das regressões pertence aos tickets de correção correspondentes e ao fechamento do ciclo. Nenhum resultado chamado de acurácia JEV ou edge WIN.
-- **Estado parcial da transferência:** a suíte de linha de base foi reexecutada; as novas fixtures de regressão dos defeitos ainda não foram implementadas. JT-001 permanece proposto e não concluído.
+- **Estado em 07/10/2026:** regressões locais implementadas e suíte reproduzida com 188 testes/autoteste em Windows. JT-001 concluído no escopo offline. Evidência no status atual.
 
 ### JT-002 — Preservar premissa e separar famílias de hipótese
 

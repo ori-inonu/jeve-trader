@@ -69,6 +69,11 @@ def run_check(kind: str) -> dict:
 
 
 def main() -> int:
+    # Windows consoles may use cp1252; failure logs can contain replacement
+    # characters that must not crash the reporter itself.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--_child", choices=("tests", "desktop"), help=argparse.SUPPRESS)
     args = parser.parse_args()

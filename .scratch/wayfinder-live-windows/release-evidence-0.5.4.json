@@ -1,0 +1,206 @@
+{
+  "version": "0.5.4",
+  "recorded_at_utc": "2026-10-09T01:50:08.508614+00:00",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.14.7",
+  "source_commit": "88067db1ffa9cf2b9877415fc6191404859da834",
+  "source_branch": "codex/windows-updates-and-live-roadmap",
+  "baseline_commit": "6839d9c03e337bcb1d91f9b7e8eb53bddae68c42",
+  "candidate_manifest_sha256": "ae33245f95182c5b0854282f688d14e6968a44a469ca424b229fb948c5403c40",
+  "contract_sha256": "35e31874203603c3f25ee560377e62331e8a39e3df584ee0bba74928f2189e1f",
+  "independent_reviews": [
+    {
+      "axis": "spec",
+      "path": ".artifacts/flow-book-research-20261008/commit-spec-review/workspace/review.md",
+      "sha256": "1ec24c4213ca6d0c5a114b1e922fa48492b0532e6bfefcb1b5fe7fe8397bc926",
+      "isolated": true,
+      "candidate_hashes_matched_before_and_after": 19,
+      "focused_tests": 28,
+      "newline_addendum_tests": 10,
+      "initial_final_report_sha256": "afc0b9565fc66a49ce8981ff33d3a11654bf2b02cd8a7e17ce79402a778ca96c",
+      "actual_model_tier_verified": false
+    },
+    {
+      "axis": "standards",
+      "path": ".artifacts/flow-book-research-20261008/commit-standards-review/workspace/review.md",
+      "sha256": "c974247fb75af1e4e7f112acf74279bfef41d6bb617309dcbad459e27e97cd47",
+      "isolated": true,
+      "candidate_hashes_matched_before_and_after": 19,
+      "focused_tests": 12,
+      "newline_addendum_tests": 10,
+      "initial_final_report_sha256": "3e859e91a55fb32766acd035c69459390f4651104daf1bbd4f9729adcf068527",
+      "actual_model_tier_verified": false
+    }
+  ],
+  "verification": {
+    "python_tests": 260,
+    "frontend_tests": 13,
+    "desktop_check": "PASS",
+    "windows_build": "PASS",
+    "paid_jev_calls": 0,
+    "orders_enabled": false
+  },
+  "distribution": [
+    {
+      "name": "JevWIN_0.5.4_setup.exe",
+      "bytes": 19277752,
+      "sha256": "ca2014bdf8e66c394d0bd776b1a01a609ba48b23523674b7841752853501131a"
+    },
+    {
+      "name": "JevWIN_0.5.4_portable.zip",
+      "bytes": 21077383,
+      "sha256": "18adde51ef4a6b841b057e88b91be5f2abeafd2b63ee0bfd5cb4f6ed4878c70d"
+    },
+    {
+      "name": "SHA256SUMS-0.5.4.txt",
+      "bytes": 183,
+      "sha256": "231a0d5f0aa657ef71a36e360c25b9a3128f7d85974e9c1e7dccb06e6e83ecb9"
+    }
+  ],
+  "portable_payload": {
+    "status": "PASS",
+    "version": "0.5.4",
+    "files_verified": 522,
+    "manifest_sha256": "75cc5944a3a873aacd86117549accc7ff00094529827cd5ea1d536626dc1f05a"
+  },
+  "portable_smoke": {
+    "status": "PASS",
+    "packaged_engine": true,
+    "diagnostic": {
+      "status": "PASS",
+      "platform": "Windows-11-10.0.26300-SP0",
+      "python": "3.14.7",
+      "schema_version": 2,
+      "experimental": true,
+      "alternatives": 16,
+      "orders_enabled": false,
+      "financial_probability": null,
+      "code_sha256": "d06e22267f023aabc9bba4101d48a65c5baa23645fd746f73e15704fb77a10b8",
+      "ocr_runtime": {
+        "available": true,
+        "engine": "tesseract",
+        "version": "5.5.3",
+        "error": null
+      },
+      "ocr_diagnostic": {
+        "status": "PASS",
+        "engine": "tesseract",
+        "version": "5.5.3",
+        "input": "generated_known_text",
+        "real_profit_tested": false,
+        "continuity_verified": false
+      }
+    },
+    "jev_enabled": false,
+    "api_calls": 0,
+    "ocr_enabled": false,
+    "ocr_runtime_available": true,
+    "orders_enabled": false,
+    "source_mode": "idle",
+    "temperature": null,
+    "isolated_data": true
+  },
+  "installed_payload": {
+    "status": "PASS",
+    "version": "0.5.4",
+    "files_verified": 522,
+    "manifest_sha256": "75cc5944a3a873aacd86117549accc7ff00094529827cd5ea1d536626dc1f05a"
+  },
+  "installed_smoke": {
+    "status": "PASS",
+    "packaged_engine": true,
+    "diagnostic": {
+      "status": "PASS",
+      "platform": "Windows-11-10.0.26300-SP0",
+      "python": "3.14.7",
+      "schema_version": 2,
+      "experimental": true,
+      "alternatives": 16,
+      "orders_enabled": false,
+      "financial_probability": null,
+      "code_sha256": "d06e22267f023aabc9bba4101d48a65c5baa23645fd746f73e15704fb77a10b8",
+      "ocr_runtime": {
+        "available": true,
+        "engine": "tesseract",
+        "version": "5.5.3",
+        "error": null
+      },
+      "ocr_diagnostic": {
+        "status": "PASS",
+        "engine": "tesseract",
+        "version": "5.5.3",
+        "input": "generated_known_text",
+        "real_profit_tested": false,
+        "continuity_verified": false
+      }
+    },
+    "jev_enabled": false,
+    "api_calls": 0,
+    "ocr_enabled": false,
+    "ocr_runtime_available": true,
+    "orders_enabled": false,
+    "source_mode": "idle",
+    "temperature": null,
+    "isolated_data": true
+  },
+  "upgrade": {
+    "status": "PASS",
+    "previous_version": "0.5.3",
+    "installed_version": "0.5.4",
+    "user_files_unchanged": 2,
+    "payload_verified": [
+      {
+        "name": "JevWIN.exe",
+        "sha256": "6625A09E5A53FFD66183A503853FB1249827D45B4A6CF964136E4718EAFD6F03"
+      },
+      {
+        "name": "jeve-engine.exe",
+        "sha256": "D32890F905A65B0318C35098A147DB34D6762BE316DA2EEC5067FF97FFDEFE11"
+      },
+      {
+        "name": "package-manifest.json",
+        "sha256": "75CC5944A3A873AACD86117549ACCC7FF00094529827CD5EA1D536626DC1F05A"
+      }
+    ],
+    "desktop_shortcut_verified": true,
+    "installer_exit_code": 0,
+    "backup_local_only": true,
+    "orders_enabled": false
+  },
+  "native_startup": {
+    "status": "PASS",
+    "version": "0.5.4",
+    "native_window_observed": true,
+    "owned_sidecar_observed": true,
+    "isolated_database_observed": true,
+    "root_exit_cleans_sidecar": true,
+    "native_ui_interactions_verified": false,
+    "real_profit_tested": false,
+    "paid_api_calls": 0
+  },
+  "installer_copied_to_downloads": true,
+  "publication": {
+    "status": "PENDING_HUMAN_PUBLIC_DESTINATION_CONFIRMATION",
+    "prior_visibility_observation": "public at 2026-10-08T19:23:47.176879+00:00",
+    "release_created_or_uploaded_this_increment": false,
+    "updater_0_5_4_release_verified": false
+  },
+  "build_recovery": {
+    "initial_failure": "PermissionError: [WinError 5] Acesso negado during OCR stage.rename(target)",
+    "source_changed_for_retry": false,
+    "ocr_preparation_retry": "PASS",
+    "full_build_retry": "PASS",
+    "cause_established": false,
+    "windows_security_policy_changed": false
+  },
+  "source_acceptance": "PENDING_REAL_REVIEW",
+  "frozen_acceptance_unchanged": true,
+  "open_criteria": [
+    "FW-06",
+    "FW-11",
+    "FW-12"
+  ],
+  "audit": "Bounded current-book evidence and contextual interpretation increment installed. Real Profit capture, 30-minute continuity/p95 and annotated JEV interpretation comparison remain open; no model learning, financial gain or full-feed claim.",
+  "adjacent_limitation": "Feed disconnect/restoration without a new book is outside LB-01..06; investigate before claiming recovery validity.",
+  "next_eligible_step": "Research the source disconnect/restoration lifecycle against the actual public ingest path; preserve the real-pilot dependency and frozen criteria."
+}

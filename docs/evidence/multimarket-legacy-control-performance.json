@@ -1,0 +1,21 @@
+{
+  "kind": "synthetic_legacy_control",
+  "origin_baseline_commit": "da96c6ad4187030a98c4daa86a6b96e1e5b809a9",
+  "measured_commit": "bf8be7510ecd18a2f3de451a57c6c1e444200353",
+  "comparison_scope": "WIN legacy workload on implementation candidate; distinct from BTC modular workload, no native or financial gain claim",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.14.7 (tags/v3.14.7:823f032, Aug  5 2026, 10:51:32) [MSC v.1944 64 bit (AMD64)]",
+  "events": 10000,
+  "events_per_second": 1000,
+  "batch_size": 25,
+  "seconds": 10.140186199998425,
+  "batch_post_receive_p95_ms": 24.60389999760082,
+  "batch_post_receive_max_ms": 31.292200001189485,
+  "native_ui_p95_ms": null,
+  "market_lag_ms": null,
+  "jev_latency_ms": null,
+  "rss_bytes": null,
+  "gpu_bytes": null,
+  "manual_steps": null,
+  "live_performance_certified": false
+}
