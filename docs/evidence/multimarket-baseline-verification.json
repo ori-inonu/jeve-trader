@@ -1,0 +1,46 @@
+{
+  "status": "passed",
+  "generated_at_utc": "2026-10-09T05:31:25.437295+00:00",
+  "python": "3.14.7 (tags/v3.14.7:823f032, Aug  5 2026, 10:51:32) [MSC v.1944 64 bit (AMD64)]",
+  "executable": "C:\\Users\\gabri\\OneDrive\\Documentos\\GitHub\\jeve-trader\\.venv\\Scripts\\python.exe",
+  "platform": "win32",
+  "checks": {
+    "tests": {
+      "command": [
+        "C:\\Users\\gabri\\OneDrive\\Documentos\\GitHub\\jeve-trader\\.venv\\Scripts\\python.exe",
+        "-E",
+        "-s",
+        "-B",
+        "C:\\Users\\gabri\\.codex\\worktrees\\multimarket-spec\\jeve-trader\\scripts\\verify.py",
+        "--_child",
+        "tests"
+      ],
+      "cwd": "C:\\Users\\gabri\\.codex\\worktrees\\multimarket-spec\\jeve-trader\\app",
+      "returncode": 0,
+      "elapsed_seconds": 20.878,
+      "tests_run": 260,
+      "passed": true
+    },
+    "desktop": {
+      "command": [
+        "C:\\Users\\gabri\\OneDrive\\Documentos\\GitHub\\jeve-trader\\.venv\\Scripts\\python.exe",
+        "-E",
+        "-s",
+        "-B",
+        "C:\\Users\\gabri\\.codex\\worktrees\\multimarket-spec\\jeve-trader\\scripts\\verify.py",
+        "--_child",
+        "desktop"
+      ],
+      "cwd": "C:\\Users\\gabri\\.codex\\worktrees\\multimarket-spec\\jeve-trader\\app",
+      "returncode": 0,
+      "elapsed_seconds": 1.229,
+      "passed": true
+    }
+  },
+  "python_socket_network_blocked": true,
+  "gui_opened": false,
+  "windows_runtime_validated": false,
+  "live_jev_api_tested": false,
+  "live_profit_excel_tested": false,
+  "order_execution_tested": false
+}
