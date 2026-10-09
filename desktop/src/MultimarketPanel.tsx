@@ -4,7 +4,7 @@ import {observableBook,probabilityLabel,type MultimarketState} from './multimark
 const labels:Record<string,string>={off:'Desligado',starting:'Conectando',observing:'Observando',
   degraded:'Dados incompletos',invalid:'Dados inválidos',unavailable:'Indisponível',
   synthetic:'Fixture sintética',finished:'Sessão encerrada',cold:'Aguardando',syncing:'Sincronizando',
-  live:'Atualizado',stale:'Vencido'};
+  live:'Atualizado',stale:'Vencido',stopping:'Encerrando transporte'};
 
 type Run=(method:string,params?:Record<string,unknown>)=>Promise<void>;
 export function MultimarketPanel({state,run,now}:{state?:MultimarketState;run:Run;now:number}) {
@@ -35,6 +35,7 @@ export function MultimarketPanel({state,run,now}:{state?:MultimarketState;run:Ru
         <button className="button secondary" disabled={pending||!state.enabled} onClick={()=>void action('multimarket.stop')}>Encerrar</button>
         <button className="button secondary" disabled={pending||state.enabled} onClick={()=>void action('multimarket.synthetic')}>Carregar fixture sintética</button></div>
       {state.error&&<p role="alert" className="notice error">{state.error}</p>}
+      {state.status==='stopping'&&<p role="status" className="notice">Aguardando a requisição em andamento terminar. Uma nova coleta fica bloqueada.</p>}
       <div className="table-wrap"><table><thead><tr><th>Canal</th><th>Saúde</th><th>Cobertura</th><th>Lacunas / ressincronizações</th><th>Eventos perdidos</th></tr></thead><tbody>
         {state.health.map(h=><tr key={h.channel}><td>{h.channel==='depth'?'Livro':'Execuções'}</td><td>{h.stale?'Vencido':!h.valid?'Inválido':labels[h.state]||h.state}</td><td>{h.coverage==='partial'?'Parcial':h.coverage}</td><td>{h.gaps} / {h.resyncs}</td><td>{h.dropped_events}</td></tr>)}
         {!state.health.length&&<tr><td colSpan={5}>Nenhuma fonte iniciada.</td></tr>}</tbody></table></div>
@@ -54,7 +55,7 @@ export function MultimarketPanel({state,run,now}:{state?:MultimarketState;run:Ru
         <tr><td>B3 · WIN/WDO</td><td>Feed autorizado, licença e custos vigentes</td></tr><tr><td>Derivativos cripto</td><td>Produto, acesso, margem, liquidação e custos</td></tr>
         <tr><td>Trading esportivo</td><td>API permitida no Brasil e responsabilidade das posições</td></tr><tr><td>Opções binárias</td><td>Admissibilidade, settlement verificável e payout líquido</td></tr></tbody></table></div>
       <p className="muted">Dados empíricos: {state.evaluation.sample_size} · avaliação pendente. Retenção e jurisdição da fonte: {state.source?.retention_permission||'desconhecida'} / {state.source?.jurisdiction||'desconhecida'}.</p>
-      <details><summary>Faltas e rastreabilidade</summary><pre>{JSON.stringify({missing:state.missing,health:state.health,evaluation:state.evaluation},null,2)}</pre></details>
+      <details><summary>Faltas e rastreabilidade</summary><pre>{JSON.stringify({missing:state.missing,health:state.health,transport:state.transport,evaluation:state.evaluation},null,2)}</pre></details>
     </section>
   </>;
 }

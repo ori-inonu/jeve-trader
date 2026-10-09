@@ -23,7 +23,7 @@ def duration(value):
 
 def diagnostics(snapshot):
     # Live prices/sizes and payloads are deliberately absent from diagnostic output.
-    return {key: snapshot[key] for key in ('status', 'origin', 'error', 'health',
+    return {key: snapshot[key] for key in ('status', 'origin', 'error', 'health', 'transport',
         'received_trades', 'remaining_seconds', 'evaluation', 'missing', 'orders_enabled',
         'retention_enabled', 'profit_probability', 'target_probability', 'ruin_probability',
         'objective')}
@@ -66,6 +66,11 @@ def main(argv=None):
                  'orders_enabled': False, 'retention_enabled': False}
     finally:
         observer.stop()
+    if args.live:
+        stopped = observer.snapshot()
+        value['shutdown'] = {'status': stopped['status'], 'transport': stopped['transport']}
+        if stopped['enabled']:
+            exit_code = exit_code or 1
     print(json.dumps(value, ensure_ascii=False, allow_nan=False))
     return exit_code
 

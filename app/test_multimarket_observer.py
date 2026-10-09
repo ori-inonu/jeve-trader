@@ -11,12 +11,19 @@ class OfflineFeed:
         self.batch = batch
         self.starts = self.stops = 0
         self.fail = False
+        self.request_alive = False
 
     def start(self):
         self.starts += 1
 
     def stop(self):
         self.stops += 1
+
+    def status(self):
+        return {'worker_alive': False, 'reader_alive': False,
+                'rest_request_alive': self.request_alive,
+                'reason': 'stop_timeout_rest_alive' if self.request_alive else 'stopped',
+                'health': [h.to_dict() for h in self.batch.health]}
 
     def poll(self, *, max_events):
         if self.fail:
@@ -68,6 +75,25 @@ class MultimarketObserverTests(unittest.TestCase):
         self.assertFalse(snapshot['enabled'])
         self.assertNotIn('private detail', snapshot['error'])
         self.assertEqual(feed.stops, 1)
+
+    def test_stop_retains_owned_request_and_prevents_second_connection(self):
+        feed = OfflineFeed(synthetic_batch(100000))
+        feed.request_alive = True
+        observer = MultimarketObserver(feed_factory=lambda: feed)
+        observer.start(duration_seconds=2)
+        observer.stop()
+        state = observer.snapshot()
+        self.assertEqual(state['status'], 'stopping')
+        self.assertEqual(state['transport']['reason'], 'stop_timeout_rest_alive')
+        self.assertIsNone(state['book'])
+        with self.assertRaises(ValueError):
+            observer.start(duration_seconds=2)
+        with self.assertRaises(ValueError):
+            observer.synthetic()
+        self.assertEqual(feed.starts, 1)
+        feed.request_alive = False
+        observer.poll()
+        self.assertFalse(observer.snapshot()['enabled'])
 
 
 if __name__ == '__main__':

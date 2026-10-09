@@ -20,11 +20,31 @@ class MultimarketObserver:
         self.origin = None
         self.error = None
         self.received = 0
+        self.transport = {}
+
+    def _transport_status(self):
+        if self.feed is not None and hasattr(self.feed, 'status'):
+            status = self.feed.status()
+            # Diagnostic fields only: no payload, price, account or credential.
+            self.transport = {key: status[key] for key in (
+                'state', 'reason', 'worker_alive', 'reader_alive', 'rest_request_alive')
+                if key in status}
+        return self.transport
+
+    def _transport_alive(self):
+        status = self._transport_status()
+        return any(status.get(key, False) for key in (
+            'worker_alive', 'reader_alive', 'rest_request_alive'))
+
+    def _require_stopped(self):
+        if self.feed is not None:
+            raise ValueError('Aguarde o encerramento do transporte antes de iniciar outra observação.')
 
     def start(self, *, duration_seconds):
         if type(duration_seconds) is not int or not 1 <= duration_seconds <= 1800:
             raise ValueError('Duração deve ser inteira entre 1 e 1800 segundos')
         self.stop()
+        self._require_stopped()
         if self.feed_factory is None:
             from public_crypto_feed import PublicCryptoFeed
             factory = PublicCryptoFeed
@@ -34,14 +54,15 @@ class MultimarketObserver:
         try:
             self.feed.start()
         except Exception:
-            self.feed.stop()
-            self.feed = None
-            self.state = 'unavailable'
+            self.stop()
+            if self.feed is None:
+                self.state = 'unavailable'
             self.error = 'Coletor público indisponível; confira dependência opcional e saúde da fonte.'
             raise ValueError(self.error) from None
         self.deadline = self.clock_monotonic() + duration_seconds
         self.state, self.origin, self.error = 'starting', 'live', None
         self.received = 0
+        self.transport = {}
 
     def _accept(self, batch):
         from market_replay import VolumeAtPrice
@@ -63,42 +84,52 @@ class MultimarketObserver:
     def poll(self):
         if self.feed is None:
             return False
+        if self.state == 'stopping':
+            if not self._transport_alive():
+                self.feed = None
+                self.state = 'off'
+            return True
         if self.clock_monotonic() >= self.deadline:
             self.stop()
-            self.state = 'finished'
+            if self.feed is None:
+                self.state = 'finished'
             return True
         try:
             self._accept(self.feed.poll(max_events=1000))
         except Exception:
             self.stop()
-            self.state = 'invalid'
+            if self.feed is None:
+                self.state = 'invalid'
             self.error = 'Dados inconsistentes ou coletor indisponível; observação interrompida.'
         return True
 
     def synthetic(self):
         self.stop()
+        self._require_stopped()
         self.origin, self.error = 'synthetic', None
         self.received = 0
         self._accept(synthetic_batch(self.clock_ms()))
         self.state = 'synthetic'
 
     def stop(self):
-        feed, self.feed = self.feed, None
         try:
-            if feed is not None:
-                feed.stop()
+            if self.feed is not None:
+                self.feed.stop()
         finally:
+            if not self._transport_alive():
+                self.feed = None
             self.deadline = None
             self.batch = self.vap = self.context = None
             self.instrument_id = None
             self.features = {}
-            self.state = 'off'
+            self.state = 'stopping' if self.feed is not None else 'off'
 
     def snapshot(self):
         from multimarket_economics import evaluation_report
         return {
             'enabled': self.feed is not None, 'status': self.state,
             'origin': self.origin, 'error': self.error,
+            'transport': self._transport_status(),
             'instrument': self.batch.instrument.to_dict() if self.batch else None,
             'source': self.batch.source.to_dict() if self.batch else None,
             'health': [h.to_dict() for h in self.batch.health] if self.batch else [],

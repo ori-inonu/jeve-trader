@@ -5,6 +5,7 @@ export type ChannelHealth = {
 };
 export type MultimarketState = {
   enabled:boolean; status:string; origin:string|null; error:string|null;
+  transport?:{state?:string;reason?:string;worker_alive?:boolean;reader_alive?:boolean;rest_request_alive?:boolean};
   instrument:{symbol:string;instrument_id:string;base_asset:string|null;quote_asset:string|null}|null;
   source:{provider:string;venue:string;jurisdiction:string|null;retention_permission:string}|null;
   health:ChannelHealth[];
