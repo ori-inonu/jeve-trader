@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
   Activity, ArrowDownUp, BookOpen, CheckCircle2, ChevronDown, CircleDollarSign,
-  Database, FileText, Gauge, LockKeyhole, Radio, RefreshCw, Shield, Wallet, WifiOff,
+  Database, Download, FileText, Gauge, LockKeyhole, Radio, RefreshCw, Shield, Wallet, WifiOff,
 } from 'lucide-react';
 import {
+  contextAnswerRows,
   createMultimarketProjector,
+  metricsExportPayload,
+  schedulerErrorMessage,
   type MultimarketRun,
   type MultimarketSnapshot,
   type MultimarketWorkspace,
@@ -125,6 +128,7 @@ export function MultimarketCockpit({ snapshot, run }: MultimarketCockpitProps) {
   const account = record(selected?.account);
   const costs = record(selected?.costs);
   const scheduler = projection.scheduler;
+  const schedulerError = schedulerErrorMessage(scheduler?.error);
   const workspaces = projection.workspaces;
   const selectedWorkspace = workspaces.find(item => item.workspace_id === selected?.workspace_id) ?? null;
   const connectionState = selected?.status ?? selectedWorkspace?.status ?? 'disconnected';
@@ -212,6 +216,22 @@ export function MultimarketCockpit({ snapshot, run }: MultimarketCockpitProps) {
     if (selectedId) await execute('metrics', { workspace_id: selectedId });
   }
 
+  function exportMetricsAndGates() {
+    const payload = metricsExportPayload(projection.metrics, projection.gates);
+    if (!payload) { setCommandError('Métricas e gates ainda não estão disponíveis para exportação.'); return; }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'jeve-multimarket-metrics.json';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    setCommandError(null);
+    setCommandNotice('Exportação local contém somente métricas e estado resumido dos gates. GPU e janela nativa não medidas.');
+  }
+
   const healthComplete = !!health && !!health.quote && !!health.trades && !!health.book;
   const fullTape = source?.full_tape === true && market?.full_tape === true;
   const schedulerEnabled = scheduler?.enabled === true;
@@ -280,7 +300,7 @@ export function MultimarketCockpit({ snapshot, run }: MultimarketCockpitProps) {
               <div className="mm-card-head"><div><span className="mm-eyebrow">MELHOR OFERTA · L1</span><h3>Bid / Ask</h3></div><span className="mm-partial-tag">L1 PÚBLICO</span></div>
               {quote ? <>
                 <div className="mm-quote-values"><div><small>BID · COMPRA</small><strong>{decimal(quote.bid)}</strong><span>{currency}</span></div><div><small>ASK · VENDA</small><strong>{decimal(quote.ask)}</strong><span>{currency}</span></div></div>
-                <div className="mm-spread-line"><span>Spread</span><b>{decimal(features?.spread)} {currency}</b><span className="mm-age">cotação {ageLabel(quote.age_ms)}</span></div>
+                <div className="mm-spread-line"><span>Spread</span><b>{decimal(features?.spread)} {currency}</b><span className="mm-market-time">Hora da exchange: {quote.market_ts_ms == null ? 'desconhecida' : shortTime(quote.market_ts_ms)}</span><span className="mm-age">recebida há {ageLabel(quote.age_ms)}</span></div>
               </> : <div className="mm-empty-data"><WifiOff size={18} aria-hidden="true"/><span>Aguardando uma cotação válida.</span></div>}
               <small className="mm-card-foot">Book L2 indisponível nesta fonte. Identificadores não certificam continuidade.</small>
             </article>
@@ -330,10 +350,10 @@ export function MultimarketCockpit({ snapshot, run }: MultimarketCockpitProps) {
 
             <article className="mm-card mm-cost-card">
               <div className="mm-card-head"><div><span className="mm-eyebrow">CUSTOS EXPLÍCITOS</span><h3>Taxa e slippage</h3></div><CircleDollarSign size={17} aria-hidden="true"/></div>
-              {costs ? <div className="mm-cost-summary"><span className={`mm-status-pill mm-tone-${statusTone(costs.verified ? 'healthy' : 'unknown')}`}><i aria-hidden="true"/>{costs.verified ? 'informado e verificado' : 'não verificado'}</span><div><b>{text(costs.currency, 'Moeda não informada')}</b><span>taxa {decimal(costs.fee_rate, 'não informada')} · slippage {decimal(costs.slippage, 'não informado')}</span></div></div> : <div className="mm-unknown mm-unknown-cost"><span className="mm-unknown-mark"><CircleDollarSign size={16} aria-hidden="true"/></span><div><b>Custos não informados</b><p>Valores ausentes permanecem desconhecidos; não são tratados como zero.</p></div></div>}
+              {costs ? <div className="mm-cost-summary"><span className={`mm-status-pill mm-tone-${statusTone(costs.verified ? 'healthy' : 'unknown')}`}><i aria-hidden="true"/>{costs.verified ? 'informado e verificado' : 'não verificado'}</span><div><b>{text(costs.currency, 'Moeda não informada')}</b><span>taxa por lado {decimal(costs.fee_rate, 'não informada')} · slippage {decimal(costs.slippage, 'não informado')} {text(costs.currency, '')}/unidade por lado</span></div></div> : <div className="mm-unknown mm-unknown-cost"><span className="mm-unknown-mark"><CircleDollarSign size={16} aria-hidden="true"/></span><div><b>Custos não informados</b><p>Valores ausentes permanecem desconhecidos; não são tratados como zero.</p></div></div>}
               <form className="mm-form mm-cost-form" onSubmit={event => void updateCosts(event)}>
-                <div className="mm-form-grid"><label>Moeda<input value={costCurrency} onChange={event => setCostCurrency(event.target.value)} autoComplete="off" placeholder="Código da moeda" required/></label><label>Taxa<input inputMode="decimal" value={feeRate} onChange={event => setFeeRate(event.target.value)} placeholder="Decimal explícito" required/></label></div>
-                <label>Slippage<input inputMode="decimal" value={slippage} onChange={event => setSlippage(event.target.value)} placeholder="Decimal explícito" required/></label>
+                <div className="mm-form-grid"><label>Moeda<input value={costCurrency} onChange={event => setCostCurrency(event.target.value)} autoComplete="off" placeholder="Código da moeda" required/></label><label>Taxa por lado<input inputMode="decimal" value={feeRate} onChange={event => setFeeRate(event.target.value)} placeholder="Fração decimal explícita" required/><small>Fração da operação por lado, não percentual inteiro.</small></label></div>
+                <label>Slippage por unidade e por lado<input inputMode="decimal" value={slippage} onChange={event => setSlippage(event.target.value)} placeholder={`Preço em ${costCurrency.trim().toUpperCase() || currency}`} required/><small>Variação de preço por unidade, na moeda informada. Valores desconhecidos não devem ser preenchidos como zero.</small></label>
                 <label className="mm-check"><input type="checkbox" checked={costsConfirmed} onChange={event => setCostsConfirmed(event.target.checked)}/><span>Confirmo que estes custos estão atualizados.</span></label>
                 <button className="mm-button mm-button-subtle" type="submit" disabled={!!pending || !selectedId}>Salvar custos do workspace</button>
               </form>
@@ -345,7 +365,8 @@ export function MultimarketCockpit({ snapshot, run }: MultimarketCockpitProps) {
             <article className="mm-card mm-context-card">
               <div className="mm-card-head"><div><span className="mm-eyebrow">CAMADA CONTEXTUAL</span><h3>JEV contextual</h3></div><span className={`mm-status-pill mm-tone-${schedulerEnabled ? 'live' : 'quiet'}`}><i aria-hidden="true"/>{schedulerEnabled ? 'habilitado' : 'desabilitado'}</span></div>
               <div className="mm-context-body"><div className="mm-context-icon"><BookOpen size={18} aria-hidden="true"/></div><div><b>{text(selected.contextStatus, 'Sem resposta contextual')}</b><p>Respostas tipadas servem como apoio contextual. Não são probabilidade de lucro, decisão financeira nem autorização para operar.</p></div></div>
-              {projection.context ? <div className="mm-context-answer"><span>RESPOSTAS · {text(projection.context.questions_version)}</span><b>{ageLabel(projection.context.age_ms)}</b><ul>{Array.isArray(projection.context.answers) ? projection.context.answers.map((answer, index) => <li key={index}>{JSON.stringify(answer)}</li>) : <li>Sem resposta compatível.</li>}</ul></div> : <div className="mm-context-empty">Nenhuma resposta contextual válida para esta identidade de workspace.</div>}
+              {schedulerError && <div className="mm-context-error" role="status"><Shield size={14} aria-hidden="true"/><span>{schedulerError}</span></div>}
+              {projection.context ? <div className="mm-context-answer"><span>RESPOSTAS · {text(projection.context.questions_version)}</span><b>{ageLabel(projection.context.age_ms)}</b><ul>{contextAnswerRows(projection.context.answers).map((answer, index) => <li key={index}>{answer}</li>)}</ul></div> : <div className="mm-context-empty">Nenhuma resposta contextual válida para esta identidade de workspace.</div>}
               <div className="mm-context-controls"><button className="mm-button mm-button-subtle" onClick={() => void setJevEnabled(!schedulerEnabled)} disabled={!!pending || (!schedulerEnabled && !selectedId)}>{schedulerEnabled ? 'Desabilitar JEV' : 'Habilitar JEV'}</button><span>Modelo: {text(scheduler?.model)} · versão de perguntas: {text(scheduler?.question_version)}</span></div>
               <small className="mm-context-note">Se o JEV ainda não estiver configurado, use a tela de configuração do modo legado. Nenhuma chave é coletada aqui; chamadas seguem o budget do produto.</small>
             </article>
@@ -357,7 +378,7 @@ export function MultimarketCockpit({ snapshot, run }: MultimarketCockpitProps) {
               <section><h4>Identidade e capacidades</h4><div className="mm-kv"><span>Workspace</span><b>{text(selected.identity.workspace_id)}</b><span>Instrumento</span><b>{text(selected.identity.instrument_id)}</b><span>Fonte</span><b>{text(selected.identity.source_id)}</b><span>Metadata</span><b>{text(selected.identity.metadata_version)}</b><span>Vencimento</span><b>{shortTime(selected.identity.expiry_at_ms)}</b><span>Tick de preço</span><b>{decimal(instrument?.price_tick)}</b><span>Passo de quantidade</span><b>{decimal(instrument?.quantity_step)}</b><span>Quantidade mínima</span><b>{decimal(instrument?.quantity_min)}</b><span>Multiplicador</span><b>{decimal(instrument?.contract_multiplier)}</b><span>Tape completo</span><b>{fullTape ? 'sim' : 'não certificado'}</b><span>Modo de livro</span><b>{text(source?.book_mode, 'não informado')}</b></div></section>
               <section><h4>Gates não promovidos</h4><div className="mm-gates"><Gate label="Feed B3 independente" state={projection.gates?.b3} detail="Aguardando fornecedor, entitlement e licença."/><Gate label="Conta privada" state={projection.gates?.private_account} detail="Somente reconciliação manual read-only nesta tarefa."/><Gate label="Modelo financeiro" state={projection.gates?.financial_model} detail="Probabilidade de lucro permanece não estimada."/><Gate label="Evidência nativa" state={projection.gates?.native_evidence} detail="Janela Windows e jornada humana não medidas."/></div></section>
               <section><h4>Persistência e replay</h4><div className="mm-retention"><Database size={15} aria-hidden="true"/><div><b>Gravação: {statusLabel(projection.recording?.status)}</b><small>{text(projection.recording?.reason, 'Política de retenção/exportação não informada.')}</small></div></div><p>Sem política afirmativa por fonte, payload de mercado não deve ser persistido. O estado e a contagem de eventos são diagnósticos sanitizados.</p><div className="mm-inline-actions"><button className="mm-button mm-button-subtle" onClick={() => void setRecording(!recordingEnabled)} disabled={!!pending}>{recordingEnabled ? 'Solicitar parada da gravação' : 'Solicitar gravação'}</button><button className="mm-button mm-button-subtle" onClick={() => void replayWorkspace()} disabled={!!pending || !selectedId}><RefreshCw size={14} aria-hidden="true"/>Reproduzir namespace</button></div></section>
-              <section><h4>Métricas sem payload</h4><div className="mm-metrics-grid"><Stat label="EVENTOS" value={String(projection.metrics?.events ?? '—')}/><Stat label="DUPLICATAS" value={String(projection.metrics?.duplicates ?? '—')}/><Stat label="REJEITADOS" value={String(projection.metrics?.rejected ?? '—')}/><Stat label="OVERFLOW" value={String(projection.metrics?.overflow ?? '—')}/><Stat label="P95 · ms" value={projection.metrics?.process_p95_ms == null ? '—' : String(projection.metrics.process_p95_ms)}/><Stat label="ATRASO · ms" value={projection.metrics?.market_lag_ms == null ? '—' : String(projection.metrics.market_lag_ms)}/><Stat label="RSS · bytes" value={projection.metrics?.rss_bytes == null ? '—' : String(projection.metrics.rss_bytes)}/><Stat label="GPU · bytes" value={projection.metrics?.gpu_bytes == null ? '—' : String(projection.metrics.gpu_bytes)}/></div><button className="mm-button mm-button-subtle" onClick={() => void refreshMetrics()} disabled={!!pending || !selectedId}><RefreshCw size={14} aria-hidden="true"/>Atualizar métricas</button></section>
+              <section><h4>Métricas sem payload</h4><div className="mm-metrics-grid"><Stat label="EVENTOS" value={String(projection.metrics?.events ?? '—')}/><Stat label="DUPLICATAS" value={String(projection.metrics?.duplicates ?? '—')}/><Stat label="REJEITADOS" value={String(projection.metrics?.rejected ?? '—')}/><Stat label="OVERFLOW" value={String(projection.metrics?.overflow ?? '—')}/><Stat label="P95 · ms" value={projection.metrics?.process_p95_ms == null ? '—' : String(projection.metrics.process_p95_ms)}/><Stat label="ATRASO · ms" value={projection.metrics?.market_lag_ms == null ? '—' : String(projection.metrics.market_lag_ms)}/><Stat label="RSS · bytes" value={projection.metrics?.rss_bytes == null ? '—' : String(projection.metrics.rss_bytes)}/><Stat label="GPU · não medida" value="—"/></div><div className="mm-inline-actions"><button className="mm-button mm-button-subtle" onClick={() => void refreshMetrics()} disabled={!!pending || !selectedId}><RefreshCw size={14} aria-hidden="true"/>Atualizar métricas</button><button className="mm-button mm-button-subtle" onClick={exportMetricsAndGates} disabled={!projection.metrics && !projection.gates}><Download size={14} aria-hidden="true"/>Baixar métricas e gates</button></div><small className="mm-export-note">O arquivo contém somente contadores e estados resumidos dos gates. GPU e interface Windows nativa não foram medidas.</small></section>
             </div>
           </details>
 

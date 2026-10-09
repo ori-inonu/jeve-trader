@@ -1,6 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createMultimarketProjector, workspaceIdentity } from '../src/multimarketModel.ts';
+import { contextAnswerRows, createMultimarketProjector, metricsExportPayload, schedulerErrorMessage, workspaceIdentity } from '../src/multimarketModel.ts';
+
+const evaluationIdentity = () => ({
+  workspace_id: 'spot-btc',
+  instrument_id: 'binance:spot:BTCUSDT',
+  source_id: 'binance_public_spot',
+  epoch: 1,
+  metadata_version: 'exchange-info-7',
+  feature_version: 'features-v1',
+  question_version: 'mm-context-v1',
+  cost_revision: null,
+  account_id: null,
+  account_revision: null,
+  selection_revision: 1,
+  event_range: null,
+  received_monotonic_ns: 5000,
+});
 
 const snapshot = (overrides = {}) => {
   const selected = {
@@ -20,7 +36,13 @@ const snapshot = (overrides = {}) => {
     },
     account: null,
     decision: { action: 'wait', reason: 'No approved financial model', profit_probability: null, quantity: '0', net_profit: null },
-    context: { status: 'complete', model: 'jev-1.13.0', questions_version: 'mm-context-v1', origin_monotonic_ns: 5000, age_ms: 100, answers: [{ kind: 'Choice', value: 'observe_buy' }], financial_probability: null, identity: { workspace_id: 'spot-btc', instrument_id: 'binance:spot:BTCUSDT', source_id: 'binance_public_spot', epoch: 1, metadata_version: 'exchange-info-7' } },
+    evaluation_identity: evaluationIdentity(),
+    context: { status: 'complete', model: 'jev-1.13.0', questions_version: 'mm-context-v1', origin_monotonic_ns: 5000, age_ms: 100, answers: {
+      direction: { type: 'choice', choice: 'observe_buy', probabilities: { wait: 0.05, observe_buy: 0.9, observe_sell: 0.05 }, confidence: 0.85 },
+      context_support: { type: 'noul', noul: 0.72 },
+      context_contradiction: { type: 'noul', noul: 0.18 },
+      evidence_sufficiency: { type: 'noul', noul: 0.8 },
+    }, financial_probability: null, identity: evaluationIdentity() },
     costs: null,
   };
   return {
@@ -49,8 +71,24 @@ test('valid Snapshot3 keeps domain identity and ages source data from a monotoni
   assert.equal(first.selected.market.quote.age_ms, 0);
   assert.equal(later.selected.market.quote.age_ms, 1500);
   assert.equal(later.selected.context.age_ms, 1600);
+  assert.equal(later.selected.market.quote.market_ts_ms, 10000);
   assert.equal(first.selected.decision.profit_probability, null);
   assert.equal(first.ordersEnabled, false);
+});
+
+test('public bookTicker quote stays usable when exchange market time is unknown', () => {
+  const projector = createMultimarketProjector();
+  const input = snapshot();
+  input.selected.market.quote.market_ts_ms = null;
+  const first = projector.project(input, 1000);
+  const laterInput = snapshot();
+  laterInput.selected.market.quote.market_ts_ms = null;
+  const later = projector.project(laterInput, 2400);
+
+  assert.equal(first.selected.market.quote.market_ts_ms, null);
+  assert.equal(first.selected.market.quote.age_ms, 0);
+  assert.equal(later.selected.market.quote.market_ts_ms, null);
+  assert.equal(later.selected.market.quote.age_ms, 1400);
 });
 
 test('market domains, individual trades, and manual account age without snapshot renewal', () => {
@@ -98,7 +136,8 @@ test('context from another workspace is discarded after a fast workspace switch'
       source_id: 'other_public_spot',
       instrument: { ...snapshot().selected.instrument, instrument_id: 'other:spot:BTCUSDT', venue: 'OTHER', metadata_version: 'other-1' },
       source: { ...snapshot().selected.source, source_id: 'other_public_spot' },
-      context: { ...snapshot().selected.context, identity: { ...snapshot().selected.context.identity, workspace_id: 'spot-btc', instrument_id: 'binance:spot:BTCUSDT', source_id: 'binance_public_spot' } },
+      evaluation_identity: { ...evaluationIdentity(), workspace_id: 'other-venue-btc', instrument_id: 'other:spot:BTCUSDT', source_id: 'other_public_spot', metadata_version: 'other-1' },
+      context: { ...snapshot().selected.context, identity: evaluationIdentity() },
     },
   });
   const projected = projector.project(otherWorkspace, 1100);
@@ -106,6 +145,104 @@ test('context from another workspace is discarded after a fast workspace switch'
   assert.match(projected.selected.identity.workspace_id, /other-venue-btc/);
   assert.equal(projected.selected.context, null);
   assert.match(projected.selected.contextStatus, /identity|workspace/i);
+});
+
+test('context requires a complete exact evaluation identity for every dependency', () => {
+  const fields = Object.keys(evaluationIdentity());
+  for (const field of fields) {
+    const selected = snapshot().selected;
+    const currentValue = selected.context.identity[field];
+    const changedValue = field === 'event_range' ? { from: 1, to: 2 }
+      : field === 'account_id' || field === 'cost_revision' || field === 'account_revision' ? 'revision-2'
+        : ['epoch', 'selection_revision', 'received_monotonic_ns'].includes(field) ? currentValue + 1
+          : `${currentValue}-changed`;
+    selected.context.identity = { ...selected.context.identity, [field]: changedValue };
+    const projected = createMultimarketProjector().project({ ...snapshot(), selected }, 1000);
+    assert.equal(projected.selected.context, null, `context must be removed when ${field} changes`);
+    assert.match(projected.selected.contextStatus, /identidade|divergente|incompleta/i, `context status should explain ${field}`);
+  }
+  for (const field of fields) {
+    const selected = snapshot().selected;
+    delete selected.context.identity[field];
+    const projected = createMultimarketProjector().project({ ...snapshot(), selected }, 1000);
+    assert.equal(projected.selected.context, null, `context must be removed when ${field} is missing`);
+  }
+  for (const field of fields) {
+    const selected = snapshot().selected;
+    delete selected.evaluation_identity[field];
+    const projected = createMultimarketProjector().project({ ...snapshot(), selected }, 1000);
+    assert.equal(projected.selected.context, null, `context must be removed when expected ${field} is missing`);
+  }
+
+  const selectedWithoutEvaluationIdentity = snapshot().selected;
+  delete selectedWithoutEvaluationIdentity.evaluation_identity;
+  const missingExpected = createMultimarketProjector().project({ ...snapshot(), selected: selectedWithoutEvaluationIdentity }, 1000);
+  assert.equal(missingExpected.selected.context, null);
+
+  const selectedWithoutContextIdentity = snapshot().selected;
+  delete selectedWithoutContextIdentity.context.identity;
+  const missingActual = createMultimarketProjector().project({ ...snapshot(), selected: selectedWithoutContextIdentity }, 1000);
+  assert.equal(missingActual.selected.context, null);
+});
+
+test('contextual answers use readable labels and explicitly contextual percentages', () => {
+  const projected = createMultimarketProjector().project(snapshot(), 1000);
+  const rows = contextAnswerRows(projected.selected.context.answers);
+
+  assert.deepEqual(rows, [
+    'Leitura contextual: observar compra · confiança contextual 85% (não é probabilidade de lucro).',
+    'Apoio contextual: 72% (escala contextual, não probabilidade de lucro).',
+    'Contradição contextual: 18% (escala contextual, não probabilidade de lucro).',
+    'Evidência suficiente para avaliar: 80% (escala contextual, não probabilidade de lucro).',
+  ]);
+  assert.deepEqual(contextAnswerRows([{ kind: 'Choice', value: 'raw payload' }]), []);
+
+  const unknownChoice = snapshot();
+  unknownChoice.selected.context.answers.direction.choice = 'arbitrary-provider-text';
+  const rejected = createMultimarketProjector().project(unknownChoice, 1000);
+  assert.equal(rejected.selected.context, null, 'unknown choice labels must not leave an empty valid context panel');
+});
+
+test('scheduler errors keep license, timeout, and unavailable blockers visible as plain text', () => {
+  assert.equal(schedulerErrorMessage('license_required'), 'A licença/configuração do JEV bloqueia novas respostas.');
+  assert.equal(schedulerErrorMessage('timeout'), 'O JEV excedeu o tempo limite; não há resposta contextual válida.');
+  assert.equal(schedulerErrorMessage('unavailable'), 'JEV indisponível; decisões financeiras continuam bloqueadas.');
+  assert.equal(schedulerErrorMessage({ reason: 'provider unavailable' }), 'JEV indisponível; decisões financeiras continuam bloqueadas.');
+  assert.equal(schedulerErrorMessage({ code: null, reason: 'timeout' }), 'O JEV excedeu o tempo limite; não há resposta contextual válida.');
+  assert.equal(schedulerErrorMessage({ code: '', message: 'license required' }), 'A licença/configuração do JEV bloqueia novas respostas.');
+  assert.equal(schedulerErrorMessage(null), null);
+});
+
+test('metrics export includes only approved counters and coarse gate states', () => {
+  const payload = metricsExportPayload({
+    events: 14, duplicates: 2, rejected: 1, overflow: 0, process_p95_ms: 4.5,
+    market_lag_ms: 0.8, rss_bytes: 1024, gpu_bytes: 4096,
+    symbol: 'BTCUSDT', quote: { bid: '50000' }, recent_trades: [{ price: '50001' }],
+    account_id: 'private-account-id', secret: 'do-not-export',
+  }, {
+    b3: { status: 'blocked', reason: 'entitlement path C:/private' },
+    private_account: { status: 'not_connected', account_id: 'private-account-id' },
+    financial_model: 'unknown',
+    native_evidence: { status: 'not_measured', window_title: 'private window' },
+    private_payload: 'do-not-export',
+  });
+
+  assert.deepEqual(payload, {
+    schema_version: 1,
+    metrics: { events: 14, duplicates: 2, rejected: 1, overflow: 0, process_p95_ms: 4.5, market_lag_ms: 0.8, rss_bytes: 1024, gpu_bytes: null },
+    gates: { b3: 'blocked', private_account: 'unknown', financial_model: 'unknown', native_evidence: 'not_measured' },
+    measurement_scope: { gpu: 'not_measured', native_windows_ui: 'not_measured' },
+  });
+  assert.doesNotMatch(JSON.stringify(payload), /BTCUSDT|50000|private-account-id|entitlement path|private window|do-not-export/i);
+});
+
+test('stale contextual responses are removed with an explicit expiry cause', () => {
+  const projector = createMultimarketProjector();
+  projector.project(snapshot(), 1000);
+  const stale = projector.project(snapshot(), 3100);
+
+  assert.equal(stale.selected.context, null);
+  assert.equal(stale.selected.contextStatus, 'Contexto expirado.');
 });
 
 test('same symbol at different venues has a distinct workspace identity', () => {

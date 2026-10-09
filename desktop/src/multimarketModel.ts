@@ -50,6 +50,11 @@ export interface MultimarketProjection {
 type AgeAnchor = { identity: string; baseAgeMs: number; atMs: number };
 const CONTEXT_VALIDITY_MS = 2_000;
 const DECIMAL = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/;
+const EVALUATION_IDENTITY_FIELDS = [
+  'workspace_id', 'instrument_id', 'source_id', 'epoch', 'metadata_version',
+  'feature_version', 'question_version', 'cost_revision', 'account_id',
+  'account_revision', 'selection_revision', 'event_range', 'received_monotonic_ns',
+] as const;
 
 const isRecord = (value: unknown): value is UnknownRecord =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -58,8 +63,107 @@ const isString = (value: unknown): value is string => typeof value === 'string' 
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 const isAge = (value: unknown): value is number => isFiniteNumber(value) && value >= 0;
 const isDecimal = (value: unknown): value is string => typeof value === 'string' && DECIMAL.test(value);
+const isUnitNumber = (value: unknown): value is number => isFiniteNumber(value) && value >= 0 && value <= 1;
 const safeText = (value: unknown, fallback = 'Motivo não informado'): string =>
   typeof value === 'string' && value.trim() ? value.slice(0, 240) : fallback;
+const CONTEXT_CHOICES = ['wait', 'observe_buy', 'observe_sell'] as const;
+
+function validEvaluationIdentity(value: unknown): value is UnknownRecord {
+  if (!isRecord(value) || !EVALUATION_IDENTITY_FIELDS.every(field => Object.prototype.hasOwnProperty.call(value, field))) return false;
+  if (!['workspace_id', 'instrument_id', 'source_id', 'metadata_version', 'feature_version', 'question_version'].every(field => isString(value[field]))) return false;
+  if (!isFiniteNumber(value.epoch) || !isFiniteNumber(value.selection_revision) || !isFiniteNumber(value.received_monotonic_ns)) return false;
+  if (value.account_id !== null && !isString(value.account_id)) return false;
+  const optionalRevision = (revision: unknown) => revision === null || isFiniteNumber(revision) || isString(revision);
+  if (!optionalRevision(value.cost_revision) || !optionalRevision(value.account_revision)) return false;
+  return value.event_range !== undefined;
+}
+
+function validContextAnswer(value: unknown): value is UnknownRecord {
+  if (!isRecord(value)) return false;
+  if (value.type === 'noul') return Object.keys(value).length === 2 && isUnitNumber(value.noul);
+  if (value.type !== 'choice' || Object.keys(value).length !== 4 || !isString(value.choice) || !CONTEXT_CHOICES.includes(value.choice as typeof CONTEXT_CHOICES[number]) || !isRecord(value.probabilities) || !isUnitNumber(value.confidence)) return false;
+  const probabilities = value.probabilities;
+  if (Object.keys(probabilities).length !== CONTEXT_CHOICES.length || !CONTEXT_CHOICES.every(choice => Object.prototype.hasOwnProperty.call(probabilities, choice))) return false;
+  const values = Object.values(probabilities);
+  if (values.length < 2 || values.some(probability => !isUnitNumber(probability))) return false;
+  const numericValues = values as number[];
+  const total = numericValues.reduce((sum, probability) => sum + probability, 0);
+  return Math.abs(total - 1) <= 1e-6 && probabilities[String(value.choice)] === Math.max(...numericValues);
+}
+
+function validContextAnswers(value: unknown): value is UnknownRecord {
+  return isRecord(value) && Object.keys(value).length > 0 && Object.keys(value).length <= 12 && Object.values(value).every(validContextAnswer);
+}
+
+const choiceLabels: Record<string, string> = {
+  observe_buy: 'observar compra',
+  observe_sell: 'observar venda',
+  wait: 'aguardar',
+};
+
+function contextualNoulLabel(questionId: string): string {
+  const normalized = questionId.toLowerCase();
+  if (normalized.includes('support') || normalized.includes('apoio')) return 'Apoio contextual';
+  if (normalized.includes('contradiction') || normalized.includes('contradicao')) return 'Contradição contextual';
+  if (normalized.includes('insufficient') || normalized.includes('insuficien')) return 'Evidência insuficiente';
+  if (normalized.includes('sufficiency') || normalized.includes('evaluable') || normalized.includes('sufficient')) return 'Evidência suficiente para avaliar';
+  if (normalized.includes('context')) return 'Relevância contextual';
+  return 'Avaliação contextual';
+}
+
+export function contextAnswerRows(answers: unknown): string[] {
+  if (!validContextAnswers(answers)) return [];
+  return Object.entries(answers).flatMap(([questionId, rawAnswer]) => {
+    const answer = rawAnswer as UnknownRecord;
+    if (answer.type === 'choice') {
+      const direction = choiceLabels[String(answer.choice)];
+      if (!direction) return [];
+      return [`Leitura contextual: ${direction} · confiança contextual ${Math.round((answer.confidence as number) * 100)}% (não é probabilidade de lucro).`];
+    }
+    const score = answer.noul as number;
+    return [`${contextualNoulLabel(questionId)}: ${Math.round(score * 100)}% (escala contextual, não probabilidade de lucro).`];
+  });
+}
+
+export function schedulerErrorMessage(value: unknown): string | null {
+  const code = isRecord(value) ? [value.code, value.status, value.reason, value.message].find(candidate => isString(candidate) && candidate.trim()) : value;
+  if (!isString(code) || !code.trim()) return null;
+  const normalized = code.toLowerCase();
+  if (/(license|licen[çc]a|credential|unauthori[sz]ed|api.?key)/.test(normalized)) return 'A licença/configuração do JEV bloqueia novas respostas.';
+  if (/(timeout|timed out|tempo limite|deadline)/.test(normalized)) return 'O JEV excedeu o tempo limite; não há resposta contextual válida.';
+  if (/(unavailable|indispon[ií]vel|offline|provider down)/.test(normalized)) return 'JEV indisponível; decisões financeiras continuam bloqueadas.';
+  return safeText(code, 'JEV bloqueado; não há resposta contextual válida.');
+}
+
+const EXPORT_METRIC_FIELDS = ['events', 'duplicates', 'rejected', 'overflow', 'process_p95_ms', 'market_lag_ms', 'rss_bytes'] as const;
+const EXPORT_GATE_FIELDS = ['b3', 'private_account', 'financial_model', 'native_evidence'] as const;
+
+function exportGateState(value: unknown): string {
+  const raw = isRecord(value) ? value.status : value;
+  if (!isString(raw)) return 'unknown';
+  const normalized = raw.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+  if (/(not.?measured|unmeasured)/.test(normalized)) return 'not_measured';
+  if (/pending|in_progress|connecting/.test(normalized)) return 'pending';
+  if (/allowed|enabled|healthy|reconciled|(^|_)ready($|_)/.test(normalized)) return 'allowed';
+  if (/blocked|denied|disabled|missing|not_approved|not_qualified|rejected|invalid|error|prohibited/.test(normalized)) return 'blocked';
+  return 'unknown';
+}
+
+export function metricsExportPayload(metrics: unknown, gates: unknown): UnknownRecord | null {
+  if (!isRecord(metrics) && !isRecord(gates)) return null;
+  const metricValues = isRecord(metrics) ? metrics : {};
+  const gateValues = isRecord(gates) ? gates : {};
+  const exportedMetrics = Object.fromEntries(EXPORT_METRIC_FIELDS.map(field => {
+    const value = metricValues[field];
+    return [field, isFiniteNumber(value) && value >= 0 ? value : null];
+  }));
+  return {
+    schema_version: 1,
+    metrics: { ...exportedMetrics, gpu_bytes: null },
+    gates: Object.fromEntries(EXPORT_GATE_FIELDS.map(field => [field, exportGateState(gateValues[field])])),
+    measurement_scope: { gpu: 'not_measured', native_windows_ui: 'not_measured' },
+  };
+}
 
 function validWorkspace(value: unknown): value is MultimarketWorkspace {
   return isRecord(value) && ['workspace_id', 'instrument_id', 'source_id', 'symbol', 'venue', 'segment', 'status'].every(key => isString(value[key]));
@@ -179,19 +283,18 @@ function contextStamp(context: UnknownRecord): string {
   ]);
 }
 
+function stableIdentityValue(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableIdentityValue).join(',')}]`;
+  if (isRecord(value)) return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${stableIdentityValue(value[key])}`).join(',')}}`;
+  return JSON.stringify(value) ?? 'undefined';
+}
+
 function contextMismatch(context: UnknownRecord, selected: UnknownRecord): string | null {
-  const identity = isRecord(context.identity) ? context.identity : context;
-  const instrument = selected.instrument as UnknownRecord;
-  const market = selected.market as UnknownRecord;
-  const expected: Record<string, unknown> = {
-    workspace_id: selected.workspace_id,
-    instrument_id: selected.instrument_id,
-    source_id: selected.source_id,
-    epoch: market.epoch,
-    metadata_version: instrument.metadata_version,
-  };
-  for (const [field, expectedValue] of Object.entries(expected)) {
-    if (identity[field] !== undefined && identity[field] !== expectedValue) return `Contexto descartado: identidade divergente (${field}).`;
+  const actual = context.identity;
+  const expected = selected.evaluation_identity;
+  if (!validEvaluationIdentity(actual) || !validEvaluationIdentity(expected)) return 'Contexto descartado: identidade de avaliação ausente ou incompleta.';
+  for (const field of EVALUATION_IDENTITY_FIELDS) {
+    if (stableIdentityValue(actual[field]) !== stableIdentityValue(expected[field])) return `Contexto descartado: identidade divergente (${field}).`;
   }
   return null;
 }
@@ -213,7 +316,6 @@ export class MultimarketProjector {
   private readonly tradeAnchors = new Map<string, AgeAnchor>();
   private accountAnchor: AgeAnchor | null = null;
   private selectedIdentity: string | null = null;
-  private lastContextStamp: string | null = null;
 
   private clearAges(): void {
     this.quoteAnchor = null;
@@ -228,7 +330,6 @@ export class MultimarketProjector {
     if (failure) {
       this.clearAges();
       this.selectedIdentity = null;
-      this.lastContextStamp = null;
       return { diagnostic: failure, workspaces: [], selected: null, context: null, ordersEnabled: false, scheduler: null, recording: null, metrics: null, gates: null };
     }
     if (!isRecord(input)) throw new Error('unreachable snapshot validation state');
@@ -236,7 +337,6 @@ export class MultimarketProjector {
     if (input.selected === null) {
       this.clearAges();
       this.selectedIdentity = null;
-      this.lastContextStamp = null;
       return { diagnostic: null, workspaces, selected: null, context: null, ordersEnabled: false, scheduler: input.scheduler as UnknownRecord, recording: input.recording as UnknownRecord, metrics: input.metrics as UnknownRecord, gates: input.gates as UnknownRecord };
     }
 
@@ -256,10 +356,8 @@ export class MultimarketProjector {
       identity.metadata_version,
     ]);
     const selectionChanged = this.selectedIdentity !== null && this.selectedIdentity !== selectionKey;
-    const previousContextStamp = this.lastContextStamp;
     if (selectionChanged) {
       this.clearAges();
-      this.lastContextStamp = null;
     }
     this.selectedIdentity = selectionKey;
 
@@ -267,7 +365,7 @@ export class MultimarketProjector {
     let quoteWarning: string | null = null;
     if (isRecord(market.quote)) {
       const quote = market.quote;
-      if (![quote.bid, quote.ask, quote.bid_quantity, quote.ask_quantity].every(isDecimal) || !isFiniteNumber(quote.market_ts_ms) || !isFiniteNumber(quote.received_at_ms) || !isAge(quote.age_ms)) {
+      if (![quote.bid, quote.ask, quote.bid_quantity, quote.ask_quantity].every(isDecimal) || (quote.market_ts_ms !== null && !isFiniteNumber(quote.market_ts_ms)) || !isFiniteNumber(quote.received_at_ms) || !isAge(quote.age_ms)) {
         quoteWarning = 'Cotação removida: campos ou clocks incompatíveis.';
         this.quoteAnchor = null;
       } else {
@@ -320,19 +418,15 @@ export class MultimarketProjector {
     if (rawContext) {
       const mismatch = contextMismatch(rawContext, raw);
       const contextIdentity = selectionKey + ':' + contextStamp(rawContext);
-      const contextIdentityRecord = isRecord(rawContext.identity) ? rawContext.identity : null;
-      const hasIdentity = contextIdentityRecord !== null && ['workspace_id', 'instrument_id', 'source_id', 'epoch', 'metadata_version'].every(field => contextIdentityRecord[field] !== undefined);
-      const reusedAcrossSelection = selectionChanged && !hasIdentity && contextStamp(rawContext) === previousContextStamp;
-      if (mismatch || reusedAcrossSelection) {
+      if (mismatch) {
         this.contextAnchor = null;
-        contextStatus = mismatch ?? 'Contexto descartado após troca de workspace: aguarda identidade nova.';
-      } else if (isAge(rawContext.age_ms) && isAge(rawContext.origin_monotonic_ns) && Array.isArray(rawContext.answers)) {
+        contextStatus = mismatch;
+      } else if (isAge(rawContext.age_ms) && isAge(rawContext.origin_monotonic_ns) && validContextAnswers(rawContext.answers)) {
         const age = ageFromAnchor(this.contextAnchor, contextIdentity, rawContext.age_ms, nowMonotonicMs);
         this.contextAnchor = age.anchor;
         if (age.age !== null && age.age <= CONTEXT_VALIDITY_MS && rawContext.financial_probability === null) {
-          projectedContext = { ...rawContext, age_ms: age.age, answers: rawContext.answers.slice(0, 12) };
+          projectedContext = { ...rawContext, age_ms: age.age, answers: Object.fromEntries(Object.entries(rawContext.answers).slice(0, 12)) };
           contextStatus = safeText(rawContext.status, 'Contexto recebido');
-          this.lastContextStamp = contextStamp(rawContext);
         } else {
           this.contextAnchor = null;
           contextStatus = rawContext.financial_probability !== null ? 'Contexto descartado: probabilidade financeira não autorizada.' : 'Contexto expirado.';
@@ -343,7 +437,6 @@ export class MultimarketProjector {
       }
     } else {
       this.contextAnchor = null;
-      this.lastContextStamp = null;
     }
 
     const decision = raw.decision as UnknownRecord;
