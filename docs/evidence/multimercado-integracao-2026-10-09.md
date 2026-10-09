@@ -38,6 +38,14 @@ Integração fixa `09e7b3090106cd1cabccef4327f541fca55f0354`: `python -E -s -B s
 
 A hipótese genérica de comprovar coleta saudável com esses ensaios curtos falhou em três candidatos distintos e não será repetida sem causa nova demonstrada. O erro de transporte requer diagnóstico separado; disponibilidade, livro sincronizado e operação sustentada continuam pendentes.
 
-## Limites de conclusão
+## Correção do motivo de fechamento
+
+Revisões isoladas do candidato `52464af` passaram 343 testes e self-test, mas reprovaram dois P2: status canônico desatualizado e `recv()` após fechamento intencional substituindo o motivo por `websocket_transport_error`. O revisor Spec reproduziu `stopped` com todos os helpers encerrados e uma razão falsa; o implementador reproduziu também o mesmo mascaramento de `sequence_gap` durante recuperação. Ambos usaram somente fakes, sem rede.
+
+No commit `280580fa975c88d5d99cc5999fbee1396dddccf5`, duas novas regressões falharam antes e passaram após a correção: a recuperação preserva `sequence_gap` e a parada solicitada preserva `stopped`. O teste de falha remota genuína continua expondo `websocket_transport_error`. O fechamento local marca a conexão como encerrada antes de chamar o transporte e o reader não cria erro para uma conexão que já está sendo fechada. Invalidação do livro, limites de helpers e a política `U <= S <= u` permanecem exigidos.
+
+Integração `41230ae81b434e30b197f78ea715b0c7cdd5c6df`: o integrador executou `python -E -s -B scripts/verify.py` no Windows e passou 345 testes em 12,654 s e self-test em 0,866 s, com sockets Python bloqueados. Nenhum quarto ensaio público foi realizado. A correção de diagnóstico não comprova a causa do livro inválido no terceiro ensaio nem a estabilidade live; nova revisão independente está pendente.
+
+## Limites atuais
 
 Coleta real, duração prolongada, reconexão real, direitos de retenção, produto/jurisdição, custos atuais e avaliação financeira fora da amostra permanecem pendentes. AC-07 global não será marcado concluído a partir de fixtures. Nenhum preço ou payload real entra no repositório.
