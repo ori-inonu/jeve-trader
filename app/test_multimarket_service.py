@@ -146,6 +146,66 @@ class MultimarketIntegrationTests(unittest.TestCase):
                 released.set()
                 service.close()
 
+    def test_selection_change_rejects_a_late_context_for_both_workspaces(self):
+        with tempfile.TemporaryDirectory() as directory:
+            primary = Adapter(allowed=True)
+            secondary = Adapter(allowed=True)
+            secondary.caps = replace(source('secondary_public_spot'), retention='allowed', export='allowed')
+            service = MultimarketService(directory, clock=Clock(), adapters={
+                'binance_public_spot': primary,
+                'secondary_public_spot': secondary,
+            })
+            started, released = threading.Event(), threading.Event()
+
+            def executor(*_):
+                started.set()
+                released.wait(5)
+                return _valid_context_response()
+
+            try:
+                first_workspace = connected(service, primary)
+                service.command('multimarket.connect', {'source_id': 'secondary_public_spot'})
+                second_workspace = 'secondary_public_spot:spot:BTCUSDT'
+                for _ in range(100):
+                    service.tick()
+                    if second_workspace in {item['workspace_id'] for item in service.snapshot()['workspaces']}:
+                        break
+                    threading.Event().wait(.005)
+                self.assertIn(second_workspace, {item['workspace_id'] for item in service.snapshot()['workspaces']})
+
+                service.command('multimarket.select', {'workspace_id': first_workspace})
+                service.configure_jev(executor, lambda *_: None, lambda *_: None, lambda: (True, 1))
+                service.command('multimarket.jev.set_enabled', {'enabled': True})
+                service.tick()
+                self.assertTrue(started.wait(1), 'the first workspace evaluation should be pending')
+                self.assertTrue(service.snapshot()['scheduler']['in_flight'])
+                request_identity = service.snapshot()['selected']['evaluation_identity']
+
+                changed = service.command('multimarket.select', {'workspace_id': second_workspace})
+                self.assertEqual(changed['selected_workspace_id'], second_workspace)
+                self.assertNotEqual(request_identity['selection_revision'],
+                                    changed['selected']['evaluation_identity']['selection_revision'])
+                self.assertIsNone(changed['selected']['context'])
+
+                released.set()
+                for _ in range(100):
+                    service.tick()
+                    snapshot = service.snapshot()
+                    if snapshot['scheduler']['error'] == 'identity_changed':
+                        break
+                    threading.Event().wait(.005)
+                self.assertEqual(snapshot['scheduler']['error'], 'identity_changed')
+                self.assertFalse(snapshot['scheduler']['in_flight'])
+                self.assertEqual(snapshot['selected_workspace_id'], second_workspace)
+                self.assertIsNone(snapshot['selected']['context'])
+
+                returned = service.command('multimarket.select', {'workspace_id': first_workspace})
+                self.assertIsNone(returned['selected']['context'],
+                                  'the rejected result must not remain published to its original workspace')
+            finally:
+                released.set()
+                service.close()
+
     def test_valid_context_is_causal_journaled_and_not_repeated_or_reaged(self):
         with tempfile.TemporaryDirectory() as directory:
             adapter, clock = Adapter(allowed=True), Clock()
