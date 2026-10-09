@@ -19,7 +19,7 @@ Versionar app/frontend/Tauri/Cargo e empacotar a versão consistente com hashes 
 
 ## Comments
 
-0.4.1 instalada no Windows 11 x64, saída 0. Atalho `C:/Users/gabri/OneDrive/Área de Trabalho/JevWIN.lnk` aponta para o executável instalado. Instalador acessível em `C:/Users/gabri/Downloads/Jeve-Trader-0.4.1-setup.exe`. Atualização preservou os arquivos existentes em LOCALAPPDATA/JevWIN.
+0.4.1 instalada no Windows 11 x64, saída 0. Atalho `Área de Trabalho/JevWIN.lnk` aponta para o executável instalado. Instalador acessível em `Downloads/Jeve-Trader-0.4.1-setup.exe`. Atualização preservou os arquivos existentes em LOCALAPPDATA/JevWIN.
 
 Release privada publicada: https://github.com/ori-inonu/jeve-trader/releases/tag/v0.4.1, código `2e55df3bffd7239bbfe63fac4ef99d8cbb6ab651`. Instalador, portable e SHA256SUMS enviados com tamanho/digest conferidos. Não houve mudança de visibilidade do repositório. Baseline anterior capturada em `13b8ec2`; remoto incorporado em `66d9aee`; branch `codex/windows-updates-and-live-roadmap` enviada ao origin.
 
@@ -27,4 +27,4 @@ Release privada publicada: https://github.com/ori-inonu/jeve-trader/releases/tag
 
 Evidência detalhada: [Windows release 0.4.1](../../../docs/evidence/windows-release-0.4.1.json). Não são evidências de feed Excel/Profit, rentabilidade, termômetro, alertas ou cadência JEV nova. A instalação de uma atualização continua manual após abrir a release.
 
-Continuação 2026-10-08: atualização instalada 0.5.0 → 0.5.1, saída 0, com dois bancos locais byte-idênticos por SHA256, registro e atalho preservados. Instalador e portable publicados na release privada [v0.5.1](https://github.com/ori-inonu/jeve-trader/releases/tag/v0.5.1), commit `ee54938aaacf1f02ae2c4679e803e0a0aebe7ce7`, com tamanhos e digests remotos conferidos. Consulta real reconheceu `available` em 0.5.0 e `current` em 0.5.1. Cópia acessível em `C:/Users/gabri/Downloads/Jeve-Trader-0.5.1-setup.exe`. [Evidência sanitizada](../release-evidence-0.5.1.json). O ticket de piloto real permanece aberto; instalação e consulta de releases não certificam o feed.
+Continuação 2026-10-08: atualização instalada 0.5.0 → 0.5.1, saída 0, com dois bancos locais byte-idênticos por SHA256, registro e atalho preservados. Instalador e portable publicados na release privada [v0.5.1](https://github.com/ori-inonu/jeve-trader/releases/tag/v0.5.1), commit `ee54938aaacf1f02ae2c4679e803e0a0aebe7ce7`, com tamanhos e digests remotos conferidos. Consulta real reconheceu `available` em 0.5.0 e `current` em 0.5.1. Cópia acessível em `Downloads/Jeve-Trader-0.5.1-setup.exe`. [Evidência sanitizada](../release-evidence-0.5.1.json). O ticket de piloto real permanece aberto; instalação e consulta de releases não certificam o feed.

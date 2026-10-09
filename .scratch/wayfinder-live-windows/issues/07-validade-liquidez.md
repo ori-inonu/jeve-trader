@@ -3,7 +3,7 @@
 Label: wayfinder:research
 Parent: ../map.md
 Status: closed (pesquisa resolvida; implementação depende do contrato ready)
-Assignee: root-01a11717-73b1-7070-8d20-ad6d6e61188a
+Assignee: root-[identidade privada omitida]
 Claimed: 2026-10-08
 Tracker: local-markdown
 

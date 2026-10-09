@@ -6,7 +6,7 @@ Este repositório contém as instruções e os scripts necessários para retomar
 
 No Codex, abra um novo chat, abra o seletor de ambientes e procure **Jeve Trader**. O ambiente aparece entre os publicados e foi selecionado com o campo de tarefa vazio. Use `docs/CODEX_NEXT_TASK.md` quando desejar iniciar a implementação.
 
-O [chat de configuração](https://chatgpt.com/local/01a113f1-e024-75b3-9113-723a82fd30f9?hostId=local) registra a preparação e permite abrir o painel do ambiente. A interface consultada não forneceu URL canônica exclusiva do ambiente nem campo para configurar a branch; a tarefa de preparação confirmou checkout/origin `main`.
+O registro privado da preparação (identidade omitida) registra a preparação e permite abrir o painel do ambiente. A interface consultada não forneceu URL canônica exclusiva do ambiente nem campo para configurar a branch; a tarefa de preparação confirmou checkout/origin `main`.
 
 A configuração publicada contém o nome **Jeve Trader**, repositório `ori-inonu/jeve-trader`, acesso **Somente eu**, instalação `bash scripts/setup-codex.sh` e instruções de inicialização com Python 3.12 e `.venv/bin/python scripts/verify.py`. O acesso à internet permaneceu no perfil **Gerenciadores de pacotes**, sem domínios extras, variáveis ou segredos adicionados.
 

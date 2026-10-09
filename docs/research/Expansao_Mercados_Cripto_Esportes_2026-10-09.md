@@ -1,6 +1,6 @@
 # Jeve Trader — coleta de dados cripto e esportes
 
-Pesquisa delimitada em 2026-10-09. Autor: pesquisador auxiliar; conversa própria `01a11ee3-1734-7602-a28a-5b63b56b816a`, sessão `01a11ee0-293d-7a82-8719-5c41909aebcb`. Repositório somente leitura, baseline `da96c6ad4187030a98c4daa86a6b96e1e5b809a9`. Este arquivo é investigação e requisitos propostos; não implementa nem certifica uma especificação. Nenhuma conta, chave, ordem, depósito, assinatura de dados ou dependência foi criada.
+Pesquisa delimitada em 2026-10-09. Autor: pesquisador auxiliar; conversa própria `[identidade privada omitida]`, sessão `[identidade privada omitida]`. Repositório somente leitura, baseline `da96c6ad4187030a98c4daa86a6b96e1e5b809a9`. Este arquivo é investigação e requisitos propostos; não implementa nem certifica uma especificação. Nenhuma conta, chave, ordem, depósito, assinatura de dados ou dependência foi criada.
 
 ## Resultado e relação com a meta financeira
 

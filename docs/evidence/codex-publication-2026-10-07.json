@@ -12,7 +12,7 @@
   "branch_configuration_field_observed": false,
   "canonical_environment_url_provided_by_ui": false,
   "environment_url": null,
-  "setup_chat_url": "https://chatgpt.com/local/01a113f1-e024-75b3-9113-723a82fd30f9?hostId=local",
+  "setup_chat_url": null,
   "new_chat_url": "https://chatgpt.com/",
   "setup_command": "bash scripts/setup-codex.sh",
   "initialization_verify_command": ".venv/bin/python scripts/verify.py",

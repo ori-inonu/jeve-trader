@@ -21,7 +21,7 @@ git clone https://github.com/ori-inonu/jeve-trader.git
 cd jeve-trader
 ```
 
-O **ambiente Jeve Trader está publicado no Codex**. Em um novo chat, abra o seletor de ambientes, procure `Jeve Trader` e selecione-o. O [chat de configuração](https://chatgpt.com/local/01a113f1-e024-75b3-9113-723a82fd30f9?hostId=local) registra a preparação; a interface não forneceu uma URL exclusiva do ambiente. Consulte [docs/CODEX.md](docs/CODEX.md) e [docs/TRANSFER_STATUS.json](docs/TRANSFER_STATUS.json) para os detalhes confirmados.
+O **ambiente Jeve Trader está publicado no Codex**. Em um novo chat, abra o seletor de ambientes, procure `Jeve Trader` e selecione-o. O registro privado da preparação (identidade omitida) registra a preparação; a interface não forneceu uma URL exclusiva do ambiente. Consulte [docs/CODEX.md](docs/CODEX.md) e [docs/TRANSFER_STATUS.json](docs/TRANSFER_STATUS.json) para os detalhes confirmados.
 
 A preparação usou GPT-6.1 Sol e registrou Python 3.12.14, 166 testes e autoteste aprovados, com os 71 arquivos do aplicativo preservados. A implementação do backlog ainda não foi iniciada. Evidências da publicação ficam em [docs/evidence/](docs/evidence/).
 

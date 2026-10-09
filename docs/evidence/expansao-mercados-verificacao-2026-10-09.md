@@ -1,6 +1,6 @@
 # Verificação da entrega documental
 
-Conversa própria: `01a11ee0-293d-7a82-8719-5c41909aebcb`. Worktree: `C:/Users/gabri/.codex/worktrees/pesquisa-apis-mercados/jeve-trader`; baseline `da96c6ad4187030a98c4daa86a6b96e1e5b809a9`. Plataforma observada: Windows 11, Python 3.14.7. Estado: verificações locais aprovadas; revisão independente registrada em parecer separado quando concluída.
+Conversa própria: `[identidade privada omitida]`. Worktree: `worktree isolado (caminho privado omitido)`; baseline `da96c6ad4187030a98c4daa86a6b96e1e5b809a9`. Plataforma observada: Windows 11, Python 3.14.7. Estado: verificações locais aprovadas; revisão independente registrada em parecer separado quando concluída.
 
 ## Comando e alcance
 

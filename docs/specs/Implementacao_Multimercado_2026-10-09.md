@@ -1,6 +1,6 @@
 # EM-01 — contrato de implementação local multimercado
 
-Data: 2026-10-09. Autor: pesquisador `/root/multimarket_ready_spec`, conversa própria `01a11f08-bbc8-7a80-8ceb-ee50764213cd`. Estado: **candidato pronto para congelamento pelo integrador e revisão independente; não implementado ou certificado pelo autor**. Autorização observada: iniciar a implementação das especificações com até três subagentes. Esta autorização não inclui conta, chave, ordem, aposta, depósito, compra, publicação ou validação financeira.
+Data: 2026-10-09. Autor: pesquisador `/root/multimarket_ready_spec`, conversa própria `[identidade privada omitida]`. Estado: **candidato pronto para congelamento pelo integrador e revisão independente; não implementado ou certificado pelo autor**. Autorização observada: iniciar a implementação das especificações com até três subagentes. Esta autorização não inclui conta, chave, ordem, aposta, depósito, compra, publicação ou validação financeira.
 
 ## Resultado e limite da entrega
 

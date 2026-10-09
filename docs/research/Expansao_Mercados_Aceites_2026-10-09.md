@@ -19,7 +19,7 @@ Não estão incluídos alterações do aplicativo, ordens, depósitos, criação
 
 ## Estado inicial e responsabilidade
 
-Checkout principal já contém mudanças de outras frentes. O harness recusou ownership da raiz com `overlapping_lease`; a investigação foi isolada no worktree anexado `C:/Users/gabri/.codex/worktrees/pesquisa-apis-mercados/jeve-trader`. O integrador escreve os artefatos desta frente; cada pesquisador escreve apenas sua nota em pasta privada exclusiva; revisor recebe uma cópia hash-verificada e escreve somente parecer. Nenhum auxiliar altera índices compartilhados.
+Checkout principal já contém mudanças de outras frentes. O harness recusou ownership da raiz com `overlapping_lease`; a investigação foi isolada no worktree anexado `worktree isolado (caminho privado omitido)`. O integrador escreve os artefatos desta frente; cada pesquisador escreve apenas sua nota em pasta privada exclusiva; revisor recebe uma cópia hash-verificada e escreve somente parecer. Nenhum auxiliar altera índices compartilhados.
 
 Fontes locais inspecionadas: `app/profit_bridge.py` (`SourceBatch`, `MarketEvent.quantity: int`, livro/agregados/capacidades); `app/profitdll_contract.py` (SDK autorizado ausente, valida símbolo WIN); `app/decision_engine.py` (`POINT_VALUE=.20`, conta BRL manual, quantidade inteira, tarifas exemplares). A inspeção não valida Profit/Excel real, feed integral ou rentabilidade.
 

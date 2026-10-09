@@ -2,7 +2,7 @@
 
 Status: ready (2026-10-08). Incremento reversível derivado de FW-06/FW-10 do plano aprovado; não altera os aceites congelados.
 
-Baseline do código: `3ee94e2af7dc71ffebf26479110dfe319b422d91`. Responsável pela integração: conversa `01a11717-73b1-7070-8d20-ad6d6e61188a`; arquivos de outras conversas preservados.
+Baseline do código: `3ee94e2af7dc71ffebf26479110dfe319b422d91`. Responsável pela integração: conversa `[identidade privada omitida]`; arquivos de outras conversas preservados.
 
 ## Problema observado e caminho
 

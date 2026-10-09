@@ -26,7 +26,7 @@
     "setup_command": "bash scripts/setup-codex.sh",
     "verify_command": ".venv/bin/python scripts/verify.py",
     "development_task_started": false,
-    "setup_chat_url": "https://chatgpt.com/local/01a113f1-e024-75b3-9113-723a82fd30f9?hostId=local",
+    "setup_chat_url": null,
     "new_chat_url": "https://chatgpt.com/",
     "selection_label": "Jeve Trader",
     "repository": "ori-inonu/jeve-trader",

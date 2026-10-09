@@ -2,7 +2,7 @@
 
 Type: grilling
 Status: open
-Assigned to: conversation 01a11717-73b1-7070-8d20-ad6d6e61188a
+Assigned to: conversation [identidade privada omitida]
 Blocked by: 01-fontes, 02-cadencia
 
 ## Question

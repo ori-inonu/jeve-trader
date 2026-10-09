@@ -2,9 +2,9 @@
 
 **Veredicto: PASS documental.** A entrega satisfaz AM-01–06 como pesquisa, especificação e plano. Este parecer não valida feed econômico, cobertura ao vivo, elegibilidade geográfica de qualquer conta/produto, rentabilidade ou segurança financeira; também não aprova operação.
 
-**Revisor:** review-multimarket-20261009 — identidade canônica /root/review_multimarket, thread 01a11ef7-13c8-7253-a392-e0705db12e59. Revisão independente, somente leitura, feita sobre a cópia física isolada indicada abaixo. Não alterei a candidata, o checkout, o worktree ou os critérios.
+**Revisor:** review-multimarket-20261009 — identidade canônica /root/review_multimarket, thread [identidade privada omitida]. Revisão independente, somente leitura, feita sobre a cópia física isolada indicada abaixo. Não alterei a candidata, o checkout, o worktree ou os critérios.
 
-**Objeto congelado:** C:/Users/gabri/.codex/codex-desktop-harness/research/01a11ee0-293d-7a82-8719-5c41909aebcb/review/input. SHA-256 do manifest.json: e917a95f7fc752d64aac741326e86c37908898157f04c0adc5fe393533e209e2. Os 15 artefatos listados no manifesto, inclusive os critérios, conferem byte a byte com seus hashes. Critérios AM-01–06: docs/research/Expansao_Mercados_Aceites_2026-10-09.md, SHA-256 0e520a66c668e9594edf4be7ce7b145a555a813156a29de7b45896d3ec2243b2. Baseline declarada: da96c6ad4187030a98c4daa86a6b96e1e5b809a9.
+**Objeto congelado:** cópia isolada privada do manifesto SHA-256 do manifest.json: e917a95f7fc752d64aac741326e86c37908898157f04c0adc5fe393533e209e2. Os 15 artefatos listados no manifesto, inclusive os critérios, conferem byte a byte com seus hashes. Critérios AM-01–06: docs/research/Expansao_Mercados_Aceites_2026-10-09.md, SHA-256 0e520a66c668e9594edf4be7ce7b145a555a813156a29de7b45896d3ec2243b2. Baseline declarada: da96c6ad4187030a98c4daa86a6b96e1e5b809a9.
 
 ## Evidência por critério
 
