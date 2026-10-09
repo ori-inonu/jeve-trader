@@ -22,11 +22,11 @@ Esta é a sessão de charting: somente tickets research podem ser resolvidos nes
 - [Dados cripto](issues/02-dados-cripto.md): contratos públicos documentados; granularidade, lado e sequência não são equivalentes. Divergências e regionalidade precisam de prova no piloto.
 - [Arquitetura atual](issues/03-arquitetura-atual.md): snapshot confirma gates Excel, regras WIN/quantidades inteiras e estado global. Migração precisa contratos de instrumento, fonte e conta; código preservado.
 
-O [lote JEV persistido](jev-receipt.json) recomenda core modular local, identidade tipada por venue/instrumento, scheduler por evidência, cockpit focado na decisão, reconciliação read-only e piloto spot em paralelo à qualificação B3. Essas direções estão na [proposta](architecture-proposal.md), [vocabulário candidato](domain-proposal.md) e [SPEC draft](spec.md); os tickets abaixo conservam alternativas, perguntas de stress e lacunas. Nenhuma recomendação foi tratada como resposta humana ou prontidão de código.
+O [lote JEV persistido e sanitizado](../../docs/evidence/multimarket-planning-jev.json) recomenda core modular local, identidade tipada por venue/instrumento, scheduler por evidência, cockpit focado na decisão, reconciliação read-only e piloto spot em paralelo à qualificação B3. Essas direções estão na [proposta](architecture-proposal.md), [vocabulário candidato](domain-proposal.md) e [SPEC draft](spec.md); os tickets abaixo conservam alternativas, perguntas de stress e lacunas. Nenhuma recomendação foi tratada como resposta humana ou prontidão de código.
 
 ## Tickets e fronteira
 
-O [lote complementar](jev-supplement.json), baseado nos relatórios finais, propõe reaproveitar o isolamento local existente, snapshot visual do workspace selecionado e prioridade por relevância/severidade com aging. Houve abstenção sobre o recorte do piloto cripto: [Sequência dos pilotos](issues/09-sequencia-pilotos.md) conserva essa dependência, sem escolher venue.
+O [lote complementar sanitizado](../../docs/evidence/multimarket-planning-jev.json), baseado nos relatórios finais, propõe reaproveitar o isolamento local existente, snapshot visual do workspace selecionado e prioridade por relevância/severidade com aging. Houve abstenção sobre o recorte do piloto cripto: [Sequência dos pilotos](issues/09-sequencia-pilotos.md) conserva a dependência daquela rodada; o incremento posterior escolhe seu piloto pelo contrato finito e novo recibo.
 
 | Ticket | Tipo | Dependências |
 |---|---|---|
@@ -45,6 +45,8 @@ O [lote complementar](jev-supplement.json), baseado nos relatórios finais, prop
 Próxima fronteira de decisão: os seis tickets técnicos, visuais e de fluxo, começando por [Fronteira de processamento e migração](issues/04-fronteira-processamento.md). A qualificação B3 pode avançar em leitura documental; contratação ou acesso privado continuam dependências externas. Esta rodada encerra a descoberta documental, mantendo o mapa aberto.
 
 ## Not yet specified
+
+Atualização após o pedido explícito de implementação: o [contrato finito I-01–I-12](../../docs/specs/Multimercado_Implementacao_2026-10-09.md) delimita o incremento executável, com [evidência](../../docs/evidence/multimarket-acceptance.md). Ele não resolve retroativamente tickets HITL nem gates externos. A próxima investigação é [RT-12](issues/12-evidencia-proximo-ciclo.md), com [contrato candidato](../../docs/specs/Multimercado_Proximo_Ciclo_2026-10-09.md); a escolha de prioridade permanece aberta após abstenção do JEV.
 
 Calibração financeira e promoção por instrumento/venue; derivados cripto, funding, colateral e liquidação se sua inclusão for decidida; parâmetros numéricos de latência após piloto; conectores privados B3 quando documentação e acesso estiverem disponíveis; desenho visual detalhado após contrato de capacidades; agregação econômica de carteira com moedas e horários distintos.
 

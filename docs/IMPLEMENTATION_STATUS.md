@@ -1,5 +1,19 @@
 # Jeve Trader — implementação e evidências
 
+## Incremento multimercado — 09/10/2026
+
+Implementados os módulos de contratos/registro, saúde de mercado, ledger por conta, risco determinístico, scheduler contextual causal, fonte pública BTCUSDT, journal/replay licenciado, integração sidecar e cockpit. A [SPEC I-01–I-12](specs/Multimercado_Implementacao_2026-10-09.md) fixa o incremento; a [matriz de aceite](evidence/multimarket-acceptance.md) reúne verificações e limitações. A baseline anterior permanece acessível no modo legado e em suas regressões.
+
+| Capacidade | Alcance demonstrado | Dependência restante |
+|---|---|---|
+| Cripto público | Discovery/HTTPS/WSS read-only, filtros atuais, L1 e trades individuais; fixtures/reconnect offline e smoke pontual | Disponibilidade contínua e elegibilidade regional |
+| Inteligência | Choice/Noul tipadas, identidade exata, timeout/expiração monotônicos, orçamento e licença | Habilitação do produto e política afirmativa para envio de dados; sem chamada paga na verificação |
+| Conta/risco | Importação manual/read-only contratual, idempotência, conciliação e q=0 | Acesso privado real, custos vigentes e modelo financeiro aprovado |
+| Interface | Cockpit React, seleção, frescor, causas, exportação de métricas e acesso ao legado | Jornada e desempenho da nova janela nativa Windows |
+| Evidência | Suítes offline, build, stress e workload por batch | Avaliação econômica/prospectiva real |
+
+Probabilidade de lucro segue não estimada sem modelo aprovado no escopo atual. B3 independente permanece bloqueado até qualificação de fornecedor e licença. Confiança contextual não promove modelo financeiro. Os resultados de 07/10 abaixo são históricos e não certificam o novo incremento nativo.
+
 ## Entrega atual — 07/10/2026, painel 0.4.0
 
 Implementado o painel Tauri 2/React/TypeScript/Vite/Tailwind 4/ECharts, com serviço Python separado da UI Tkinter. Mudanças locais anteriores foram preservadas; o diff inicial foi arquivado em `.artifacts/before-implementation.patch`. A distribuição mantém os identificadores JevWIN e o diretório de dados legado. [Guia](DECISION_PANEL.md), [ADR](decisions/0010-painel-e-capital-progressivo.md) e [evidência sanitizada](evidence/decision-panel-2026-10-07.json).

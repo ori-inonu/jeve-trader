@@ -1,5 +1,15 @@
 # Retomada — Jeve Trader
 
+## Incremento multimercado — 09/10/2026
+
+Entrega isolada na branch `codex/multimarket-spec`, com [SPEC finita](specs/Multimercado_Implementacao_2026-10-09.md), [grafo SDD](SDD.md) e [matriz de aceite](evidence/multimarket-acceptance.md). O cockpit React acessa BTCUSDT spot por API pública, mantém identidade/metadata/frescor por fonte e instrumento e expõe causas de AGUARDAR. O motor modular inclui conta reconciliada, risco Decimal, scheduler JEV causal, journal condicionado à licença e métricas exportáveis.
+
+Nenhuma fonte, conta ou chamada JEV é ativada no boot. A inicialização exige conexão explícita; a reconexão posterior e a descoberta de metadata são automáticas. Ordens continuam desligadas. A pasta `multimarket/` separa o novo armazenamento dos dados JevWIN; Excel/OCR/laboratório continuam acessíveis pelo modo legado.
+
+Verifique com `.venv/Scripts/python.exe scripts/verify.py`, `npm test` e `npm run build` em `desktop/`. A [evidência de desempenho](evidence/multimarket-performance.json) mede processamento sintético pós-recebimento; o [smoke público](evidence/multimarket-public-smoke.json) mede alcance pontual de HTTPS/WSS, sem persistir cotações. Consulte a matriz para os resultados finais e os limites da revisão.
+
+Continuam pendentes: fornecedor/SKU/entitlement/licença B3 para WIN/WDO; conta privada com escopos read-only; corpus autorizado e aprovação financeira por instrumento; instalação e jornada da nova versão na janela Windows com avaliação prospectiva pareada. A observação no navegador não substitui essa medição. O estado de 07/10 abaixo é histórico e descreve o painel anterior.
+
 ## Estado atual — 07/10/2026
 
 A implementação local 0.4.0 está neste checkout, ainda sem commit/PR. Preserve as alterações que já existiam antes desta tarefa; o patch inicial está em `.artifacts/before-implementation.patch`. Não clone por cima deste diretório. [Guia atual](DECISION_PANEL.md), [status](IMPLEMENTATION_STATUS.md), [backlog](BACKLOG.md) e [evidência](evidence/decision-panel-2026-10-07.json) descrevem o escopo demonstrado.

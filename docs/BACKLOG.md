@@ -1,5 +1,18 @@
 # Backlog acionável do Jeve Trader
 
+## Incremento multimercado — 09/10/2026
+
+IMP-01–IMP-04 estão implementados na branch `codex/multimarket-spec`. IMP-05 reúne a verificação e a revisão independente no [contrato finito](specs/Multimercado_Implementacao_2026-10-09.md), com [evidência por aceite](evidence/multimarket-acceptance.md). A conclusão local desses tickets conserva as dependências externas abaixo e o histórico JT.
+
+| Próxima fronteira | Evidência necessária antes de habilitar |
+|---|---|
+| B3 sem Profit | Fornecedor/SKU WIN/WDO, entitlement, schema/captura autorizada e licença de uso/retention/export |
+| Conta automática | Escopos read-only, fixture autorizada, reconciliação com posição/saldo reais |
+| Modelo financeiro por mercado | Corpus licenciado, comparação temporal sem leakage, custos e aprovação por instrumento/venue/horizonte/metadata |
+| Nova distribuição Windows | Build instalável, jornada nativa e comparação prospectiva pareada; métricas sintéticas não comprovam benefício |
+
+Nenhum desses gates é encerrado pela presença de contratos ou botões no cockpit. O planejamento histórico de 07/10 abaixo mantém seus próprios critérios.
+
 **Atualizado em 07/10/2026.** Critérios abaixo preservam o escopo do estudo de 06/10; o quadro atual identifica o que já foi demonstrado. Protocolo e gates: [ROADMAP.md](ROADMAP.md). Decisão aceita: [ADR 0010](decisions/0010-painel-e-capital-progressivo.md). Evidência: [status](IMPLEMENTATION_STATUS.md).
 
 ## Planejamento Wayfinder — 07/10/2026

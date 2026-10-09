@@ -1,0 +1,31 @@
+{
+  "kind": "public_read_only_smoke",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "https": "passed",
+  "wss": "passed",
+  "quote": 3,
+  "trade": 1,
+  "statuses": [
+    {
+      "status": "connecting",
+      "reason": "startup",
+      "epoch": 1
+    },
+    {
+      "status": "connecting",
+      "reason": "metadata_ready",
+      "epoch": 1
+    },
+    {
+      "status": "live",
+      "reason": "stream_open",
+      "epoch": 1
+    }
+  ],
+  "payload_persisted": false,
+  "orders": false,
+  "paid_jev_calls": 0,
+  "metadata_version": "sha256:046502e849863dd412461f7ee352a284cb1174e1effedc3a056e585604c3059f",
+  "constraints_verified": true,
+  "quote_exchange_clock_present": false
+}

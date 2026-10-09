@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "source_commit": "3edf5d27a3036f97db5c331407996124a023783b",
+  "observed_date": "2026-10-09",
+  "platform": "Windows host, Codex in-app browser, Vite preview and Python sidecar",
+  "scope": "Browser journey only; not a packaged native Windows release",
+  "isolated_data": true,
+  "boot": {
+    "automatically_connected": false,
+    "metadata_discovered": false,
+    "orders_enabled": false,
+    "private_account_connected": false
+  },
+  "connection": {
+    "activated_with_keyboard_enter": true,
+    "live_updates_without_reload": true,
+    "public_instrument": "BINANCE/SPOT/BTCUSDT",
+    "partial_coverage_visible": true,
+    "financial_probability": null,
+    "recommendation": "WAIT",
+    "recommended_quantity": "0",
+    "product_jev_enabled": false
+  },
+  "navigation": {
+    "legacy_opened_with_keyboard": true,
+    "return_to_cockpit_with_keyboard": true,
+    "subscription_resumed": true
+  },
+  "narrow_viewport": {
+    "override_width": 390,
+    "override_height": 844,
+    "document_client_width": 375,
+    "document_scroll_width": 375,
+    "horizontal_overflow": false,
+    "override_reset_after_test": true
+  },
+  "backend_stop": {
+    "stopped_at_utc": "2026-10-09T07:09:36Z",
+    "last_visible_snapshot_local": "2026-10-09T04:09:34-03:00",
+    "snapshot_unchanged_after_stop": true,
+    "after_quote_ttl": {"quote_removed": true, "quote_stale_visible": true, "bid_visible": false},
+    "after_trade_ttl": {"trades_removed": true, "trades_stale_visible": true},
+    "expected_dev_transport_errors_after_controlled_stop": true
+  },
+  "console_warnings_or_errors_before_controlled_stop": [],
+  "screenshot": "multimarket-cockpit.jpg",
+  "screenshot_state": "Fresh disconnected boot; no market payload",
+  "temporary_tab_closed": true,
+  "preview_server_stopped": true,
+  "persisted_market_payload": false,
+  "paid_jev_calls": false,
+  "native_window_verified": false,
+  "native_gpu_measurement": null,
+  "paired_manual_step_gain": null
+}

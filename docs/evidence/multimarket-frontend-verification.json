@@ -1,0 +1,11 @@
+{
+  "kind": "offline_frontend_verification",
+  "measured_commit": "3edf5d27a3036f97db5c331407996124a023783b",
+  "date_utc": "2026-10-09",
+  "platform": "Windows x64",
+  "tests": {"command": "npm test", "passed": 36, "failed": 0, "duration_ms": 252.7492},
+  "build": {"command": "npm run build", "typescript": "passed", "vite": "passed", "modules": 2173, "main_kb": 278.56, "legacy_kb": 629.29, "warning": "Legacy lazy chunk exceeds 500 kB"},
+  "native_window_verified": false,
+  "product_jev_calls": false,
+  "orders": false
+}
