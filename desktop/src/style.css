@@ -188,3 +188,5 @@
 .path-rail i { display:block; height:100%; transition:width 180ms ease; }
 .path-sides small { grid-column:1/-1; font-size:8px; }
 @media(max-width:1000px){.depth-instrument{height:128px}}
+
+.multimarket-controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px}.multimarket-controls .field{width:160px}.multimarket-controls .button.secondary{margin-left:0}
