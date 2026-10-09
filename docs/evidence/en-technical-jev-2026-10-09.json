@@ -1,0 +1,83 @@
+{
+  "status": "assessed",
+  "receipt_id": "fe939df5-cb54-4eb1-a43d-be173c58b888",
+  "input_digest": "6b4b677f818c01f10bf98c5bb57d332afea3cad6dc25a150e69d7215a80c48fd",
+  "rubric_version": "batch-2026-09-26.2",
+  "model": "jev-1.13.0",
+  "answers": {
+    "test_seams": {
+      "type": "choice",
+      "domain": "strategy",
+      "providerChoice": "public_contracts",
+      "bestCandidate": "public_contracts",
+      "probabilities": {
+        "public_contracts": 1,
+        "full_native_only": 0,
+        "internal_helpers": 0,
+        "insufficient_evidence": 0
+      },
+      "confidence": 1,
+      "disposition": "recommendation",
+      "recommendation": "public_contracts",
+      "policy": {
+        "version": "decision-policy-2026-09-26.1",
+        "mode": "conservative",
+        "minConfidence": 0.6,
+        "minProbability": 0.6,
+        "calibration": "not_locally_calibrated"
+      }
+    },
+    "origin_strategy": {
+      "type": "choice",
+      "domain": "strategy",
+      "providerChoice": "split_origin",
+      "bestCandidate": "split_origin",
+      "probabilities": {
+        "split_origin": 0.99,
+        "runtime_bridge_now": 0,
+        "version_origin": 0,
+        "insufficient_evidence": 0.01
+      },
+      "confidence": 0.99,
+      "disposition": "recommendation",
+      "recommendation": "split_origin",
+      "policy": {
+        "version": "decision-policy-2026-09-26.1",
+        "mode": "conservative",
+        "minConfidence": 0.6,
+        "minProbability": 0.6,
+        "calibration": "not_locally_calibrated"
+      }
+    },
+    "integration_target": {
+      "type": "choice",
+      "domain": "strategy",
+      "providerChoice": "stacked",
+      "bestCandidate": "stacked",
+      "probabilities": {
+        "stacked": 1,
+        "port_main_now": 0,
+        "mix_branches": 0,
+        "insufficient_evidence": 0
+      },
+      "confidence": 1,
+      "disposition": "recommendation",
+      "recommendation": "stacked",
+      "policy": {
+        "version": "decision-policy-2026-09-26.1",
+        "mode": "conservative",
+        "minConfidence": 0.6,
+        "minProbability": 0.6,
+        "calibration": "not_locally_calibrated"
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 1011,
+    "output_tokens": 174
+  },
+  "billed_cost_usd": null,
+  "authority": "advisory_only",
+  "approved_by": "jev_delegated",
+  "scope": "Technical seams, origin strategy and stacked integration only; scope readiness comes from independent review."
+}
