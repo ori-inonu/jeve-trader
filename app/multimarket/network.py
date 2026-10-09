@@ -7,7 +7,9 @@ import ssl
 import threading
 import urllib.error
 import urllib.request
-from typing import Any, Callable
+from typing import Callable
+
+from .strict_json import DuplicateJsonKey, unique_object
 
 
 METADATA_URL = "https://data-api.binance.vision/api/v3/exchangeInfo?symbol=BTCUSDT"
@@ -26,15 +28,6 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 def _reject_json_constant(_value: str) -> None:
     raise NetworkError("Binance metadata contains a non-finite JSON number.")
-
-
-def _unique_object(pairs: list[tuple[str, Any]]) -> dict:
-    result: dict[str, Any] = {}
-    for key, value in pairs:
-        if key in result:
-            raise NetworkError("Binance metadata contains duplicate JSON keys.")
-        result[key] = value
-    return result
 
 
 class BinancePublicTransport:
@@ -75,11 +68,13 @@ class BinancePublicTransport:
             value = json.loads(
                 raw.decode("utf-8"),
                 parse_constant=_reject_json_constant,
-                object_pairs_hook=_unique_object,
+                object_pairs_hook=unique_object,
             )
             if not isinstance(value, dict):
                 raise NetworkError("Binance metadata schema is invalid.")
             return value
+        except DuplicateJsonKey:
+            raise NetworkError("Binance metadata contains duplicate JSON keys.") from None
         except NetworkError:
             raise
         except (urllib.error.URLError, TimeoutError, OSError, UnicodeError, ValueError, TypeError):

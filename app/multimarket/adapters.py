@@ -14,6 +14,7 @@ from typing import Any
 from uuid import uuid4
 
 from .contracts import EventEnvelope, InstrumentSpec, SourceCapabilities, SystemClock, decimal_text
+from .strict_json import DuplicateJsonKey, unique_object
 
 
 SOURCE_ID = "binance_public_spot"
@@ -24,10 +25,6 @@ _MAX_RECONNECT_SECONDS = 5.0
 
 class AdapterError(RuntimeError):
     """Sanitized adapter validation or lifecycle failure."""
-
-
-class _DuplicateKey(ValueError):
-    pass
 
 
 class _StopOrResync:
@@ -55,15 +52,6 @@ class _StopOrResync:
             if self._resync_event.is_set():
                 return True
         return True
-
-
-def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-    value: dict[str, Any] = {}
-    for key, item in pairs:
-        if key in value:
-            raise _DuplicateKey
-        value[key] = item
-    return value
 
 
 def _reject_constant(_value: str) -> None:
@@ -289,7 +277,7 @@ class PublicSpotAdapter:
             if isinstance(message, str):
                 root = json.loads(
                     message,
-                    object_pairs_hook=_unique_object,
+                    object_pairs_hook=unique_object,
                     parse_constant=_reject_constant,
                     parse_float=_finite_float,
                 )
@@ -322,7 +310,15 @@ class PublicSpotAdapter:
             return [event]
         except AdapterError:
             raise
-        except (UnicodeError, json.JSONDecodeError, _DuplicateKey, TypeError, ValueError, OverflowError, RecursionError):
+        except (
+            UnicodeError,
+            json.JSONDecodeError,
+            DuplicateJsonKey,
+            TypeError,
+            ValueError,
+            OverflowError,
+            RecursionError,
+        ):
             raise AdapterError("Binance market message is malformed or non-finite.") from None
 
     def _trade(

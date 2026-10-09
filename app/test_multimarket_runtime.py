@@ -239,11 +239,17 @@ class BinancePublicTransportTests(unittest.TestCase):
 
     def test_metadata_rejects_duplicate_json_keys(self):
         expected_url = "https://data-api.binance.vision/api/v3/exchangeInfo?symbol=BTCUSDT"
-        response = _Response(b'{"symbols":[],"symbols":[]}', expected_url)
-        with patch("multimarket.network.urllib.request.build_opener") as build_opener:
-            build_opener.return_value.open.return_value = response
-            with self.assertRaises(NetworkError):
-                BinancePublicTransport().get_metadata("BTCUSDT")
+        for body in (
+            b'{"symbols":[],"symbols":[]}',
+            b'{"symbols":[{"symbol":"BTCUSDT","symbol":"ETHUSDT"}]}',
+        ):
+            with self.subTest(body=body):
+                response = _Response(body, expected_url)
+                with patch("multimarket.network.urllib.request.build_opener") as build_opener:
+                    build_opener.return_value.open.return_value = response
+                    with self.assertRaises(NetworkError) as raised:
+                        BinancePublicTransport().get_metadata("BTCUSDT")
+                self.assertEqual(str(raised.exception), "Binance metadata contains duplicate JSON keys.")
 
     def test_stream_uses_fixed_tls_endpoint_and_delivers_messages(self):
         seen = []
@@ -464,6 +470,14 @@ class PublicSpotAdapterTests(unittest.TestCase):
         for message in messages:
             with self.subTest(message=message), self.assertRaises(AdapterError):
                 adapter.normalize(message, "workspace-a", 4, spec.metadata_version)
+
+        nested_duplicate = (
+            '{"e":"trade","s":"BTCUSDT","t":1,"p":"1","q":"1","m":false,'
+            '"extra":{"duplicate":1,"duplicate":2}}'
+        )
+        with self.assertRaises(AdapterError) as raised:
+            adapter.normalize(nested_duplicate, "workspace-a", 4, spec.metadata_version)
+        self.assertEqual(str(raised.exception), "Binance market message is malformed or non-finite.")
 
     def test_queue_overflow_surfaces_error_and_resets_epoch_with_diagnostic(self):
         message = '{"e":"trade","E":1800000000000,"s":"BTCUSDT","t":%d,"p":"10","q":"0.5","m":false}'
