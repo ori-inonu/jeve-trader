@@ -32,6 +32,37 @@ class OfflineFeed:
 
 
 class MultimarketObserverTests(unittest.TestCase):
+    def test_book_level_changes_do_not_create_executions_or_change_vap(self):
+        batch = synthetic_batch(100000)
+        feed = OfflineFeed(batch)
+        observer = MultimarketObserver(feed_factory=lambda: feed, clock_ms=lambda: 100000)
+        observer.start(duration_seconds=10)
+        observer.poll()
+        first = observer.snapshot()
+        vap_before = first['features']['volume_at_price']
+        self.assertEqual(first['received_trades'], len(batch.trades))
+
+        changed_book = replace(
+            batch.book,
+            bids=(('98.50', '5.00000'),),
+            asks=(('101.50', '7.00000'),),
+        )
+        feed.batch = replace(batch, trades=(), book=changed_book)
+        observer.poll()
+        changed = observer.snapshot()
+        self.assertEqual(changed['book']['bids'], [['98.50', '5.00000']])
+        self.assertEqual(changed['book']['asks'], [['101.50', '7.00000']])
+        self.assertEqual(changed['received_trades'], len(batch.trades))
+        self.assertEqual(changed['features']['volume_at_price'], vap_before)
+
+        feed.batch = replace(batch, trades=(), book=None)
+        observer.poll()
+        removed = observer.snapshot()
+        self.assertIsNone(removed['book'])
+        self.assertEqual(removed['received_trades'], len(batch.trades))
+        self.assertEqual(removed['features']['volume_at_price'], vap_before)
+        observer.stop()
+
     def test_explicit_start_dedup_stale_and_bounded_stop(self):
         clock = [100000]
         mono = [1.0]
