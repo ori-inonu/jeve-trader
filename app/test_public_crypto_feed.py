@@ -256,6 +256,34 @@ class PublicFeedTests(unittest.TestCase):
         self.assertTrue(feed._book.view().valid)
         self.assertEqual(feed._book.view().last_update_id, 3)
 
+    def test_explicit_stop_close_does_not_report_transport_failure(self):
+        class LocalCloseRaises(FakeWebSocket):
+            def recv(self, timeout_s):
+                if self.messages:
+                    return self.messages.popleft()
+                if self.closed.wait(timeout_s):
+                    raise RuntimeError("local close unblocked recv")
+                return None
+
+        ws = LocalCloseRaises([{"stream": "btcusdt@depth@100ms", "data": delta()}])
+        rest = FakeRest([HttpResponse(200, rest_exchange_info(), {}),
+                         HttpResponse(200, snapshot(), {})])
+        feed = PublicCryptoFeed(rest_get=rest, ws_factory=lambda _: ws,
+                                clock_utc_ms=lambda: 1, clock_mono_ns=time.monotonic_ns,
+                                limits={"poll_timeout_s": 0.01, "max_attempts": 1})
+        feed.start()
+        deadline = time.monotonic() + 2.0
+        while feed.status()["state"] != "live" and time.monotonic() < deadline:
+            time.sleep(0.005)
+        self.assertEqual(feed.status()["state"], "live")
+
+        feed.stop()
+        status = feed.status()
+        self.assertEqual(status["state"], "stopped")
+        self.assertEqual(status["reason"], "stopped")
+        self.assertEqual(status["health"][1]["reason"], "stopped")
+        self.assertFalse(status["worker_alive"])
+
     def test_start_is_nonblocking_connects_before_snapshot_and_stop_owns_transport(self):
         ws = FakeWebSocket([
             {"_control": "ping", "payload": "heartbeat"},
@@ -409,6 +437,37 @@ class PublicFeedTests(unittest.TestCase):
         self.assertEqual(status["reason"], "websocket_transport_error")
         self.assertFalse(status["health"][1]["valid"])
         self.assertFalse(status["health"][1]["sequence_ok"])
+        self.assertEqual(status["health"][1]["reason"], "websocket_transport_error")
+
+    def test_gap_reason_survives_intentional_close_of_current_attempt(self):
+        class LocalCloseRaises(FakeWebSocket):
+            def recv(self, timeout_s):
+                if self.messages:
+                    return self.messages.popleft()
+                if self.closed.wait(timeout_s):
+                    raise RuntimeError("local close unblocked recv")
+                return None
+
+        ws = LocalCloseRaises([
+            {"stream": "btcusdt@depth@100ms", "data": delta(10, 11)},
+            {"stream": "btcusdt@depth@100ms", "data": delta(15, 15)},
+        ])
+        rest = FakeRest([HttpResponse(200, rest_exchange_info(), {}),
+                         HttpResponse(200, snapshot(10), {})])
+        feed = PublicCryptoFeed(rest_get=rest, ws_factory=lambda _: ws,
+                                clock_utc_ms=lambda: 1, clock_mono_ns=time.monotonic_ns,
+                                limits={"poll_timeout_s": 0.01, "max_attempts": 1,
+                                        "backoff_seconds": [0]})
+        feed.start()
+        deadline = time.monotonic() + 2.0
+        while feed.status()["state"] not in ("error", "stopped") and time.monotonic() < deadline:
+            time.sleep(0.005)
+        status = feed.status()
+        feed.stop()
+
+        self.assertEqual(status["reason"], "sequence_gap")
+        self.assertEqual(status["health"][1]["reason"], "sequence_gap")
+        self.assertFalse(status["health"][1]["valid"])
 
     def test_bounded_peer_close_after_live_data_allows_resync(self):
         disconnect = Event()

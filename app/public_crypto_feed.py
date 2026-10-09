@@ -520,6 +520,7 @@ class PublicCryptoFeed:
         self._managed_bytes = 0
         self._peak_managed_bytes = 0
         self._attempt = 0
+        self._closing_attempt: int | None = None
         self._last_backoff = 0.0
         self._worker_alive = False
         self._catalog_ready = False
@@ -574,7 +575,7 @@ class PublicCryptoFeed:
                 message = transport.recv(float(self._limits["poll_timeout_s"]))
             except Exception:
                 with self._lock:
-                    if ingress_epoch == self._attempt:
+                    if ingress_epoch == self._attempt and self._closing_attempt != ingress_epoch:
                         self._reader_error = "websocket_transport_error"
                         self._reason = "websocket_transport_error"
                 self._ingress_event.set()
@@ -915,6 +916,8 @@ class PublicCryptoFeed:
         if transport is None or not callable(getattr(transport, "close", None)):
             return None
         with self._lock:
+            if transport is self._transport:
+                self._closing_attempt = self._attempt
             current = self._close_thread
             if current and current.is_alive():
                 return current
@@ -981,6 +984,7 @@ class PublicCryptoFeed:
                     self._connected = False
                     self._reason = ""
                     self._reader_error = ""
+                    self._closing_attempt = None
                     self._ingress.clear(); self._ingress_bytes = 0
                     self._ingress_event.clear()
                     if attempt > 1:
