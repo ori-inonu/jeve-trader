@@ -24,6 +24,12 @@ Verificação visual: navegador Codex no Windows, prévia Vite própria na porta
 
 No candidato `907beb3`, a CLI explícita com `--live --duration-seconds 20` recebeu 7 execuções e retornou 1. Livro permaneceu inválido e os canais desconectados/vencidos; razão `websocket_close_timeout`. Shutdown terminou `off`, sem worker, reader ou REST ativos. O [diagnóstico sanitizado](multimercado-smoke-publico-2026-10-09.json) conserva contadores e saúde sem preços/quantidades/payloads. A falha está em investigação pelo proprietário do coletor; não foi ocultada nem promovida a integração saudável. Nenhum piloto prolongado ou recuperação real ficou certificado.
 
+## Revisão e segundo ensaio
+
+As duas revisões independentes de `907beb3` reprovaram o candidato: clocks eram registrados ao processar a fila, duplicatas renovavam freshness e faltava regressão explícita Book → VAP. Um único implementador corrigiu esses achados com testes que falharam antes da alteração. O candidato `91df26b623c6262fa5f62a94588d249ca0ea74e6` passou 341 testes em 11,681 s e self-test offline em 0,483 s, novamente com sockets bloqueados. Isso ainda não constitui aprovação independente das correções.
+
+O segundo ensaio público de 20 s nesse candidato recebeu 772 execuções e registrou duas ressincronizações, mas terminou com livro inválido e shutdown `stopping/stop_timeout_close_alive`. O [diagnóstico sanitizado 02](multimercado-smoke-publico-02-2026-10-09.json) preserva o resultado reprovado. A fonte instalada `websocket-client 1.9.2` mostra `close(timeout=3)`; o wrapper não fornecia timeout, enquanto o stop esperava 1,8 s. Fechamento e sincronização estão sendo reproduzidos pelo mesmo implementador. Não há nova certificação live.
+
 ## Limites de conclusão
 
 Coleta real, duração prolongada, reconexão real, direitos de retenção, produto/jurisdição, custos atuais e avaliação financeira fora da amostra permanecem pendentes. AC-07 global não será marcado concluído a partir de fixtures. Nenhum preço ou payload real entra no repositório.

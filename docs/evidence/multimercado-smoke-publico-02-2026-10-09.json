@@ -1,0 +1,131 @@
+{
+  "candidate": "91df26b623c6262fa5f62a94588d249ca0ea74e6",
+  "command": "python -E -s -B scripts/observe_multimarket.py --live --duration-seconds 20",
+  "platform": "Windows / Python 3.14.7 / websocket-client 1.9.2",
+  "exit_code": 1,
+  "validation": "failed: book invalid and close still alive at shutdown",
+  "scope": "Public Spot observer only; no orders, credentials, prices, quantities or raw payload retention",
+  "diagnostics": {
+    "status": "degraded",
+    "origin": "live",
+    "error": null,
+    "health": [
+      {
+        "channel": "trade",
+        "connected": false,
+        "state": "connecting",
+        "valid": false,
+        "stale": false,
+        "coverage": "partial",
+        "last_exchange_time_ms": 1791525957107,
+        "last_receive_time_ms": 1791525899174,
+        "last_receive_monotonic_ns": 51380481327200,
+        "sequence_ok": false,
+        "gaps": 0,
+        "resyncs": 2,
+        "dropped_events": 0,
+        "dropped_bytes": 0,
+        "reason": "",
+        "metrics": {
+          "queue_events": 0,
+          "queue_bytes": 0,
+          "managed_bytes": 0,
+          "peak_managed_bytes": 296370,
+          "rest_weight_window": 320
+        }
+      },
+      {
+        "channel": "depth",
+        "connected": false,
+        "state": "cold",
+        "valid": false,
+        "stale": true,
+        "coverage": "partial",
+        "last_exchange_time_ms": 1791525957114,
+        "last_receive_time_ms": 1791525899178,
+        "last_receive_monotonic_ns": 51380485200800,
+        "sequence_ok": false,
+        "gaps": 0,
+        "resyncs": 2,
+        "dropped_events": 0,
+        "dropped_bytes": 0,
+        "reason": "awaiting_snapshot",
+        "metrics": {
+          "queue_events": 0,
+          "queue_bytes": 0,
+          "managed_bytes": 0,
+          "peak_managed_bytes": 296370,
+          "rest_weight_window": 320
+        }
+      }
+    ],
+    "transport": {
+      "state": "connecting",
+      "reason": "",
+      "worker_alive": true,
+      "reader_alive": false,
+      "rest_request_alive": false
+    },
+    "received_trades": 772,
+    "remaining_seconds": 0,
+    "evaluation": {
+      "status": "pending",
+      "sample_size": 0,
+      "chronology": null,
+      "costs": null,
+      "calibration": null,
+      "intervals": null,
+      "drawdown": null,
+      "target_probability": null,
+      "ruin_probability": null,
+      "missing": [
+        "minimum_sample_evidence",
+        "chronological_split",
+        "overlap_assessment",
+        "multiple_comparisons",
+        "cost_execution_evidence",
+        "calibration_brier_logloss",
+        "temporal_uncertainty_intervals",
+        "bankroll_drawdown_evidence",
+        "independent_acceptance_criteria",
+        "AC-07_pending"
+      ],
+      "result_type": "protocol_only",
+      "ac07_status": "pending",
+      "protocol": [
+        "causal_chronological_split",
+        "purge_and_embargo_overlapping_samples",
+        "account_for_multiple_comparisons",
+        "brier_and_logloss_calibration",
+        "include_fees_slippage_funding_and_execution",
+        "measure_bankroll_drawdown_target_and_ruin",
+        "temporal_uncertainty_intervals",
+        "independent_acceptance_criteria"
+      ]
+    },
+    "missing": [
+      "no_trades_in_interval"
+    ],
+    "orders_enabled": false,
+    "retention_enabled": false,
+    "profit_probability": null,
+    "target_probability": null,
+    "ruin_probability": null,
+    "objective": {
+      "initial_capital_brl": "400",
+      "target_capital_brl": "4000",
+      "horizon": "less_than_one_week",
+      "status": "not_estimated"
+    },
+    "shutdown": {
+      "status": "stopping",
+      "transport": {
+        "state": "stopping",
+        "reason": "stop_timeout_close_alive",
+        "worker_alive": true,
+        "reader_alive": false,
+        "rest_request_alive": false
+      }
+    }
+  }
+}
