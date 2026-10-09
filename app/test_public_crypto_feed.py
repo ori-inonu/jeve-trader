@@ -362,6 +362,67 @@ class PublicFeedTests(unittest.TestCase):
         self.assertFalse(status["health"][1]["valid"])
         self.assertFalse(status["health"][1]["sequence_ok"])
 
+    def test_bounded_peer_close_after_live_data_allows_resync(self):
+        disconnect = Event()
+        close_started = Event()
+        release_close = Event()
+
+        class SlowHandshakeWebSocket(FakeWebSocket):
+            def recv(self, timeout_s):
+                if self.messages:
+                    return self.messages.popleft()
+                if disconnect.wait(timeout_s):
+                    raise RuntimeError("remote closed connection")
+                return None
+
+            def close(self):
+                close_started.set()
+                release_close.wait(2.0)
+                super().close()
+
+        trades = [{
+            "stream": "btcusdt@trade", "data": {
+                "e": "trade", "E": 1700000000001 + index, "s": "BTCUSDT",
+                "t": index, "p": "100.50", "q": "0.25",
+                "T": 1700000000000 + index, "m": False,
+            },
+        } for index in range(1, 8)]
+        first_ws = SlowHandshakeWebSocket(
+            [{"stream": "btcusdt@depth@100ms", "data": delta()}, *trades]
+        )
+        second_ws = FakeWebSocket([{"stream": "btcusdt@depth@100ms", "data": delta()}])
+        sockets = deque([first_ws, second_ws])
+        rest = FakeRest([
+            HttpResponse(200, rest_exchange_info(), {}),
+            HttpResponse(200, snapshot(), {}),
+            HttpResponse(200, snapshot(), {}),
+        ])
+        feed = PublicCryptoFeed(
+            rest_get=rest, ws_factory=lambda _: sockets.popleft(),
+            clock_utc_ms=lambda: 1700000001000, clock_mono_ns=time.monotonic_ns,
+            limits={"poll_timeout_s": 0.01, "backoff_seconds": [0], "max_attempts": 2},
+        )
+        feed.start()
+        deadline = time.monotonic() + 2.0
+        while (feed.status()["state"] != "live" or feed.status()["queue_events"] < 7) and time.monotonic() < deadline:
+            time.sleep(0.005)
+        self.assertEqual(feed.status()["queue_events"], 7)
+
+        disconnect.set()
+        self.assertTrue(close_started.wait(1.0))
+        release_close.wait(0.4)
+        release_close.set()
+
+        deadline = time.monotonic() + 2.0
+        while (feed.status()["attempt"] < 2 or feed.status()["state"] != "live") and time.monotonic() < deadline:
+            time.sleep(0.005)
+        status = feed.status()
+        feed.stop()
+        self.assertEqual(status["attempt"], 2, status)
+        self.assertEqual(status["state"], "live")
+        self.assertEqual(status["resyncs"], 1)
+        self.assertTrue(status["health"][1]["valid"])
+
     def test_injected_limits_cannot_exceed_frozen_caps(self):
         feed = PublicCryptoFeed(limits={
             "rest_timeout_s": 100.0, "poll_timeout_s": 10.0, "sync_timeout_s": 100.0,
@@ -437,6 +498,70 @@ class PublicFeedTests(unittest.TestCase):
         feed.stop()
         self.assertEqual(trade_health["last_receive_time_ms"], 1000)
         self.assertEqual(depth_health["last_receive_time_ms"], 1000)
+
+    def test_ingress_backlog_keeps_receive_clocks_and_stales_from_arrival(self):
+        clock = {"utc": 1000, "mono": 100}
+        messages = [
+            {"stream": "btcusdt@depth@100ms", "data": delta()},
+            {"stream": "btcusdt@trade", "data": {
+                "e": "trade", "E": 1700000000001, "s": "BTCUSDT", "t": 700,
+                "p": "100.50", "q": "0.25", "T": 1700000000000, "m": False,
+            }},
+        ]
+
+        class OneMessageThenDisconnect:
+            def __init__(self):
+                self.messages = deque(messages)
+
+            def recv(self, timeout_s):
+                if self.messages:
+                    return self.messages.popleft()
+                raise RuntimeError("remote closed connection")
+
+        feed = PublicCryptoFeed(
+            clock_utc_ms=lambda: clock["utc"], clock_mono_ns=lambda: clock["mono"]
+        )
+        feed._attempt = 1
+        feed._reader_loop(OneMessageThenDisconnect(), 1)
+        self.assertEqual(feed.status()["ingress_events"], 2)
+
+        # Model an owner blocked elsewhere while the reader has already queued the trade.
+        clock.update(utc=20000, mono=11_000_000_101)
+        while (item := feed._dequeue_ingress()) is not None:
+            self.assertEqual(feed._process_one(item), "")
+        trade_health, depth_health = feed.status()["health"]
+        self.assertEqual(trade_health["last_receive_time_ms"], 1000)
+        self.assertEqual(trade_health["last_receive_monotonic_ns"], 100)
+        self.assertTrue(trade_health["stale"])
+        self.assertEqual(depth_health["last_receive_time_ms"], 1000)
+        self.assertEqual(depth_health["last_receive_monotonic_ns"], 100)
+        self.assertTrue(depth_health["stale"])
+
+    def test_duplicate_trade_does_not_refresh_channel_freshness(self):
+        clock = {"utc": 1000, "mono": 0}
+        feed = PublicCryptoFeed(
+            clock_utc_ms=lambda: clock["utc"], clock_mono_ns=lambda: clock["mono"]
+        )
+        feed._connected = True
+        feed._state = "live"
+        first = {"stream": "btcusdt@trade", "data": {
+            "e": "trade", "E": 1, "s": "BTCUSDT", "t": 7,
+            "p": "100.50", "q": "0.25", "T": 1, "m": False,
+        }}
+        duplicate = {"stream": "btcusdt@trade", "data": {
+            **first["data"], "E": 11001, "T": 11000,
+        }}
+        self.assertEqual(feed._process_one(_Ingress(first, 1)), "")
+
+        clock.update(utc=12000, mono=11_000_000_000)
+        self.assertEqual(feed._process_one(_Ingress(duplicate, 1)), "")
+        health = feed.status()["health"][0]
+        self.assertTrue(health["connected"])
+        self.assertTrue(health["stale"])
+        self.assertEqual(health["last_receive_time_ms"], 1000)
+        self.assertEqual(health["last_receive_monotonic_ns"], 0)
+        self.assertEqual(health["last_exchange_time_ms"], 1)
+        self.assertEqual(feed.status()["queue_events"], 1)
 
     def test_health_records_received_stale_depth_delta_without_validating_book(self):
         utc = {"now": 100}
