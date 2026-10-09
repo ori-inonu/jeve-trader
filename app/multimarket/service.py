@@ -117,7 +117,7 @@ class MultimarketService:
             source_id=source.source_id, epoch=state['epoch'], metadata_version=spec.metadata_version,
             feature_version=str(features['version']), question_version='mm-context-v1',
             cost_revision=self.costs.get(workspace_id, {}).get('revision', 0),
-            account_id=account_id, account_revision=account['revision'] if account else 0,
+            account_id=account_id, account_revision=account['revision'] if account else None,
             selection_revision=self.registry.selection_revision,
             event_range=features.get('event_range'), received_monotonic_ns=received)
 
@@ -353,7 +353,8 @@ class MultimarketService:
                 try:
                     self._settle(value['call_id'], value['response']['usage'])
                 except (ValueError, KeyError, TypeError):
-                    value = dict(call_id=value['call_id'], error='Uso JEV inválido; reserva mantida')
+                    value.pop('response', None)
+                    value['error'] = 'Uso JEV inválido; reserva mantida'
             response = value.get('response', {'error': value.get('error', 'JEV indisponível')})
             result = self.scheduler.complete(value['call_id'], response, identity)
             if 'request' in value:

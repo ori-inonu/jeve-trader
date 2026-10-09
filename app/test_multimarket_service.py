@@ -2,11 +2,14 @@ import json
 import tempfile
 import unittest
 import threading
+import subprocess
+import sys
 from dataclasses import replace
 from pathlib import Path
 
 from multimarket.service import MultimarketService
 from test_multimarket_domain import instrument, source, market_event
+from test_multimarket_runtime import _valid_context_response
 
 
 class Adapter:
@@ -120,7 +123,7 @@ class MultimarketIntegrationTests(unittest.TestCase):
             def executor(*_):
                 started.set()
                 released.wait(1)
-                return {'model':'jev-1.13.0','answers':{},'usage':{'input_tokens':1,'output_tokens':1}}
+                return _valid_context_response()
             try:
                 workspace_id = connected(service, adapter)
                 service.configure_jev(executor, lambda *_:None, lambda *_:None, lambda:(True, credential[0]))
@@ -142,6 +145,59 @@ class MultimarketIntegrationTests(unittest.TestCase):
             finally:
                 released.set()
                 service.close()
+
+    def test_valid_context_is_causal_journaled_and_not_repeated_or_reaged(self):
+        with tempfile.TemporaryDirectory() as directory:
+            adapter, clock = Adapter(allowed=True), Clock()
+            service = MultimarketService(directory, clock=clock, adapters={'binance_public_spot':adapter})
+            calls, settlements = [], []
+            def executor(state, questions):
+                calls.append((state, questions))
+                return _valid_context_response()
+            try:
+                workspace_id = connected(service, adapter)
+                service.configure_jev(executor, lambda *_:None, lambda *args:settlements.append(args), lambda:(True, 1))
+                service.command('multimarket.recording.set', {'enabled':True})
+                service.command('multimarket.jev.set_enabled', {'enabled':True})
+                for _ in range(40):
+                    service.tick()
+                    if service.snapshot()['selected']['context']: break
+                    threading.Event().wait(.005)
+                current = service.snapshot()['selected']
+                self.assertIsNotNone(current['context'])
+                self.assertEqual(current['context']['identity'], current['evaluation_identity'])
+                self.assertIsNone(current['context']['financial_probability'])
+                self.assertEqual(len(settlements), 1)
+                rows = list(service.journal.replay(workspace_id))
+                self.assertEqual([row['kind'] for row in rows], ['context_request','context_result'])
+                self.assertEqual(rows[0]['payload']['identity'], rows[1]['payload']['identity'])
+                self.assertTrue(rows[1]['payload']['accepted_current'])
+                self.assertNotIn('account', calls[0][0])
+                clock.wall -= 50000
+                clock.mono += 1_000_000_000
+                service.tick()
+                self.assertEqual(service.snapshot()['selected']['context']['age_ms'], 1000)
+                clock.mono += 1_001_000_000
+                for _ in range(5): service.tick()
+                self.assertIsNone(service.snapshot()['selected']['context'])
+                self.assertEqual(len(calls), 1)
+                self.assertEqual(service.snapshot()['selected']['decision']['quantity'], '0')
+            finally:
+                service.close()
+
+    def test_sidecar_outer_versions_preserve_legacy_and_separate_inner_multimarket(self):
+        with tempfile.TemporaryDirectory() as directory:
+            requests = [dict(schema_version=version, id='mm-'+str(version), method='multimarket.snapshot', params={}) for version in (1,2)]
+            requests.append(dict(schema_version=1, id='legacy', method='snapshot', params={}))
+            process = subprocess.Popen([sys.executable,'-u',str(Path(__file__).with_name('desktop_service.py')),'--data-dir',directory],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding='utf-8')
+            output, error = process.communicate('\n'.join(map(json.dumps, requests))+'\n', timeout=15)
+            self.assertEqual(process.returncode, 0, error)
+            replies = {row['id']:row for row in map(json.loads, output.splitlines()) if 'id' in row}
+            for version in (1,2):
+                self.assertEqual(replies['mm-'+str(version)]['schema_version'], version)
+                self.assertEqual(replies['mm-'+str(version)]['result']['schema_version'], 3)
+            self.assertEqual(replies['legacy']['result']['schema_version'], 2)
 
     def test_boot_is_offline_versioned_and_separate_from_legacy_storage(self):
         with tempfile.TemporaryDirectory() as directory:

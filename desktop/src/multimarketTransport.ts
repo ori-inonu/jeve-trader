@@ -1,17 +1,14 @@
 import {invoke} from '@tauri-apps/api/core';
 import {listen} from '@tauri-apps/api/event';
 import type {MultimarketSnapshot, UnknownRecord} from './multimarketModel';
+import {parseMultimarketWire, projectMultimarketEvent, type MultimarketWire} from './multimarketWire';
 
-type Wire = {schema_version?:number; id?:string; event?:string; error?:string; result?:unknown};
+type Wire = MultimarketWire;
 const pending = new Map<string,{resolve:(value:MultimarketSnapshot)=>void;reject:(error:Error)=>void;timer:ReturnType<typeof setTimeout>}>();
 const subscribers = new Set<(value:MultimarketSnapshot)=>void>();
 const native = () => '__TAURI_INTERNALS__' in window;
 function result(wire:Wire):MultimarketSnapshot {
-  if(wire.error)throw new Error(wire.error);
-  if(![1,2].includes(wire.schema_version??0) || !wire.result || typeof wire.result!=='object' || (wire.result as UnknownRecord).schema_version!==3)
-    throw new Error('Resposta multimercado incompatível; esperado snapshot 3.');
-  // Detailed field/identity validation is centralized in multimarketModel.
-  return wire.result as MultimarketSnapshot;
+  return parseMultimarketWire(wire);
 }
 function receive(wire:Wire) {
   if(wire.id && pending.has(wire.id)) {
@@ -20,7 +17,7 @@ function receive(wire:Wire) {
     catch(error){request.reject(error instanceof Error?error:new Error('Resposta inválida'));}
   } else if(wire.event==='multimarket.snapshot') {
     // Pass incompatible inner versions to the fail-closed projector as diagnostics.
-    subscribers.forEach(callback=>callback(wire.result as MultimarketSnapshot));
+    subscribers.forEach(callback=>callback(projectMultimarketEvent(wire)));
   }
 }
 export async function connectMultimarket(callback:(value:MultimarketSnapshot)=>void) {
