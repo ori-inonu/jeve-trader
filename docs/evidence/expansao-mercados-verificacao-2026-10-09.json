@@ -1,0 +1,48 @@
+{
+  "status": "pass",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.14.7",
+  "baseline": "da96c6ad4187030a98c4daa86a6b96e1e5b809a9",
+  "tracked_changes": [],
+  "network_calls": 0,
+  "local_links_checked": 18,
+  "external_references_count": 64,
+  "external_links_live_verified_by_this_script": false,
+  "math": {
+    "factor": "10",
+    "net_gain_brl": "3600",
+    "net_return_percent": "900",
+    "five_session_rate_percent": "58.489319246111348520210137339150701326944213382500",
+    "seven_day_rate_percent": "38.949549437313763712998521735301162211304671449100",
+    "binary_net_payout": "0.8",
+    "binary_break_even_probability": "0.55555555555555555555555555555555555555555555555556",
+    "ideal_all_win_counts": {
+      "0.10": 30,
+      "0.02": 146
+    },
+    "all_in_four_win_factor": "10.4976",
+    "win_1000_points_gross_brl": "200",
+    "lay_100_at_5_liability_brl": "400",
+    "single_back_at_2_commission_5pct_break_even": "0.51282051282051282051282051282051282051282051282051",
+    "target_probability": null,
+    "observed_financial_performance": null
+  },
+  "artifacts": {
+    "docs/research/Expansao_Mercados_Aceites_2026-10-09.md": "0e520a66c668e9594edf4be7ce7b145a555a813156a29de7b45896d3ec2243b2",
+    "docs/research/Expansao_Mercados_APIs_2026-10-09.md": "1abc9e201cfd86e54fa23adca6b9474775aab115509524deca70a53cdb6391d3",
+    "docs/research/Expansao_Mercados_B3_Binarias_2026-10-09.md": "821c210ae9e450331cee416bc2164d8ed46ad3da3e738eb4fc0b233aebcbc7a5",
+    "docs/research/Expansao_Mercados_Cripto_Esportes_2026-10-09.md": "6ecf2269304987ca57523634e9377abf4be72f6cd10d79b4bbe2390580ac26db",
+    "docs/research/Expansao_Mercados_Direcao_2026-10-09.md": "f6c0fe1ee8b761a4f28c2aedda834b34110bd451168eef787647414e98bf5307",
+    "docs/research/Expansao_Mercados_Economia_2026-10-09.md": "c543e77627b2e8c68761f52ef8376af571055ac9324294d0a733f39b0dc957a1",
+    "docs/research/Expansao_Mercados_Plano_2026-10-09.md": "eb21ff521a0c100aaebd46546a524c4b75a587629f63a281978d72a6e90b2cb0",
+    "docs/specs/Coleta_Multimercado_2026-10-09.md": "9e3325633f779d4133748c06509b76e79561a9cbae85f74de46792a767de24bc",
+    "docs/evidence/expansao-mercados-decisoes-2026-10-09.json": "0576304d9144480f3e3eb84ed3696ccaaaded2857a0f73cad0ab786f8e181537",
+    "docs/evidence/verify_expansao_mercados.py": "79cb81cb256ef8678f54d18e24483437eb42da4de2d3eb5da68cde9e9cad967b"
+  },
+  "app_hashes": {
+    "app/profit_bridge.py": "e717dcfb4f0a9f7f8d67b801c7e2575e6a1c81bdef50ce629ccdd5ccae55ee3b",
+    "app/profitdll_contract.py": "8eb1a97cdac3b1103dcf6b490a9e3073ae1a54df59444c014bb68d918f139c3a",
+    "app/decision_engine.py": "809a3010b398a9fb685fe32fb8c4ec6cf1d78af564a144e0fa62e389cbfde450"
+  },
+  "scope": "Documentation/arithmetic/integrity only; no WS, account, execution or profitability validation."
+}

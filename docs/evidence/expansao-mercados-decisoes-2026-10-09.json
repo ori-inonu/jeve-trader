@@ -1,0 +1,106 @@
+{
+  "date": "2026-10-09",
+  "conversation": "01a11ee0-293d-7a82-8719-5c41909aebcb",
+  "plugin": "Jev Workflows",
+  "authority": "advisory_only",
+  "billed_cost_usd": null,
+  "automatic_transcript_egress": false,
+  "limits": {
+    "maxCallsPerDay": null,
+    "maxBytesPerDay": null,
+    "maxHookCallsPerSession": null
+  },
+  "consultations": [
+    {
+      "receiptId": "4457abf9-b6d8-4482-ac66-0989e5c03315",
+      "purpose": "Estratégia de pesquisa independente",
+      "status": "abstained",
+      "reason": "low_confidence",
+      "selected_origin": "local_fallback",
+      "fallback_basis": "Skill research requer pesquisador; divisão por mercados independentes."
+    },
+    {
+      "receiptId": "607f7108-6d5f-4cc0-a3c3-0ba1123dbf1b",
+      "purpose": "Próximo passo de pesquisa documental",
+      "status": "unavailable",
+      "reasonCode": "invalid_response",
+      "validationFailure": "probability_sum_invalid",
+      "selected_origin": "local_fallback",
+      "fallback_basis": "Cálculos e contratos são independentes de fontes pendentes; escopo documental inalterado."
+    },
+    {
+      "receiptId": "d12f2d93-df47-4524-98e6-b501f259d412",
+      "purpose": "Prioridade do piloto de dados e desenho dos contratos",
+      "status": "assessed",
+      "model": "jev-1.13.0",
+      "inputDigest": "305269f68dbe48413817c499dc2645b0d289817be064932a549e52b7618a7a8d",
+      "answers": {
+        "first_data_pilot": {
+          "type": "choice",
+          "domain": "strategy",
+          "providerChoice": "crypto_spot_public",
+          "bestCandidate": "crypto_spot_public",
+          "probabilities": {
+            "crypto_spot_public": 1,
+            "b3_sdk_licensed": 0,
+            "sports_odds_poll": 0,
+            "binary_platform_ticks": 0,
+            "insufficient_evidence": 0
+          },
+          "confidence": 1,
+          "disposition": "recommendation",
+          "recommendation": "crypto_spot_public",
+          "policy": {
+            "version": "decision-policy-2026-09-26.1",
+            "mode": "conservative",
+            "minConfidence": 0.6,
+            "minProbability": 0.6,
+            "calibration": "not_locally_calibrated"
+          }
+        },
+        "normalization": {
+          "type": "choice",
+          "domain": "strategy",
+          "providerChoice": "typed_envelope_adapters",
+          "bestCandidate": "typed_envelope_adapters",
+          "probabilities": {
+            "typed_envelope_adapters": 0.91,
+            "extend_win_event": 0.05,
+            "fully_separate_pipelines": 0.01,
+            "insufficient_evidence": 0.03
+          },
+          "confidence": 0.88,
+          "disposition": "recommendation",
+          "recommendation": "typed_envelope_adapters",
+          "policy": {
+            "version": "decision-policy-2026-09-26.1",
+            "mode": "conservative",
+            "minConfidence": 0.6,
+            "minProbability": 0.6,
+            "calibration": "not_locally_calibrated"
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 938,
+        "output_tokens": 147
+      },
+      "receiptPersisted": true,
+      "interpretation": "Piloto spot é infraestrutura, não escolha de investimento nem prova do objetivo 10x; envelope tipado preserva semântica."
+    },
+    {
+      "receiptId": "62035197-461c-4c76-8051-864eb7bd2632",
+      "purpose": "Shortlist de investigação de alavancagem após direção confirmada",
+      "status": "assessed",
+      "model": "jev-1.13.0",
+      "recommendation": "b3_crypto_derivatives",
+      "confidence": 0.99,
+      "usage": {
+        "input_tokens": 732,
+        "output_tokens": 77
+      },
+      "receiptPersisted": true,
+      "interpretation": "Preferência contextual de prioridade de pesquisa; não P(meta), recomendação de operação ou autorização."
+    }
+  ]
+}
