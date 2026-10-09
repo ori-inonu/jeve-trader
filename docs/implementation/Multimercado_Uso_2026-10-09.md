@@ -19,7 +19,7 @@ Para transporte público opcional, instale a dependência no ambiente utilizado 
 .\.venv\Scripts\python.exe .\scripts\observe_multimarket.py --live --duration-seconds 60
 ```
 
-Live exige a flag, dura no máximo 1800 segundos e não grava payloads. O diagnóstico imprime contadores e saúde; preços e quantidades não entram no log. Resposta bloqueada ou erro permanente encerra a sessão sem trocar host, conta ou localização. O encerramento deve ser verificado no status do worker.
+Live exige a flag, dura no máximo 1800 segundos e não grava payloads. O diagnóstico imprime contadores e saúde; preços e quantidades não entram no log. Resposta bloqueada ou erro permanente encerra a sessão sem trocar host, conta ou localização. O diagnóstico `shutdown` deve confirmar o encerramento. Se uma requisição ainda estiver terminando, o painel indica esse estado e bloqueia nova coleta até o transporte encerrar.
 
 No desktop, a seção **Mercados** oferece iniciar, encerrar e carregar a fixture sintética. Toda abertura começa com captura desligada. Livro inválido ou vencido fica indisponível; volume por preço usa somente execuções únicas recebidas, em quantidade base e valor cotado. Cobertura permanece parcial.
 

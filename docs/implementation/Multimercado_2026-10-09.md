@@ -16,7 +16,25 @@ A autorização atual inicia a implementação de software e sua verificação. 
 | EM-05/10 | Integrador | serviço, observador, CLI, UI, requisitos e evidências | três frentes | integração offline e observação limitada sem ordens |
 | Revisão | Revisores independentes | relatórios fora do checkout | candidato fixo | standards + spec, sem autoaprovação |
 
-Estados dos tickets serão atualizados apenas com evidência. EM-06 (B3), acesso operacional EM-07 (derivativos), EM-11 (esportes) e EM-12 (binárias) dependem de fontes, licença/jurisdição ou dados ainda ausentes. Os cálculos locais dos quatro tipos de payoff podem avançar sem habilitar esses mercados.
+## Estado demonstrado
+
+| Ticket | Estado | Evidência / próxima condição |
+|---|---|---|
+| EM-00/01 | Pesquisa e SPEC ready concluídas | Fontes primárias e contrato congelado; SHA da SPEC `7e8d2034…00612` |
+| EM-02 | Contratos integrados | Catálogo, envelopes e testes de Decimal/unidades/relógios; WIN preservado |
+| EM-03 | Software integrado; transporte real em investigação | Testes fake passaram; smoke de 20 s recebeu 7 execuções e terminou com `websocket_close_timeout`, livro inválido. Não certifica coleta saudável |
+| EM-04 | Replay/VAP integrados | Hash/índice, dedup, intervalos e soma exata; retenção real desligada |
+| EM-05 | Serviço/CLI/UI integrados | Padrão desligado; fixture conferida no navegador Windows com sidecar real; janela Tauri não validada |
+| EM-06 | Dependência externa | SDK/feed B3 autorizado, licença, cobertura e custos atuais |
+| EM-07 | Dependência externa | Produto derivativo, acesso, margem, funding/liquidação e custos; feed spot não satisfaz |
+| EM-08 | Calculadoras e gates integrados; comparação real pendente | Payoffs sintéticos por família; custo/FX/risco/produto ausente mantém `wait`, q=0 |
+| EM-09 | Protocolo integrado; aceite empírico pendente | Relatório `pending`, amostra 0 e probabilidades null; AC-07 permanece aberto |
+| EM-10 | Estudo prospectivo pendente | Dataset representativo, método e critérios independentes congelados |
+| EM-11 | Dependência externa | API esportiva permitida no Brasil e responsabilidade das posições |
+| EM-12 | Dependência externa | Admissibilidade, settlement verificável e payout líquido |
+| Revisão | Em andamento em candidato fixo | Dois revisores independentes, Standards e Spec; não equivale a autoaprovação |
+
+O candidato integrado `907beb3365c8760b7214fd3af22f2f41d5269e9a` passou 337 testes Python e self-test offline do serviço com socket/rede bloqueados. Tipos, 15 testes Node e build passaram. [Evidência de integração](../evidence/multimercado-integracao-2026-10-09.md) e [uso local](Multimercado_Uso_2026-10-09.md) registram alcance e pendências. Uma entrega de software não conclui o objetivo financeiro nem os aceites globais empíricos.
 
 A fronteira inicial é contrato → coleta / replay-contexto / economia → integração → revisão. Nenhuma frente modifica o checkout principal, que contém trabalho de outra conversa.
 
