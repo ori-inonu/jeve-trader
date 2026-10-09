@@ -1,0 +1,147 @@
+{
+  "schema_version": 2,
+  "baseline_main": "0171aed6c4a25adf26d349bfe2c3140805a35e97",
+  "reviewed_code_commit": "e52172de0c127a8f1d3768cc072964501eb8ff69",
+  "reviewed_code_tree": "3e2e3ceb4856ea71ec1b903efda4fc6fd729098e",
+  "scope": "Evidence/documentation and bounded Git byte-preservation attributes only. No product code, install, merge, private feed or orders.",
+  "hash_encoding": "SHA-256 of exact publication bytes; explicit per-file Git -text preserves these bytes in commits and checkouts.",
+  "raw_source_policy": "Personal checkout paths and the conversation UUID are omitted from derived publication copies. Non-personal task and reviewer role labels are retained as provenance. Original exact bytes and source hashes remain in the ignored local provenance archive. Frozen acceptance sources are unchanged. Three immutable phase JSON sources retain locally excluded original paths; their published projections have explicit -public.json names.",
+  "files": [
+    {
+      "path": ".scratch/wayfinder-multimercado/issues/10-qualificacao-b3.md",
+      "sha256": "cea4678e76c11c0ad4c7587992948e50b9b23110621af35e69f453c400ce0744"
+    },
+    {
+      "path": ".scratch/wayfinder-multimercado/issues/12-evidencia-proximo-ciclo.md",
+      "sha256": "1ea75d8a2522e6c2c800c7e9b00a82084589e1a48d2b3f7ffcf8a11774bf4a89"
+    },
+    {
+      "path": ".scratch/wayfinder-multimercado/issues/12-evidencia-proximo-ciclo-resolution.md",
+      "sha256": "a818041d583b513295c66e09ca0d80052cd2b8446cebb6cfd119c38cc774d249"
+    },
+    {
+      "path": ".scratch/wayfinder-multimercado/issues/13-schema-publico-cedro.md",
+      "sha256": "992d829d1239c3c9315ced79f1a146a380f3d9ccb97d90542770d0aa34428bb5"
+    },
+    {
+      "path": ".scratch/wayfinder-multimercado/map.md",
+      "sha256": "127d46011584a1d877d047311baa1a4f754466cf9d0f0976a783db37eeff9e03"
+    },
+    {
+      "path": ".scratch/wayfinder-multimercado/next-cycle-proposal.md",
+      "sha256": "68e3167814a290974ab1eee1cfa60eeef13d6d3bc3cea609f9328d35269da26b"
+    },
+    {
+      "path": ".scratch/wayfinder-multimercado/next-cycle-proposal.json",
+      "sha256": "8fdd93ed8d8e40a6cab3473ece1e1eeb3345493ed35adbaeb77cbce197140f48"
+    },
+    {
+      "path": ".scratch/wayfinder-multimercado/cycle-scope-review.json",
+      "sha256": "58509e36549e5aeee0bb15314c86605b9de1e6f475aafa64510ebb5fa7b9b8cd"
+    },
+    {
+      "path": "docs/SDD.md",
+      "sha256": "4dcb511fb86439be90849641da2f27aa93ffa5417f469635ba64a1a25eaa3aac"
+    },
+    {
+      "path": "docs/HANDOFF.md",
+      "sha256": "a5523fe4752893a22abe7ae6f378f27d34e71e31c3052c6ab876cde0eb80600f"
+    },
+    {
+      "path": "docs/IMPLEMENTATION_STATUS.md",
+      "sha256": "28b648edf7e32d48a6bedca059bee7c790427819fc1df1f4e206af8facc66475"
+    },
+    {
+      "path": "docs/BACKLOG.md",
+      "sha256": "6d8c2569648e6e464e5666198cabb7fa8b47aa2b45d57733807ad29f674d4909"
+    },
+    {
+      "path": "docs/specs/PR2_Revisao_Main_2026-10-09.md",
+      "sha256": "89f127a4fd48e30790ffb2d8fdb8e1f662e586eb89e2b29078d31862119a1c5c"
+    },
+    {
+      "path": "docs/specs/Instrumentacao_Protocolo_Multimercado_2026-10-09.md",
+      "sha256": "9e6d06ed4ea275981bdcf8c0d4d26e568b3ff79d9f9be20482feb06e77565e26"
+    },
+    {
+      "path": "docs/research/RT12_Proximo_Ciclo_2026-10-09.md",
+      "sha256": "816619846ff7740e0c543af6d1d5e4f84fe7f884225e56acfe5af72ac6107684"
+    },
+    {
+      "path": "docs/research/B3_Qualificacao_Publica_2026-10-09.md",
+      "sha256": "1e5581c3286f2ef7839ea03366d2d0b8db75b8badf4e2f24ead803ca3f4d1d7f"
+    },
+    {
+      "path": "docs/research/Cedro_Socket_Schema_Publico_2026-10-09.md",
+      "sha256": "c8f227ea3d1a19de685e17ada89cf207967fd0cd8ed297877d447ee9bc7738b6"
+    },
+    {
+      "path": "docs/evidence/pr2-main-initial-spec-review.md",
+      "sha256": "20c87a6fe8aec7d26a9b68026a21311668e6953c3f9f910272d139172ddfe957"
+    },
+    {
+      "path": "docs/evidence/pr2-main-initial-standards-review.md",
+      "sha256": "c8f0169b9f2ef701c5733779c0d63e5622c24c47a7529231fccd3593dd53ec77"
+    },
+    {
+      "path": "docs/evidence/pr2-main-standards-final.md",
+      "sha256": "fa36f3de7436396ff05b4df6deae6ba12f9838cc2a0e4fdb4bda83da89bac5cb"
+    },
+    {
+      "path": "docs/evidence/pr2-main-standards-final-public.json",
+      "sha256": "71bae427906399243768880a138e6b821725c73672455c050c10b2bddc47bf7c"
+    },
+    {
+      "path": "docs/evidence/pr2-main-spec-final.md",
+      "sha256": "b4da9a5cb60a01663c34547d96b33796353fd12b6be6bb99b8c117568ab0c481"
+    },
+    {
+      "path": "docs/evidence/pr2-main-spec-final-public.json",
+      "sha256": "145ec90633eb84c9bb0a93136176bd20068f464cfe9edc06da2af418664ef15d"
+    },
+    {
+      "path": "docs/evidence/pr2-main-verification-public.json",
+      "sha256": "ba3a7a3ba0c1c7178ab724ddc1947f9d40ce8e489c3153b88f6bbc90007c747e"
+    },
+    {
+      "path": "docs/evidence/pr2-repair-tests.md",
+      "sha256": "d15bba1dfd7515583736f16e4676e325b99235eaf7930378541724eec91ea453"
+    },
+    {
+      "path": "docs/evidence/pr2-repair-tests.json",
+      "sha256": "55af5f116ef1d5f718568cc648e7eaf8ed38f018a3f1cd2059def383cc5a1548"
+    },
+    {
+      "path": "docs/evidence/rt12-next-spec-readiness-final.md",
+      "sha256": "5e8faf96dc180094657e3abe0dd7e03577462e484b4ce7f79763ecc6dea6074c"
+    },
+    {
+      "path": "docs/evidence/rt12-next-spec-readiness-final.json",
+      "sha256": "3f2a8dba8357eea31c23e956eafa602dab38854cc7e6935b7fffd43672769217"
+    },
+    {
+      "path": "docs/evidence/rt12-planning-jev.json",
+      "sha256": "9c8a2b673eb406105888228a7fbace36013933ff8e07f24f6c3f0fb70a117bf3"
+    },
+    {
+      "path": "docs/evidence/rt12-schema-jev.json",
+      "sha256": "5595a1aaa254dcd759f5df5099f9e3984dc87f075336184bd910d3ec6ef4ee7f"
+    },
+    {
+      "path": "docs/evidence/b3-next-diligence-jev.json",
+      "sha256": "3ac605ece35f6145528506a872e1e54a9d3750fa2d350a2c4cf2acf4d6f659e9"
+    },
+    {
+      "path": "docs/evidence/pr2-main-review-summary.md",
+      "sha256": "e28bcd73caf3550f70a3bf2fc7d15a57f1011e2ce7e9ef07c75a17c76411a220"
+    },
+    {
+      "path": "docs/evidence/pr2-publication-projections.json",
+      "sha256": "145f3bda980c2aa2ee1a4e7013b358f34e8520a707fde0f6524d3245b55ec1a2"
+    },
+    {
+      "path": ".gitattributes",
+      "sha256": "4d4492a33406eeb832419ab1a613b8c789f2ce2adde0fea3d9f8887a3521649f"
+    }
+  ]
+}

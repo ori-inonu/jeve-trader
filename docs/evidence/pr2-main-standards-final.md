@@ -1,0 +1,9 @@
+# Revisão independente STANDARDS — PR #2
+
+**Resultado: zero achados (P0–P3); aprovado no eixo local de standards.** A base é `0171aed6c4a25adf26d349bfe2c3140805a35e97` (merge-base igual), candidato `e52172de0c127a8f1d3768cc072964501eb8ff69`, árvore `3e2e3ceb4856ea71ec1b903efda4fc6fd729098e`.
+
+A revisão inicial cobriu o diff completo contra main (236 arquivos). Reutilizei-a e reli o delta final `5f15ab73f4f5adfd3221b9bd5f785c24c9afc496..e52172d` (5 arquivos, +224/−18). O P2 inicial de crescimento sem limite em `_seen` foi corrigido: `MarketState` limita deduplicação a 100.000 IDs, trata duplicata antes de testar saturação e invalida o epoch, limpa IDs e sinaliza resync quando chega um ID novo acima do limite (`app/multimarket/market_state.py:104-109, 171-199`; `app/multimarket/service.py:326-330`). O snapshot expõe uso e capacidade (`market_state.py:273`).
+
+O bloqueio JEV OFF e o gate final/disparo síncrono compartilham o mesmo lock (`app/desktop_service.py:456-466, 562-567`), eliminando a corrida de despacho; contabilidade de sucesso/falha segue coberta. A espera por uma chamada já iniciada é permitida pela SPEC. Não encontrei outros problemas nas 12 heurísticas Fowler do skill de revisão. **64 testes focados passaram**: 48 de controle/domínio/serviço multimercado e 16 de serviço desktop/contexto. A árvore permaneceu limpa.
+
+O gate `merge_ready_local` cobre somente este eixo. A verificação completa e frontend/build ficam com o coordenador; esta revisão não mede latência/fechamento nativo do Tk no Windows. A SPEC reconhece que OFF pode esperar a tentativa iniciada e que `timeout_seconds=3` não é prova de prazo total.

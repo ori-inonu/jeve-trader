@@ -13,3 +13,7 @@ Obter documentação e condições de um fornecedor licenciado BM&F que confirme
 ## Comments
 
 2026-10-09: dependência externa explicitamente preservada. Cotação pública atrasada não satisfaz esta evidência; não é permitido enfraquecer o aceite para encerrar o ticket.
+
+Retomada documental: /root/rt12_research investiga até três rotas já identificadas, somente fontes públicas, em checkout isolado. O ticket contratual continua aberto: o dossiê explicita lacunas e não substitui fornecedor/SKU/licença nem contato autorizado. Esta investigação não reivindica autorização para compra, conta ou feed real.
+
+A diligência [Schema público Cedro](13-schema-publico-cedro.md) foi resolvida documentalmente: lacunas impedem SPEC de parser real; fornecedor/SKU/entitlement/licença continuam sem confirmação. Nenhum feed foi contratado ou ativado.

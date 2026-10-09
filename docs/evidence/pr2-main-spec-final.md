@@ -1,0 +1,9 @@
+# Revisão final independente — PR #2 contra main
+
+Resultado: aprovado para os critérios congelados de código e SPEC, com zero achados bloqueadores. Baseline: 0171aed6c4a25adf26d349bfe2c3140805a35e97. Candidato: e52172de0c127a8f1d3768cc072964501eb8ff69; árvore: 3e2e3ceb4856ea71ec1b903efda4fc6fd729098e. SPEC R01–R04: docs/specs/PR2_Revisao_Main_2026-10-09.md, SHA256 89f127a4fd48e30790ffb2d8fdb8e1f662e586eb89e2b29078d31862119a1c5c.
+
+Revisei explicitamente o delta 5f15ab73f4f5adfd3221b9bd5f785c24c9afc496→e52172de0c127a8f1d3768cc072964501eb8ff69 (5 arquivos). R01–R02: o lock serializa OFF com o ponto de dispatch HTTP; a contabilização de tentativas ocorre para sucesso/falha e a guarda de controle impede resultado antigo de reviver contexto atual (app/desktop_service.py:453-466, 556-567, 684-720). R03: duplicata é aceita antes da checagem de capacidade; a próxima identidade inédita ao limite invalida a época e limpa IDs/contexto (app/multimarket/market_state.py:104-109, 165-199). R04: resync invalida contexto e preserva full_tape=false (app/multimarket/service.py:313-330; testes de serviço).
+
+Verificação independente: 48 testes focados passaram usando o venv existente e clientes falsos, sem rede. A primeira execução com Python global não tinha tzdata; nenhuma dependência foi instalada. Fullverify/selftest (326), 36 testes frontend/build e Rust offline foram reportados pelo coordenador, não repetidos por mim.
+
+Limites: FW-11 ainda requer piloto nativo Windows autorizado de 30 minutos; N01–N05 requerem jornadas/pares observados antes de alegar ganho. Licença B3, conta privada, validação financeira e evidência nativa seguem abertas; ordens continuam desabilitadas. Não consultei o estado remoto do PR, base, checks ou revisões; portanto esta aprovação é somente para conformidade local código/SPEC e não atesta prontidão remota de merge.

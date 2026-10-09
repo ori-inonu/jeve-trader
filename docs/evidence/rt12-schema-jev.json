@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "assessed",
+  "choice": "define_schemas",
+  "confidence": 1,
+  "receipt_id": "c79f045b-e65a-4d7d-b6b6-c8c6fa236b29",
+  "input_digest": "09419cf6189b6371482b2cf4e5ee8488c2ec392b36eac1808083cb2037490da5",
+  "usage": {
+    "input_tokens": 794,
+    "output_tokens": 52
+  },
+  "billed_cost_usd": null,
+  "authority": "advisory_only",
+  "api_request": true,
+  "validated_response": true
+}

@@ -1,0 +1,111 @@
+{
+  "reviewer_identity": "pr2-main-spec-review",
+  "review_type": "independent_read_only_spec_compliance",
+  "baseline": "0171aed6c4a25adf26d349bfe2c3140805a35e97",
+  "head": "e52172de0c127a8f1d3768cc072964501eb8ff69",
+  "tree": "3e2e3ceb4856ea71ec1b903efda4fc6fd729098e",
+  "candidate_worktree": "{spec_review_checkout}",
+  "spec": {
+    "path": "docs/specs/PR2_Revisao_Main_2026-10-09.md",
+    "source_checkout": "{integration_checkout}",
+    "sha256": "89f127a4fd48e30790ffb2d8fdb8e1f662e586eb89e2b29078d31862119a1c5c"
+  },
+  "delta_from_prior_review": {
+    "prior_head": "5f15ab73f4f5adfd3221b9bd5f785c24c9afc496",
+    "current_head": "e52172de0c127a8f1d3768cc072964501eb8ff69",
+    "changed_files": [
+      "app/desktop_service.py",
+      "app/multimarket/market_state.py",
+      "app/test_mesa_control.py",
+      "app/test_multimarket_domain.py",
+      "app/test_multimarket_service.py"
+    ]
+  },
+  "criterion_coverage": {
+    "R01": {
+      "status": "pass",
+      "evidence": "app/desktop_service.py:453-466,556-567; app/test_mesa_control.py:134-211",
+      "note": "OFF/dispatch serialize through one lock; no dispatch begins after OFF linearizes."
+    },
+    "R02": {
+      "status": "pass",
+      "evidence": "app/desktop_service.py:684-720; app/test_mesa_control.py:66-132",
+      "note": "Attempt usage is settled for success/failure; stale control results cannot revive current context."
+    },
+    "R03": {
+      "status": "pass",
+      "evidence": "app/multimarket/market_state.py:37-60,104-109,165-199; app/test_multimarket_domain.py:172-226",
+      "note": "Capacity is bounded; duplicates precede saturation; next unique identity invalidates/advances epoch and clears old IDs."
+    },
+    "R04": {
+      "status": "pass",
+      "evidence": "app/multimarket/service.py:313-330; app/test_multimarket_service.py:69-108",
+      "note": "Overflow clears market context and requests adapter resync; snapshot retains full_tape=false."
+    },
+    "FW11": {
+      "status": "open_external_acceptance",
+      "spec_source": ".scratch/wayfinder-live-windows/spec.md:20,39",
+      "note": "Authorized real Windows pilot >=30 minutes with visual p95 <=250ms remains unobserved."
+    },
+    "N01-N05": {
+      "status": "open_evidence_acceptance",
+      "spec_source": "docs/specs/Multimercado_Proximo_Ciclo_2026-10-09.md:16-20",
+      "note": "Real journeys, prospective paired measurement, timing/age separation, and evidence-backed gain remain pending."
+    },
+    "external_release_gates": {
+      "status": "open",
+      "note": "B3 licensing, private account, financial-model validation, and native/Profit evidence remain separate open gates; orders disabled."
+    }
+  },
+  "findings_total": 0,
+  "worst_priority": null,
+  "findings": [],
+  "checks": [
+    {
+      "name": "Focused desktop and multimarket unittest suite",
+      "status": "pass",
+      "result": "48 tests passed",
+      "environment": "Existing project venv; candidate checkout app directory; fake clients; no network."
+    },
+    {
+      "name": "Global Python attempt",
+      "status": "environment_error_not_code_finding",
+      "result": "tzdata absent for America/Sao_Paulo; no install performed."
+    },
+    {
+      "name": "Windows fullverify/selftest",
+      "status": "coordinator_reported_pass_not_independently_rerun",
+      "result": "326 checks."
+    },
+    {
+      "name": "Frontend tests/build",
+      "status": "coordinator_reported_pass_not_independently_rerun",
+      "result": "36 tests/build pass."
+    },
+    {
+      "name": "Rust offline check",
+      "status": "coordinator_reported_pass_not_independently_rerun"
+    },
+    {
+      "name": "Git identity/status",
+      "status": "pass",
+      "result": "HEAD and tree match fixed candidate; worktree clean."
+    }
+  ],
+  "remote_pr_state": "not_checked",
+  "blockers": [
+    "Hosted PR base, required checks, and review state were not fetched; remote merge readiness is unverified.",
+    "FW-11 native Windows pilot, N01-N05 evidence, and external B3/account/financial gates remain open for operational release."
+  ],
+  "approved": true,
+  "approval_scope": "Frozen local PR code/SPEC acceptance only. This is not a claim of hosted PR readiness, operational readiness, or measured financial gain.",
+  "publication_projection": {
+    "raw_source_sha256": "ac10bf54d8df1cd4a67374d6519f3444fa8e2ad56c7b8b19d715eb1febc1cee6",
+    "redactions": [
+      "personal checkout paths",
+      "conversation UUID"
+    ],
+    "acceptance_changed": false,
+    "provenance_retained": "Non-personal task and reviewer role labels are retained as provenance."
+  }
+}

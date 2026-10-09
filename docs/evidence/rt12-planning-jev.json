@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "consulted_at": "2026-10-09T12:23:26.719Z",
+  "status": "unavailable",
+  "reason_code": "invalid_response",
+  "receipt_id": "a95c79dc-2782-40df-92c5-727f55d8eed4",
+  "input_digest": "ed22d1e80e51590fbb19c246aea3892105819f8845553691eca23bd19284bacc",
+  "rubric_version": "batch-2026-09-26.2",
+  "question_ids": [
+    "priority",
+    "native_method"
+  ],
+  "api_request_made": true,
+  "response_validated": false,
+  "provider_http_status": 200,
+  "billed_cost_usd": null,
+  "usage": null,
+  "disposition": "local_fallback",
+  "fallback": "Specify package provenance, sanitized telemetry and a native protocol first; qualify public B3 documents independently; defer private account integration until source/format and access are established.",
+  "basis": [
+    "RT12 source-backed research at 5f15; no candidate native observation or paired human gain exists.",
+    "Existing N01-N05 require prospective evidence and distinct build/install/native/gain records.",
+    "Public B3 research can proceed without purchase, contract or account access."
+  ],
+  "limits": [
+    "No JEV recommendation is claimed for the unavailable batch.",
+    "No retry to obtain a favorable outcome.",
+    "Technical advice does not authorize merge, purchases, private access, orders or installation."
+  ]
+}

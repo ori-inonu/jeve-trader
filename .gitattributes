@@ -15,3 +15,40 @@
 # Preserve the exact imported baseline and the research audit snapshots.
 app/** -text
 docs/research/study-2026-10-06/** -text
+
+# Preserve exact bytes of the bounded 2026-10-09 reviewed evidence package.
+.gitattributes -text
+.scratch/wayfinder-multimercado/issues/10-qualificacao-b3.md -text
+.scratch/wayfinder-multimercado/issues/12-evidencia-proximo-ciclo.md -text
+.scratch/wayfinder-multimercado/issues/12-evidencia-proximo-ciclo-resolution.md -text
+.scratch/wayfinder-multimercado/issues/13-schema-publico-cedro.md -text
+.scratch/wayfinder-multimercado/map.md -text
+.scratch/wayfinder-multimercado/next-cycle-proposal.md -text
+.scratch/wayfinder-multimercado/next-cycle-proposal.json -text
+.scratch/wayfinder-multimercado/cycle-scope-review.json -text
+docs/SDD.md -text
+docs/HANDOFF.md -text
+docs/IMPLEMENTATION_STATUS.md -text
+docs/BACKLOG.md -text
+docs/specs/PR2_Revisao_Main_2026-10-09.md -text
+docs/specs/Instrumentacao_Protocolo_Multimercado_2026-10-09.md -text
+docs/research/RT12_Proximo_Ciclo_2026-10-09.md -text
+docs/research/B3_Qualificacao_Publica_2026-10-09.md -text
+docs/research/Cedro_Socket_Schema_Publico_2026-10-09.md -text
+docs/evidence/pr2-main-initial-spec-review.md -text
+docs/evidence/pr2-main-initial-standards-review.md -text
+docs/evidence/pr2-main-standards-final.md -text
+docs/evidence/pr2-main-standards-final-public.json -text
+docs/evidence/pr2-main-spec-final.md -text
+docs/evidence/pr2-main-spec-final-public.json -text
+docs/evidence/pr2-main-verification-public.json -text
+docs/evidence/pr2-repair-tests.md -text
+docs/evidence/pr2-repair-tests.json -text
+docs/evidence/rt12-next-spec-readiness-final.md -text
+docs/evidence/rt12-next-spec-readiness-final.json -text
+docs/evidence/rt12-planning-jev.json -text
+docs/evidence/rt12-schema-jev.json -text
+docs/evidence/b3-next-diligence-jev.json -text
+docs/evidence/pr2-main-review-summary.md -text
+docs/evidence/pr2-documentation-manifest.json -text
+docs/evidence/pr2-publication-projections.json -text
