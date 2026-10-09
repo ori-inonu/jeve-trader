@@ -10,6 +10,8 @@ O incremento multimercado de 09/10/2026 implementa o [contrato finito I-01–I-1
 | IMP-04 | Sidecar, wire externo 1/2, Snapshot3, orçamento e legado isolado | `app/test_multimarket_service.py`, testes de transport e build |
 | IMP-05 | Aceites, workload, revisão independente e PR | [Matriz de aceite](evidence/multimarket-acceptance.md) |
 
+IMP-01–IMP-05 concluídos no escopo finito, com revisões independentes [Standards](evidence/multimarket-standards-review.md) e [Spec](evidence/multimarket-spec-review.md), ambas sem achados restantes. O [PR #2](https://github.com/ori-inonu/jeve-trader/pull/2) reúne a entrega.
+
 Os testes locais usam fixtures e executores injetados, sem API paga. O smoke público prova acesso pontual HTTPS/WSS a BTCUSDT no host. A matriz conserva as limitações: fornecedor/licença B3, integração privada de conta, aprovação financeira e medição prospectiva da janela Windows. Nenhum gate local comprova essas dependências externas.
 
 O planejamento histórico continua no backlog. Este incremento não encerra automaticamente especificações draft ou experimentos financeiros anteriores. Não há ordens, migração destrutiva ou conexão automática no boot; Profit/Excel/OCR permanecem disponíveis no modo legado.

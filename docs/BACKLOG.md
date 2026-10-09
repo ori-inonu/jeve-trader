@@ -2,7 +2,7 @@
 
 ## Incremento multimercado — 09/10/2026
 
-IMP-01–IMP-04 estão implementados na branch `codex/multimarket-spec`. IMP-05 reúne a verificação e a revisão independente no [contrato finito](specs/Multimercado_Implementacao_2026-10-09.md), com [evidência por aceite](evidence/multimarket-acceptance.md). A conclusão local desses tickets conserva as dependências externas abaixo e o histórico JT.
+IMP-01–IMP-05 estão concluídos no escopo local e revisados independentemente na branch `codex/multimarket-spec`. IMP-05 registra a verificação e a revisão independente no [contrato finito](specs/Multimercado_Implementacao_2026-10-09.md), com [evidência por aceite](evidence/multimarket-acceptance.md). A conclusão local desses tickets conserva as dependências externas abaixo e o histórico JT.
 
 | Próxima fronteira | Evidência necessária antes de habilitar |
 |---|---|

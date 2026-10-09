@@ -1,0 +1,7 @@
+Revisão independente SPEC — candidato `ba001155ce83af8c8458fc7ad5c7d5e4e3113618`, baseline `da96c6ad4187030a98c4daa86a6b96e1e5b809a9`; SPEC congelada SHA256 `af174497bf764b1a7c67818cee6e3b925a40933d98c40c8e14f5b1b0f6bc01f4`.
+
+**Aprovado no escopo local I-01–I-12.** A lacuna anterior de I-12 foi fechada por `test_selection_change_rejects_a_late_context_for_both_workspaces`: com executor fake bloqueado, o teste troca A por B, confirma revisão de seleção diferente, rejeição `identity_changed` e ausência de contexto antigo em B ou ao retornar a A. A suíte de serviço foi executada independentemente no candidato: 10 testes passaram.
+
+A evidência registrada para `cc260fb` mostra 322 testes offline e autoteste legado aprovados; o delta até `ba00115` limita-se a docs/evidência. O frontend permanece igual à fonte validada em `3edf5d2` (36 testes, build TypeScript/Vite e jornada no browser). Workload: 10.000 eventos, p95 de batch 3,0231 ms, quality gate aprovado; sem certificação live.
+
+Auditoria de escopo: feed público Binance Spot consultivo, sem ordens. Continuidade realtime/nativa, conta privada, licença/entitlement B3, aprovação financeira/rentabilidade e benefício live continuam gates externos, não resultados certificados.
